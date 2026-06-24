@@ -1,6 +1,8 @@
 package com.example.myapplication.ui
 
+import android.content.Intent
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import android.text.InputType
 import android.view.View
@@ -75,6 +77,30 @@ class ScheduleListActivity : AppCompatActivity() {
         }
 
         loadSchedules()
+
+        // 检查电池优化，引导用户加白名单
+        checkBatteryOptimization()
+    }
+
+    private fun checkBatteryOptimization() {
+        val pm = getSystemService(POWER_SERVICE) as PowerManager
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            AlertDialog.Builder(this)
+                .setTitle("电池优化建议")
+                .setMessage("为确保定时提醒在后台准时触发，建议将小爪加入电池优化白名单。\n\n点击「去设置」→ 选择「所有应用」→ 找到「小爪」→ 选择「不优化」。")
+                .setPositiveButton("去设置") { _, _ ->
+                    try {
+                        startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = android.net.Uri.parse("package:$packageName")
+                        })
+                    } catch (e: Exception) {
+                        // 部分设备不支持直接跳转，打开普通电池优化列表
+                        startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                    }
+                }
+                .setNegativeButton("以后再说", null)
+                .show()
+        }
     }
 
     private fun loadSchedules() {
