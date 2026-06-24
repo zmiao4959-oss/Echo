@@ -1,9 +1,14 @@
 package com.example.myapplication.ui
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Switch
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
@@ -12,6 +17,21 @@ import com.example.myapplication.config.AppConfig
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var config: AppConfig
+
+    private val pickImageLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val path = BackgroundManager.saveCustomImage(this, uri)
+            if (path != null) {
+                config.backgroundKey = "custom:$path"
+                refreshBackgroundSelection()
+                applyCurrentBackground()
+            } else {
+                Toast.makeText(this, "图片加载失败", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,8 +66,39 @@ class SettingsActivity : AppCompatActivity() {
         ttsResourceId.setText(config.ttsResourceId)
         ttsSpeaker.setText(config.ttsSpeaker)
         ttsUrl.setText(config.ttsUrl)
+
+        // TTS 对话语音开关（即时生效，不影响闹钟）
+        val switchTts = findViewById<Switch>(R.id.switch_tts)
+        switchTts.isChecked = config.ttsEnabled
+        switchTts.setOnCheckedChangeListener { _, isChecked ->
+            config.ttsEnabled = isChecked
+        }
+
         maxToolRounds.setText(config.maxToolRounds.toString())
         maxContextTokens.setText(config.maxContextTokens.toString())
+
+        // 背景选择按钮
+        findViewById<Button>(R.id.bg_select_1).setOnClickListener {
+            config.backgroundKey = "bg_default_1"
+            refreshBackgroundSelection()
+            applyCurrentBackground()
+        }
+        findViewById<Button>(R.id.bg_select_2).setOnClickListener {
+            config.backgroundKey = "bg_default_2"
+            refreshBackgroundSelection()
+            applyCurrentBackground()
+        }
+        findViewById<Button>(R.id.bg_select_3).setOnClickListener {
+            config.backgroundKey = "bg_default_3"
+            refreshBackgroundSelection()
+            applyCurrentBackground()
+        }
+        findViewById<Button>(R.id.bg_select_custom).setOnClickListener {
+            pickImageLauncher.launch("image/*")
+        }
+
+        refreshBackgroundSelection()
+        applyCurrentBackground()
 
         // 保存按钮
         findViewById<Button>(R.id.btn_save).setOnClickListener {
@@ -66,6 +117,30 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.toast_config_saved), Toast.LENGTH_SHORT).show()
             finish()
         }
+    }
+
+    private fun refreshBackgroundSelection() {
+        val currentKey = config.backgroundKey
+        val label = findViewById<TextView>(R.id.bg_current_label)
+
+        // 更新默认按钮的选中态文本
+        val btn1 = findViewById<Button>(R.id.bg_select_1)
+        val btn2 = findViewById<Button>(R.id.bg_select_2)
+        val btn3 = findViewById<Button>(R.id.bg_select_3)
+
+        btn1.text = "默认 1${if (currentKey == "bg_default_1") " ✓" else ""}"
+        btn2.text = "默认 2${if (currentKey == "bg_default_2") " ✓" else ""}"
+        btn3.text = "默认 3${if (currentKey == "bg_default_3") " ✓" else ""}"
+
+        label.text = when {
+            currentKey.startsWith("custom:") -> "当前: 自定义图片"
+            currentKey in BackgroundManager.DEFAULT_BG_IDS -> "当前: $currentKey"
+            else -> ""
+        }
+    }
+
+    private fun applyCurrentBackground() {
+        BackgroundManager.apply(this, config.backgroundKey)
     }
 
     /** 自动补全 URL scheme，避免 OkHttp "no scheme" 错误 */

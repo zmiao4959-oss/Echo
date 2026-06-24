@@ -67,6 +67,11 @@ class AppConfig(context: Context) {
         get() = prefs.getBoolean(KEY_TTS_ENABLED, true)
         set(value) = prefs.edit().putBoolean(KEY_TTS_ENABLED, value).apply()
 
+    // ── 背景配置 ──
+    var backgroundKey: String
+        get() = prefs.getString(KEY_BACKGROUND, "bg_default_1") ?: "bg_default_1"
+        set(value) = prefs.edit().putString(KEY_BACKGROUND, value).apply()
+
     // ── 便捷方法 ──
     val isLLMConfigured: Boolean
         get() = llmBaseUrl.isNotBlank() && llmApiKey.isNotBlank()
@@ -88,5 +93,6 @@ class AppConfig(context: Context) {
         private const val KEY_TTS_SPEAKER = "tts_speaker"
         private const val KEY_TTS_URL = "tts_url"
         private const val KEY_TTS_ENABLED = "tts_enabled"
+        private const val KEY_BACKGROUND = "background_key"
     }
 }

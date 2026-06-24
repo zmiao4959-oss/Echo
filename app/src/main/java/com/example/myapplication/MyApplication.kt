@@ -6,6 +6,7 @@ import com.example.myapplication.memory.MemoryInitializer
 import com.example.myapplication.tools.ToolRegistry
 import com.example.myapplication.tools.FileTools
 import com.example.myapplication.tools.WebTools
+import com.example.myapplication.tools.WeatherTools
 import com.example.myapplication.schedule.ScheduleEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,7 @@ class MyApplication : Application() {
         // 注册内置工具
         FileTools.registerAll()
         WebTools.registerAll()
+        WeatherTools.registerAll()
 
         // 恢复定时闹钟（开机 / 应用启动）
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {

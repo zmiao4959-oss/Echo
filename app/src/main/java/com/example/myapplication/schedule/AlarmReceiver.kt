@@ -156,7 +156,7 @@ $staticPrompt
         appConfig: com.example.myapplication.config.AppConfig,
         text: String
     ) {
-        if (!appConfig.isTTSConfigured || !appConfig.ttsEnabled) return
+        if (!appConfig.isTTSConfigured) return // 闹钟不受聊天 TTS 开关影响
         try {
             val ttsClient = TTSClient(TTSConfig(
                 apiKey = appConfig.ttsApiKey,

@@ -12,6 +12,9 @@ object TTSParser {
 
     private val MOOD_TAG_RE = Regex("<mood>(.*?)</mood>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
+    /** 修复 LLM 偶尔输出的破损关闭标签（如 `</ mood>` `</mood >`） */
+    private val BROKEN_CLOSE_RE = Regex("</\\s*mood\\s*>", setOf(RegexOption.IGNORE_CASE))
+
     /**
      * 一段待合成的语音。
      */
@@ -26,20 +29,26 @@ object TTSParser {
     fun parseMoodScript(script: String): List<TTSSegment> {
         if (script.isBlank()) return emptyList()
 
+        // 规范化破损关闭标签：LLM 偶尔输出 `</ mood>` `</mood >` 等
+        val normalized = BROKEN_CLOSE_RE.replace(script, "</mood>")
+
         val segments = mutableListOf<TTSSegment>()
         var lastEnd = 0
 
-        for (match in MOOD_TAG_RE.findAll(script)) {
-            val prefix = script.substring(lastEnd, match.range.first).trim()
+        for (match in MOOD_TAG_RE.findAll(normalized)) {
+            val prefix = normalized.substring(lastEnd, match.range.first).trim()
             if (prefix.isNotEmpty()) {
                 segments.add(TTSSegment(text = prefix, mood = null))
             }
 
             val mood = match.groupValues[1].trim()
+                // 清理 mood 文本中残留的 XML 标签碎片
+                .replace(Regex("</?[^>]*>"), "")
+                .trim()
             val contentStart = match.range.last + 1
-            val nextMatch = MOOD_TAG_RE.find(script, contentStart)
-            val hardEnd = nextMatch?.range?.first ?: script.length
-            val region = script.substring(contentStart, hardEnd)
+            val nextMatch = MOOD_TAG_RE.find(normalized, contentStart)
+            val hardEnd = nextMatch?.range?.first ?: normalized.length
+            val region = normalized.substring(contentStart, hardEnd)
 
             // mood 只绑定紧跟的一段正文
             val paraBreak = region.indexOf("\n\n")
@@ -55,7 +64,7 @@ object TTSParser {
             lastEnd = newLastEnd
         }
 
-        val suffix = script.substring(lastEnd).trim()
+        val suffix = normalized.substring(lastEnd).trim()
         if (suffix.isNotEmpty()) {
             segments.add(TTSSegment(text = suffix, mood = null))
         }

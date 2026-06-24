@@ -10,6 +10,8 @@
     <!-- 聊天 -->
     <string name="send">发送</string>
     <string name="hint_message">输入消息…</string>
+    <string name="voice_input">语音输入</string>
+    <string name="voice_listening">正在聆听…</string>
     <string name="role_you">你</string>
     <string name="role_claw">小爪</string>
 
@@ -22,6 +24,8 @@
     <string name="temperature">Temperature</string>
     <string name="max_tokens">Max Tokens</string>
     <string name="tts_config">TTS 语音配置（豆包 Seed-TTS）</string>
+    <string name="tts_enable_chat">对话语音播报</string>
+    <string name="tts_disabled_note">语音已关闭，对话仅文本交流（闹钟不受影响）</string>
     <string name="tts_api_key">TTS API Key</string>
     <string name="resource_id">Resource ID</string>
     <string name="speaker">Speaker（音色）</string>
@@ -69,6 +73,15 @@
     <string name="delete_confirm">删除</string>
     <string name="cancel">取消</string>
     <string name="conversation_deleted">对话已删除</string>
+
+    <!-- 背景设置 -->
+    <string name="bg_config">背景设置</string>
+    <string name="bg_default_1">默认 1</string>
+    <string name="bg_default_2">默认 2</string>
+    <string name="bg_default_3">默认 3</string>
+    <string name="bg_custom">自定义图片</string>
+    <string name="bg_select_custom">选择图片</string>
+    <string name="bg_selected">当前使用</string>
 
     <!-- 定时提醒 -->
     <string name="schedule_list_title">⏰ 定时提醒</string>

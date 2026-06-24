@@ -88,6 +88,25 @@
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tts_api_url" android:textSize="13sp" android:textColor="#666"/>
         <EditText android:id="@+id/tts_url" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_tts_url" android:singleLine="true" android:layout_marginBottom="8dp"/>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/tts_enable_chat"
+                android:textSize="14sp"
+                android:textColor="#333"/>
+            <Switch
+                android:id="@+id/switch_tts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
 
         <!-- Agent 配置 -->
@@ -124,6 +143,72 @@
                 <EditText android:id="@+id/max_context_tokens" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_max_context_tokens" android:singleLine="true"/>
             </LinearLayout>
         </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
+
+        <!-- 背景设置 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/bg_config"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#4A90D9"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/bg_options"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/bg_select_1"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="@string/bg_default_1"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/bg_select_2"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="2dp"
+                android:text="@string/bg_default_2"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/bg_select_3"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="@string/bg_default_3"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/bg_select_custom"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="@string/bg_select_custom"
+            android:textColor="@android:color/white"
+            android:backgroundTint="#888888"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/bg_current_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#888"
+            android:gravity="center" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
 
         <!-- 保存按钮 -->
         <Button

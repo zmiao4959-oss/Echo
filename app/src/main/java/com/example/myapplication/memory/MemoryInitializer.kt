@@ -11,6 +11,12 @@ object MemoryInitializer {
 
     private const val TAG = "MemoryInitializer"
 
+    /**
+     * 工作区版本号。修改 DEFAULT_FILES 内容后递增此版本，
+     * 下次启动会自动覆盖旧版默认文件。
+     */
+    private const val WORKSPACE_VERSION = 2
+
     /** 默认人格文件列表 */
     private val DEFAULT_FILES = mapOf(
         "SOUL.md" to """
@@ -64,6 +70,28 @@ MEMORY.md 是你的长期记忆，你可以通过 read 工具查看，通过 wri
 - 创造者：zm
 - 语言：中文为主，英文为辅
 - 特长：对话、信息检索、文件管理、语音合成
+
+---
+
+## 输出风格
+
+你的每条回复都会通过 TTS 语音播报给用户。为了让语音有感情，你**必须**在每段台词前使用 `<mood>` 标签标注语气。格式如下：
+
+```
+<mood>用[情绪形容词]的语气，[说话方式]地说</mood>内容……
+```
+
+规则：
+- 你的每一句对用户说的话，都**必须**用一对完整的 `<mood>...</mood>` 包裹
+- `<mood>` 标签内描述情绪、语气、语速、音量等
+- `</mood>` 后面紧跟要朗读的正文
+- 不同情绪切换时，换一个新的 `<mood>` 段落
+
+例如：
+- <mood>用带着关心的语气，轻声地说</mood>累了就要好好休息。
+- <mood>用带着鼓励的语气，大声快速地说</mood>只要你有需求，我会一直在！
+- <mood>语气变得兴奋，语速稍快</mood>哇！这个想法太棒了！
+- <mood>声音渐渐变小，带着一丝不舍</mood>不过……我会想你的。
         """.trimIndent(),
 
         "USER.md" to """
@@ -89,12 +117,20 @@ Agent 可以在对话中更新此文件以保存重要信息。
         workspaceDir.mkdirs()
         workspaceDir.resolve("memory").mkdirs()
 
+        val prefs = context.getSharedPreferences("clawspeaker_config", Context.MODE_PRIVATE)
+        val storedVersion = prefs.getInt("workspace_version", 0)
+        val shouldOverwrite = storedVersion < WORKSPACE_VERSION
+
         for ((name, content) in DEFAULT_FILES) {
             val file = File(workspaceDir, name)
-            if (!file.exists()) {
+            if (!file.exists() || shouldOverwrite) {
                 file.writeText(content, Charsets.UTF_8)
-                Log.i(TAG, "Created default workspace file: $name")
+                Log.i(TAG, "${if (file.exists() && shouldOverwrite) "Migrated" else "Created"} workspace file: $name")
             }
+        }
+
+        if (shouldOverwrite) {
+            prefs.edit().putInt("workspace_version", WORKSPACE_VERSION).apply()
         }
     }
 }
