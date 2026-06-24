@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,11 +38,16 @@ class MainActivity : AppCompatActivity() {
         recycler = findViewById(R.id.recycler_conversations)
         fabNewChat = findViewById(R.id.fab_new_chat)
 
-        adapter = ConversationAdapter { chatId ->
-            val intent = Intent(this, ChatActivity::class.java)
-            intent.putExtra("chat_id", chatId)
-            startActivity(intent)
-        }
+        adapter = ConversationAdapter(
+            onClick = { chatId ->
+                val intent = Intent(this, ChatActivity::class.java)
+                intent.putExtra("chat_id", chatId)
+                startActivity(intent)
+            },
+            onLongClick = { sessionId ->
+                showDeleteConfirmation(sessionId)
+            }
+        )
         recycler.layoutManager = LinearLayoutManager(this)
         recycler.adapter = adapter
 
@@ -77,5 +83,31 @@ class MainActivity : AppCompatActivity() {
 
     fun openSettings(view: View) {
         startActivity(Intent(this, SettingsActivity::class.java))
+    }
+
+    fun openWorkspaceFiles(view: View) {
+        startActivity(Intent(this, WorkspaceFilesActivity::class.java))
+    }
+
+    private fun showDeleteConfirmation(sessionId: String) {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.delete_conversation_title))
+            .setMessage(getString(R.string.delete_conversation_message))
+            .setPositiveButton(getString(R.string.delete_confirm)) { _, _ ->
+                val app = application as MyApplication
+                val sessionsDir = File(app.filesDir, "sessions")
+                val sessionManager = SessionManager(
+                    saveDir = sessionsDir,
+                    maxContextTokens = { app.appConfig.maxContextTokens },
+                    compactionKeepMessages = { app.appConfig.compactionKeepMessages }
+                )
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) { sessionManager.delete(sessionId) }
+                    Toast.makeText(this@MainActivity, getString(R.string.conversation_deleted), Toast.LENGTH_SHORT).show()
+                    loadConversations()
+                }
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
     }
 }

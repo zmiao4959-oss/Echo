@@ -60,4 +60,32 @@ object FileStore {
         workspaceDir.mkdirs()
         File(workspaceDir, "memory").mkdirs()
     }
+
+    /** 写入工作区文件（自动创建父目录），返回是否成功 */
+    fun writeWorkspaceFile(filename: String, content: String): Boolean {
+        return try {
+            val file = File(workspaceDir, filename)
+            file.parentFile?.mkdirs()
+            file.writeText(content, Charsets.UTF_8)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /** 列出工作区下所有 .md 文件（根目录 + memory/ 子目录），返回 (相对路径, File) */
+    fun listWorkspaceMdFiles(): List<Pair<String, File>> {
+        ensureWorkspaceDir()
+        val results = mutableListOf<Pair<String, File>>()
+        workspaceDir.listFiles()?.filter { it.isFile && it.extension == "md" }?.forEach {
+            results.add(it.name to it)
+        }
+        val memoryDir = File(workspaceDir, "memory")
+        if (memoryDir.isDirectory) {
+            memoryDir.listFiles()?.filter { it.isFile && it.extension == "md" }?.forEach {
+                results.add("memory/${it.name}" to it)
+            }
+        }
+        return results.sortedBy { it.first }
+    }
 }

@@ -53,4 +53,20 @@
     <string name="status_max_rounds">达到工具调用上限，正在总结…</string>
     <string name="status_error_prefix">处理消息时发生错误: </string>
     <string name="status_tts_failed_prefix">TTS 合成失败: </string>
+
+    <!-- 工作区文件 -->
+    <string name="workspace_files_title">工作区文件</string>
+    <string name="empty_workspace_files">没有找到 .md 文件</string>
+    <string name="file_saved">文件已保存</string>
+    <string name="discard_changes_title">放弃更改</string>
+    <string name="discard_changes_message">有未保存的更改，确定要放弃吗？</string>
+    <string name="discard">放弃</string>
+    <string name="keep_editing">继续编辑</string>
+
+    <!-- 删除对话 -->
+    <string name="delete_conversation_title">删除对话</string>
+    <string name="delete_conversation_message">确定要删除这个对话吗？此操作不可撤销。</string>
+    <string name="delete_confirm">删除</string>
+    <string name="cancel">取消</string>
+    <string name="conversation_deleted">对话已删除</string>
 </resources>

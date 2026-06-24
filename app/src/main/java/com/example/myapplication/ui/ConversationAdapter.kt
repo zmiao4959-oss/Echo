@@ -13,7 +13,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class ConversationAdapter(
-    private val onClick: (String) -> Unit
+    private val onClick: (String) -> Unit,
+    private val onLongClick: ((String) -> Unit)? = null
 ) : ListAdapter<Session, ConversationAdapter.ViewHolder>(DiffCallback()) {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -46,6 +47,12 @@ class ConversationAdapter(
 
         holder.itemView.setOnClickListener {
             onClick(session.chatId)
+        }
+        onLongClick?.let { longClick ->
+            holder.itemView.setOnLongClickListener {
+                longClick(session.sessionId)
+                true
+            }
         }
     }
 

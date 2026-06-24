@@ -31,6 +31,9 @@
             android:name=".ui.SettingsActivity"
             android:exported="false"
             android:label="设置" />
+        <activity
+            android:name=".ui.WorkspaceFilesActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

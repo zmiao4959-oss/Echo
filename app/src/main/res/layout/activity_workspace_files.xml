@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <!-- ========== 列表模式 ========== -->
+    <LinearLayout
+        android:id="@+id/list_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- 顶栏 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#FFFFFF"
+            android:elevation="2dp"
+            android:paddingHorizontal="8dp">
+
+            <ImageButton
+                android:id="@+id/btn_back_list"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="#333333"
+                android:contentDescription="返回" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/workspace_files_title"
+                android:textSize="18sp"
+                android:textColor="#333333"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- 空状态 -->
+        <TextView
+            android:id="@+id/text_empty_files"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/empty_workspace_files"
+            android:textSize="15sp"
+            android:textColor="#999999"
+            android:visibility="gone" />
+
+        <!-- 文件列表 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_workspace_files"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="8dp" />
+
+    </LinearLayout>
+
+    <!-- ========== 编辑/查看模式 ========== -->
+    <LinearLayout
+        android:id="@+id/editor_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- 顶栏 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#FFFFFF"
+            android:elevation="2dp"
+            android:paddingHorizontal="8dp">
+
+            <ImageButton
+                android:id="@+id/btn_back_editor"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="#333333"
+                android:contentDescription="返回" />
+
+            <TextView
+                android:id="@+id/text_editor_filename"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="18sp"
+                android:textColor="#333333"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btn_edit_save"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="10dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_edit"
+                app:tint="#4A90D9"
+                android:contentDescription="编辑" />
+
+        </LinearLayout>
+
+        <!-- 内容区域 -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="12dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- 只读查看 -->
+                <TextView
+                    android:id="@+id/text_file_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="#333333"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="true" />
+
+                <!-- 编辑模式 -->
+                <EditText
+                    android:id="@+id/edit_file_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="#333333"
+                    android:fontFamily="monospace"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"
+                    android:background="@drawable/bg_input"
+                    android:padding="12dp"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+        </ScrollView>
+
+    </LinearLayout>
+
+</FrameLayout>
