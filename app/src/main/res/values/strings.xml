@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">小爪</string>
+    <string name="app_title">小爪 ClawSpeaker</string>
+
+    <!-- 主页 -->
+    <string name="settings">设置</string>
+    <string name="new_chat">新建对话</string>
+    <string name="empty_conversations">还没有对话\n点击右下角 + 开始聊天</string>
+
+    <!-- 聊天 -->
+    <string name="send">发送</string>
+    <string name="hint_message">输入消息…</string>
+    <string name="role_you">你</string>
+    <string name="role_claw">小爪</string>
+
+    <!-- 设置页面标题 -->
+    <string name="settings_title">⚙️ 设置</string>
+    <string name="llm_config">LLM 配置</string>
+    <string name="api_base_url">API Base URL</string>
+    <string name="api_key">API Key</string>
+    <string name="model">Model</string>
+    <string name="temperature">Temperature</string>
+    <string name="max_tokens">Max Tokens</string>
+    <string name="tts_config">TTS 语音配置（豆包 Seed-TTS）</string>
+    <string name="tts_api_key">TTS API Key</string>
+    <string name="resource_id">Resource ID</string>
+    <string name="speaker">Speaker（音色）</string>
+    <string name="tts_api_url">TTS API URL</string>
+    <string name="agent_config">Agent 配置</string>
+    <string name="max_tool_rounds">最大工具轮数</string>
+    <string name="max_context_tokens">上下文 Token 上限</string>
+    <string name="save_config">保存配置</string>
+    <string name="config_saved_local">配置保存在本地，不会上传到任何服务器。</string>
+
+    <!-- 设置页面 hint -->
+    <string name="hint_api_base_url">https://api.deepseek.com/v1</string>
+    <string name="hint_api_key">sk-…</string>
+    <string name="hint_model">deepseek-chat</string>
+    <string name="hint_temperature">0.7</string>
+    <string name="hint_max_tokens">4096</string>
+    <string name="hint_tts_api_key">TTS API Key</string>
+    <string name="hint_resource_id">seed-tts-2.0</string>
+    <string name="hint_speaker">zh_female_vv_uranus_bigtts</string>
+    <string name="hint_tts_url">https://openspeech.bytedance.com/api/v3/tts/unidirectional</string>
+    <string name="hint_max_tool_rounds">10</string>
+    <string name="hint_max_context_tokens">32000</string>
+
+    <!-- Toast / 状态消息 -->
+    <string name="toast_config_saved">配置已保存</string>
+    <string name="toast_configure_llm_first">请先在设置中配置 LLM API</string>
+    <string name="status_compacting">上下文较长，正在压缩…</string>
+    <string name="status_executing_tools">正在执行工具调用…</string>
+    <string name="status_max_rounds">达到工具调用上限，正在总结…</string>
+    <string name="status_error_prefix">处理消息时发生错误: </string>
+    <string name="status_tts_failed_prefix">TTS 合成失败: </string>
+</resources>

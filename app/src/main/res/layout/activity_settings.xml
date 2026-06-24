@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_title"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="24dp" />
+
+        <!-- LLM 配置 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/llm_config"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#4A90D9"
+            android:layout_marginBottom="8dp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/api_base_url" android:textSize="13sp" android:textColor="#666"/>
+        <EditText android:id="@+id/llm_base_url" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_api_base_url" android:singleLine="true" android:layout_marginBottom="8dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/api_key" android:textSize="13sp" android:textColor="#666"/>
+        <EditText android:id="@+id/llm_api_key" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_api_key" android:singleLine="true" android:inputType="textPassword" android:layout_marginBottom="8dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/model" android:textSize="13sp" android:textColor="#666"/>
+        <EditText android:id="@+id/llm_model" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_model" android:singleLine="true" android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="8dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/temperature" android:textSize="13sp" android:textColor="#666"/>
+                <EditText android:id="@+id/llm_temperature" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_temperature" android:singleLine="true"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/max_tokens" android:textSize="13sp" android:textColor="#666"/>
+                <EditText android:id="@+id/llm_max_tokens" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_max_tokens" android:singleLine="true"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
+
+        <!-- TTS 配置 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/tts_config"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#4A90D9"
+            android:layout_marginBottom="8dp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tts_api_key" android:textSize="13sp" android:textColor="#666"/>
+        <EditText android:id="@+id/tts_api_key" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_tts_api_key" android:singleLine="true" android:layout_marginBottom="8dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/resource_id" android:textSize="13sp" android:textColor="#666"/>
+        <EditText android:id="@+id/tts_resource_id" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_resource_id" android:singleLine="true" android:layout_marginBottom="8dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/speaker" android:textSize="13sp" android:textColor="#666"/>
+        <EditText android:id="@+id/tts_speaker" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_speaker" android:singleLine="true" android:layout_marginBottom="8dp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tts_api_url" android:textSize="13sp" android:textColor="#666"/>
+        <EditText android:id="@+id/tts_url" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_tts_url" android:singleLine="true" android:layout_marginBottom="8dp"/>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
+
+        <!-- Agent 配置 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/agent_config"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#4A90D9"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="8dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/max_tool_rounds" android:textSize="13sp" android:textColor="#666"/>
+                <EditText android:id="@+id/max_tool_rounds" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_max_tool_rounds" android:singleLine="true"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/max_context_tokens" android:textSize="13sp" android:textColor="#666"/>
+                <EditText android:id="@+id/max_context_tokens" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/hint_max_context_tokens" android:singleLine="true"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 保存按钮 -->
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/save_config"
+            android:textColor="@android:color/white"
+            android:backgroundTint="#4A90D9" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/config_saved_local"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="center" />
+
+    </LinearLayout>
+</ScrollView>
