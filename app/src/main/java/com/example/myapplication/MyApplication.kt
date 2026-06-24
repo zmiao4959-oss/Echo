@@ -6,6 +6,12 @@ import com.example.myapplication.memory.MemoryInitializer
 import com.example.myapplication.tools.ToolRegistry
 import com.example.myapplication.tools.FileTools
 import com.example.myapplication.tools.WebTools
+import com.example.myapplication.schedule.ReminderService
+import com.example.myapplication.schedule.ScheduleEngine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class MyApplication : Application() {
 
@@ -23,6 +29,14 @@ class MyApplication : Application() {
         // 注册内置工具
         FileTools.registerAll()
         WebTools.registerAll()
+
+        // 创建提醒通知渠道
+        ReminderService.createNotificationChannel(this)
+
+        // 恢复定时闹钟（开机 / 应用启动）
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            ScheduleEngine.rescheduleAll(this@MyApplication)
+        }
     }
 
     companion object {

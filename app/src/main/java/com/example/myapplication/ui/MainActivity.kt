@@ -1,17 +1,22 @@
 package com.example.myapplication.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.memory.SessionManager
+import com.example.myapplication.schedule.ScheduleEngine
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -59,11 +64,35 @@ class MainActivity : AppCompatActivity() {
         }
 
         loadConversations()
+
+        // 恢复定时闹钟
+        lifecycleScope.launch {
+            ScheduleEngine.rescheduleAll(this@MainActivity)
+        }
+
+        // 请求通知权限 (Android 13+)
+        requestNotificationPermissionIfNeeded()
     }
 
     override fun onResume() {
         super.onResume()
         loadConversations()
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    REQUEST_CODE_NOTIFICATIONS
+                )
+            }
+        }
+    }
+
+    companion object {
+        private const val REQUEST_CODE_NOTIFICATIONS = 1001
     }
 
     private fun loadConversations() {
@@ -87,6 +116,10 @@ class MainActivity : AppCompatActivity() {
 
     fun openWorkspaceFiles(view: View) {
         startActivity(Intent(this, WorkspaceFilesActivity::class.java))
+    }
+
+    fun openSchedules(view: View) {
+        startActivity(Intent(this, ScheduleListActivity::class.java))
     }
 
     private fun showDeleteConfirmation(sessionId: String) {

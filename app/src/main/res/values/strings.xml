@@ -69,4 +69,15 @@
     <string name="delete_confirm">删除</string>
     <string name="cancel">取消</string>
     <string name="conversation_deleted">对话已删除</string>
+
+    <!-- 定时提醒 -->
+    <string name="schedule_list_title">⏰ 定时提醒</string>
+    <string name="add_schedule">新增定时</string>
+    <string name="edit_schedule">编辑定时</string>
+    <string name="empty_schedules">还没有定时提醒\n点击右下角 + 添加</string>
+    <string name="delete_schedule_title">删除定时</string>
+    <string name="delete_schedule_message">确定要删除 %1$s 的\"%2$s\"吗？</string>
+    <string name="save">保存</string>
+    <string name="schedule_status_generating">正在生成提醒…</string>
+    <string name="schedule_notification_title">⏰ 小爪提醒</string>
 </resources>

@@ -33,6 +33,17 @@
                 tools:ignore="VisualLintSystemUi" />
 
             <ImageButton
+                android:id="@+id/btn_schedules"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="10dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_lock_idle_alarm"
+                android:contentDescription="@string/schedule_list_title"
+                android:onClick="openSchedules"
+                app:tint="#333333" />
+
+            <ImageButton
                 android:id="@+id/btn_workspace_files"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
