@@ -36,6 +36,10 @@ class MemoryFragment : Fragment() {
     private lateinit var tvRandomQuote: TextView
     private lateinit var tvRandomDate: TextView
     private lateinit var tvNoRandom: TextView
+    private lateinit var cardOnThisDay: MaterialCardView
+    private lateinit var tvOnThisDayDate: TextView
+    private lateinit var tvOnThisDayTitle: TextView
+    private lateinit var tvOnThisDaySnippet: TextView
     private lateinit var recyclerCards: RecyclerView
     private lateinit var tvEmptyCards: TextView
     private lateinit var recyclerProfiles: RecyclerView
@@ -69,6 +73,7 @@ class MemoryFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         viewModel.loadMemories()
+        viewModel.loadOnThisDay()
     }
 
     private fun bindViews(view: View) {
@@ -80,6 +85,10 @@ class MemoryFragment : Fragment() {
         tvRandomQuote = view.findViewById(R.id.tv_random_quote)
         tvRandomDate = view.findViewById(R.id.tv_random_date)
         tvNoRandom = view.findViewById(R.id.tv_no_random)
+        cardOnThisDay = view.findViewById(R.id.card_on_this_day)
+        tvOnThisDayDate = view.findViewById(R.id.tv_on_this_day_date)
+        tvOnThisDayTitle = view.findViewById(R.id.tv_on_this_day_title)
+        tvOnThisDaySnippet = view.findViewById(R.id.tv_on_this_day_snippet)
         recyclerCards = view.findViewById(R.id.recycler_cards)
         tvEmptyCards = view.findViewById(R.id.tv_empty_cards)
         recyclerProfiles = view.findViewById(R.id.recycler_profiles)
@@ -154,6 +163,27 @@ class MemoryFragment : Fragment() {
                 profileAdapter?.submitList(profiles)
                 tvEmptyProfiles.visibility = if (profiles.isEmpty()) View.VISIBLE else View.GONE
                 recyclerProfiles.visibility = if (profiles.isEmpty()) View.GONE else View.VISIBLE
+            }
+        }
+
+        // On this day
+        lifecycleScope.launch {
+            viewModel.onThisDayItem.collectLatest { item ->
+                if (item != null) {
+                    cardOnThisDay.visibility = View.VISIBLE
+                    tvOnThisDayDate.text = item.date
+                    tvOnThisDayTitle.text = item.title
+                    tvOnThisDaySnippet.text = item.snippet
+                    cardOnThisDay.setOnClickListener {
+                        if (item.diaryId != null) {
+                            val intent = Intent(requireContext(), com.example.myapplication.ui.diary.DiaryDetailActivity::class.java)
+                            intent.putExtra("diary_id", item.diaryId)
+                            startActivity(intent)
+                        }
+                    }
+                } else {
+                    cardOnThisDay.visibility = View.GONE
+                }
             }
         }
 

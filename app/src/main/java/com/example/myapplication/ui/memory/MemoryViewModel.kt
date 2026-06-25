@@ -83,7 +83,58 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
         _searchQuery.value = ""
         _searchResults.value = null
     }
+
+    // ── 那天的你 ──
+
+    private val _onThisDayItem = MutableStateFlow<OnThisDayItem?>(null)
+    val onThisDayItem: StateFlow<OnThisDayItem?> = _onThisDayItem.asStateFlow()
+
+    fun loadOnThisDay() {
+        viewModelScope.launch {
+            val today = java.time.LocalDate.now()
+            val monthDay = today.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd"))
+
+            // 查找历史上同月同日的日记（排除今年）
+            val allDiaries = diaryRepo.getAll()
+            val onThisDayDiaries = allDiaries.filter { d ->
+                d.date.length >= 10 && d.date.substring(5) == monthDay && d.date.substring(0, 4) != today.year.toString()
+            }.sortedByDescending { it.date }
+
+            _onThisDayItem.value = if (onThisDayDiaries.isNotEmpty()) {
+                val diary = onThisDayDiaries.first()
+                OnThisDayItem(
+                    date = diary.date,
+                    title = diary.title,
+                    snippet = diary.summary.ifEmpty { diary.diaryText.take(80) },
+                    diaryId = diary.id
+                )
+            } else {
+                // 也查一下 LifeRecord
+                val allRecords = recordRepo.getAll()
+                val onThisDayRecords = allRecords.filter { r ->
+                    r.date.length >= 10 && r.date.substring(5) == monthDay && r.date.substring(0, 4) != today.year.toString()
+                }.sortedByDescending { it.date }
+
+                if (onThisDayRecords.isNotEmpty()) {
+                    val record = onThisDayRecords.first()
+                    OnThisDayItem(
+                        date = record.date,
+                        title = "那天的记录",
+                        snippet = record.content.take(80),
+                        diaryId = null
+                    )
+                } else null
+            }
+        }
+    }
 }
+
+data class OnThisDayItem(
+    val date: String,
+    val title: String,
+    val snippet: String,
+    val diaryId: String?
+)
 
 data class MemorySearchUiResult(
     val query: String,

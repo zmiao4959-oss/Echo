@@ -44,6 +44,9 @@
             android:name=".ui.WorkspaceFilesActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.ProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.diary.DiaryDetailActivity"
             android:exported="false" />
         <activity

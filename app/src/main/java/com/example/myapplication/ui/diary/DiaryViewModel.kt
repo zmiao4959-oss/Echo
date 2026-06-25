@@ -45,12 +45,94 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 
+    // ── 筛选状态 ──
+    private val _filterMonth = MutableStateFlow<String?>(null)  // "yyyy-MM" or null = all
+    val filterMonth: StateFlow<String?> = _filterMonth.asStateFlow()
+
+    private val _filterMood = MutableStateFlow<String?>(null)
+    val filterMood: StateFlow<String?> = _filterMood.asStateFlow()
+
+    private val _filterTag = MutableStateFlow<String?>(null)
+    val filterTag: StateFlow<String?> = _filterTag.asStateFlow()
+
+    /** 所有可用月份（从已有日记中提取） */
+    private val _availableMonths = MutableStateFlow<List<String>>(emptyList())
+    val availableMonths: StateFlow<List<String>> = _availableMonths.asStateFlow()
+
+    /** 所有可用标签 */
+    private val _availableTags = MutableStateFlow<List<String>>(emptyList())
+    val availableTags: StateFlow<List<String>> = _availableTags.asStateFlow()
+
+    /** 所有可用情绪 */
+    private val _availableMoods = MutableStateFlow<List<String>>(emptyList())
+    val availableMoods: StateFlow<List<String>> = _availableMoods.asStateFlow()
+
+    /** 筛选后的日记列表 */
+    private val _filteredDiaries = MutableStateFlow<List<DailyDiary>>(emptyList())
+    val filteredDiaries: StateFlow<List<DailyDiary>> = _filteredDiaries.asStateFlow()
+
     fun loadDiaries() {
         viewModelScope.launch {
-            _diaries.value = diaryRepo.getAll()
+            val all = diaryRepo.getAll()
+            _diaries.value = all
+
+            // 提取可用月份、标签、情绪
+            _availableMonths.value = all
+                .map { it.date.take(7) }  // "yyyy-MM"
+                .distinct()
+                .sortedDescending()
+
+            _availableTags.value = all
+                .flatMap { it.tags }
+                .distinct()
+                .sorted()
+
+            _availableMoods.value = all
+                .map { it.mood }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .sorted()
+
+            applyFilters(all)
             _todayDiary.value = diaryRepo.getByDate(today())
             _todayRecords.value = recordRepo.getByDate(today())
         }
+    }
+
+    fun setMonthFilter(month: String?) {
+        _filterMonth.value = month
+        applyFilters(_diaries.value)
+    }
+
+    fun setMoodFilter(mood: String?) {
+        _filterMood.value = mood
+        applyFilters(_diaries.value)
+    }
+
+    fun setTagFilter(tag: String?) {
+        _filterTag.value = tag
+        applyFilters(_diaries.value)
+    }
+
+    fun clearFilters() {
+        _filterMonth.value = null
+        _filterMood.value = null
+        _filterTag.value = null
+        applyFilters(_diaries.value)
+    }
+
+    private fun applyFilters(all: List<DailyDiary>) {
+        var result = all
+        _filterMonth.value?.let { month ->
+            result = result.filter { it.date.startsWith(month) }
+        }
+        _filterMood.value?.let { mood ->
+            result = result.filter { it.mood == mood }
+        }
+        _filterTag.value?.let { tag ->
+            result = result.filter { it.tags.contains(tag) }
+        }
+        _filteredDiaries.value = result.sortedByDescending { it.date }
     }
 
     /** 手动生成今日日记 */

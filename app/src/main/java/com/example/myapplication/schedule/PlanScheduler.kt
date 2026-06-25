@@ -92,11 +92,95 @@ object PlanScheduler {
     suspend fun rescheduleAll(context: Context) {
         createNotificationChannel(context)
         val repo = PlanRepository()
+        ensureDefaultPlans(context, repo)
         val plans = repo.getAllEnabled()
         Log.d(TAG, "Rescheduling ${plans.size} enabled plans")
         for (plan in plans) {
             schedule(context, plan)
         }
+    }
+
+    /**
+     * 首次启动时创建默认规划模板。
+     */
+    private suspend fun ensureDefaultPlans(context: Context, repo: PlanRepository) {
+        val prefs = context.getSharedPreferences("clawspeaker_config", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("echo_default_plans_v1", false)) return
+
+        val allPlans = repo.getAll()
+        if (allPlans.isNotEmpty()) {
+            prefs.edit().putBoolean("echo_default_plans_v1", true).apply()
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        val dayMs = 86_400_000L
+
+        // 明天早上 8:00
+        val tomorrow8am = (now / dayMs + 1) * dayMs + 8 * 3_600_000L
+        // 明天晚上 22:00
+        val tomorrow10pm = (now / dayMs + 1) * dayMs + 22 * 3_600_000L
+        // 下周日 21:00
+        val cal = java.util.Calendar.getInstance()
+        cal.timeInMillis = now
+        val daysUntilSunday = (java.util.Calendar.SUNDAY - cal.get(java.util.Calendar.DAY_OF_WEEK) + 7) % 7
+        val nextSunday9pm = (now / dayMs + if (daysUntilSunday == 0) 7 else daysUntilSunday) * dayMs + 21 * 3_600_000L
+
+        val defaults = listOf(
+            EchoPlan(
+                id = "default_morning",
+                type = "companion_checkin",
+                title = "晨间问候",
+                message = "早上好。今天想以什么状态开始？",
+                triggerAt = tomorrow8am,
+                repeatRule = "每天",
+                enabled = true,
+                autoSpeak = false,
+                importance = 2,
+                tags = listOf("问候", "早晨"),
+                createdAt = now,
+                updatedAt = now,
+                lastTriggeredAt = null
+            ),
+            EchoPlan(
+                id = "default_evening",
+                type = "companion_checkin",
+                title = "晚间问候",
+                message = "今天有什么想留下来的吗？",
+                triggerAt = tomorrow10pm,
+                repeatRule = "每天",
+                enabled = true,
+                autoSpeak = false,
+                importance = 2,
+                tags = listOf("问候", "晚间"),
+                createdAt = now,
+                updatedAt = now,
+                lastTriggeredAt = null
+            ),
+            EchoPlan(
+                id = "default_weekly",
+                type = "memory_trigger",
+                title = "周回顾",
+                message = "这一周，你留下了不少片段。要不要一起看看？",
+                triggerAt = nextSunday9pm,
+                repeatRule = "每周",
+                enabled = true,
+                autoSpeak = false,
+                importance = 1,
+                tags = listOf("回顾", "每周"),
+                createdAt = now,
+                updatedAt = now,
+                lastTriggeredAt = null
+            )
+        )
+
+        for (plan in defaults) {
+            repo.add(plan)
+            schedule(context, plan)
+            Log.d(TAG, "Created default plan: ${plan.title}")
+        }
+
+        prefs.edit().putBoolean("echo_default_plans_v1", true).apply()
     }
 
     /**

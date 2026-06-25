@@ -178,17 +178,38 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 历史日记标题 -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- 历史日记标题 + 筛选 -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:paddingHorizontal="20dp"
                 android:paddingTop="24dp"
-                android:paddingBottom="4dp"
-                android:text="@string/diary_history_title"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#163536" />
+                android:paddingBottom="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/diary_history_title"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#163536" />
+
+                <TextView
+                    android:id="@+id/btn_filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="筛选 ▾"
+                    android:textSize="13sp"
+                    android:textColor="#2F7D7A"
+                    android:background="@drawable/bg_input"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tv_diary_count"
@@ -199,6 +220,22 @@
                 android:textSize="13sp"
                 android:textColor="#9E9E9E"
                 tools:text="共 5 篇日记" />
+
+            <!-- 月份筛选 chip 行 -->
+            <HorizontalScrollView
+                android:id="@+id/chip_scroll_months"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="8dp">
+
+                <LinearLayout
+                    android:id="@+id/chip_container_months"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
 
             <!-- 日记列表 -->
             <androidx.recyclerview.widget.RecyclerView

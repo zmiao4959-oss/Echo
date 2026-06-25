@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -60,6 +61,8 @@ class MainActivity : AppCompatActivity() {
         weatherBar = findViewById(R.id.weather_bar)
         weatherIcon = findViewById(R.id.weather_icon)
         weatherInfo = findViewById(R.id.weather_info)
+
+        findViewById<ImageButton>(R.id.btn_profile).setOnClickListener { openProfile(it) }
 
         bottomNav = findViewById(R.id.bottom_navigation)
         bottomNav.setOnItemSelectedListener { item ->
@@ -156,16 +159,8 @@ class MainActivity : AppCompatActivity() {
 
     // ── 顶部栏按钮 ──
 
-    fun openSettings(view: View) {
-        startActivity(Intent(this, SettingsActivity::class.java))
-    }
-
-    fun openWorkspaceFiles(view: View) {
-        startActivity(Intent(this, WorkspaceFilesActivity::class.java))
-    }
-
-    fun openSchedules(view: View) {
-        startActivity(Intent(this, ScheduleListActivity::class.java))
+    fun openProfile(view: View) {
+        startActivity(Intent(this, ProfileActivity::class.java))
     }
 
     // ── 天气条 ──

@@ -46,6 +46,8 @@ class TodayFragment : Fragment() {
     private lateinit var tvLastReply: TextView
     private lateinit var btnEnterChat: View
     private lateinit var tvDiaryPreview: TextView
+    private lateinit var cardTodayStatus: MaterialCardView
+    private lateinit var tvStatusSummary: TextView
 
     private var recordAdapter: TodayRecordAdapter? = null
     private var speechRecognizer: SpeechRecognizer? = null
@@ -98,6 +100,8 @@ class TodayFragment : Fragment() {
         tvLastReply = view.findViewById(R.id.tv_last_reply)
         btnEnterChat = view.findViewById(R.id.btn_enter_chat)
         tvDiaryPreview = view.findViewById(R.id.tv_diary_preview)
+        cardTodayStatus = view.findViewById(R.id.card_today_status)
+        tvStatusSummary = view.findViewById(R.id.tv_status_summary)
     }
 
     // ── RecyclerView ──
@@ -164,6 +168,15 @@ class TodayFragment : Fragment() {
                     tvDiaryPreview.text = getString(R.string.today_diary_ready, count)
                 } else {
                     tvDiaryPreview.text = getString(R.string.today_diary_empty)
+                }
+
+                // Status card
+                val status = viewModel.getTodayStatusSummary()
+                if (status != null) {
+                    tvStatusSummary.text = status
+                    cardTodayStatus.visibility = View.VISIBLE
+                } else {
+                    cardTodayStatus.visibility = View.GONE
                 }
             }
         }

@@ -22,14 +22,22 @@ class PlanFragment : Fragment() {
 
     private lateinit var viewModel: PlanViewModel
 
-    private lateinit var recyclerToday: RecyclerView
-    private lateinit var recyclerFuture: RecyclerView
-    private lateinit var tvEmptyToday: TextView
-    private lateinit var tvEmptyFuture: TextView
     private lateinit var fabAddPlan: FloatingActionButton
 
-    private var todayAdapter: PlanListAdapter? = null
-    private var futureAdapter: PlanListAdapter? = null
+    // RecyclerViews per type
+    private lateinit var recyclerReminder: RecyclerView
+    private lateinit var recyclerCheckin: RecyclerView
+    private lateinit var recyclerMemory: RecyclerView
+    private lateinit var recyclerAutodiary: RecyclerView
+    private lateinit var tvEmptyReminder: TextView
+    private lateinit var tvEmptyCheckin: TextView
+    private lateinit var tvEmptyMemory: TextView
+    private lateinit var tvEmptyAutodiary: TextView
+
+    private var reminderAdapter: PlanListAdapter? = null
+    private var checkinAdapter: PlanListAdapter? = null
+    private var memoryAdapter: PlanListAdapter? = null
+    private var autodiaryAdapter: PlanListAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,10 +55,14 @@ class PlanFragment : Fragment() {
             ViewModelProvider.AndroidViewModelFactory(requireActivity().application as MyApplication)
         )[PlanViewModel::class.java]
 
-        recyclerToday = view.findViewById(R.id.recycler_today_plans)
-        recyclerFuture = view.findViewById(R.id.recycler_future_plans)
-        tvEmptyToday = view.findViewById(R.id.tv_empty_today)
-        tvEmptyFuture = view.findViewById(R.id.tv_empty_future)
+        recyclerReminder = view.findViewById(R.id.recycler_reminder_plans)
+        recyclerCheckin = view.findViewById(R.id.recycler_checkin_plans)
+        recyclerMemory = view.findViewById(R.id.recycler_memory_plans)
+        recyclerAutodiary = view.findViewById(R.id.recycler_autodiary_plans)
+        tvEmptyReminder = view.findViewById(R.id.tv_empty_reminder)
+        tvEmptyCheckin = view.findViewById(R.id.tv_empty_checkin)
+        tvEmptyMemory = view.findViewById(R.id.tv_empty_memory)
+        tvEmptyAutodiary = view.findViewById(R.id.tv_empty_autodiary)
         fabAddPlan = view.findViewById(R.id.fab_add_plan)
 
         setupAdapters()
@@ -65,19 +77,24 @@ class PlanFragment : Fragment() {
     }
 
     private fun setupAdapters() {
-        todayAdapter = PlanListAdapter(
-            onToggle = { plan -> viewModel.toggleEnabled(plan.id) },
-            onClick = { plan -> openEdit(plan.id) }
-        )
-        recyclerToday.layoutManager = LinearLayoutManager(requireContext())
-        recyclerToday.adapter = todayAdapter
+        val onToggle: (EchoPlan) -> Unit = { plan -> viewModel.toggleEnabled(plan.id) }
+        val onClick: (EchoPlan) -> Unit = { plan -> openEdit(plan.id) }
 
-        futureAdapter = PlanListAdapter(
-            onToggle = { plan -> viewModel.toggleEnabled(plan.id) },
-            onClick = { plan -> openEdit(plan.id) }
-        )
-        recyclerFuture.layoutManager = LinearLayoutManager(requireContext())
-        recyclerFuture.adapter = futureAdapter
+        reminderAdapter = PlanListAdapter(onToggle = onToggle, onClick = onClick)
+        recyclerReminder.layoutManager = LinearLayoutManager(requireContext())
+        recyclerReminder.adapter = reminderAdapter
+
+        checkinAdapter = PlanListAdapter(onToggle = onToggle, onClick = onClick)
+        recyclerCheckin.layoutManager = LinearLayoutManager(requireContext())
+        recyclerCheckin.adapter = checkinAdapter
+
+        memoryAdapter = PlanListAdapter(onToggle = onToggle, onClick = onClick)
+        recyclerMemory.layoutManager = LinearLayoutManager(requireContext())
+        recyclerMemory.adapter = memoryAdapter
+
+        autodiaryAdapter = PlanListAdapter(onToggle = onToggle, onClick = onClick)
+        recyclerAutodiary.layoutManager = LinearLayoutManager(requireContext())
+        recyclerAutodiary.adapter = autodiaryAdapter
     }
 
     private fun openEdit(planId: String?) {
@@ -88,17 +105,35 @@ class PlanFragment : Fragment() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.plans.collectLatest { plans ->
-                val (today, future) = viewModel.getGroupedPlans()
-
-                todayAdapter?.submitList(today)
-                tvEmptyToday.visibility = if (today.isEmpty()) View.VISIBLE else View.GONE
-                recyclerToday.visibility = if (today.isEmpty()) View.GONE else View.VISIBLE
-
-                futureAdapter?.submitList(future)
-                tvEmptyFuture.visibility = if (future.isEmpty()) View.VISIBLE else View.GONE
-                recyclerFuture.visibility = if (future.isEmpty()) View.GONE else View.VISIBLE
+            viewModel.plans.collectLatest {
+                updateSection(
+                    viewModel.getByType("task_reminder"),
+                    reminderAdapter, recyclerReminder, tvEmptyReminder
+                )
+                updateSection(
+                    viewModel.getByType("companion_checkin"),
+                    checkinAdapter, recyclerCheckin, tvEmptyCheckin
+                )
+                updateSection(
+                    viewModel.getByType("memory_trigger"),
+                    memoryAdapter, recyclerMemory, tvEmptyMemory
+                )
+                updateSection(
+                    viewModel.getByType("auto_diary"),
+                    autodiaryAdapter, recyclerAutodiary, tvEmptyAutodiary
+                )
             }
         }
+    }
+
+    private fun updateSection(
+        plans: List<EchoPlan>,
+        adapter: PlanListAdapter?,
+        recycler: RecyclerView,
+        emptyView: TextView
+    ) {
+        adapter?.submitList(plans)
+        emptyView.visibility = if (plans.isEmpty()) View.VISIBLE else View.GONE
+        recycler.visibility = if (plans.isEmpty()) View.GONE else View.VISIBLE
     }
 }

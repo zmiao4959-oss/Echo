@@ -207,6 +207,77 @@
                 android:textColor="#BDBDBD"
                 android:visibility="gone" />
 
+            <!-- 那天的你卡片 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_on_this_day"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:strokeWidth="0dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="那天的你"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#E9C98F" />
+
+                    <TextView
+                        android:id="@+id/tv_on_this_day_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textSize="12sp"
+                        android:textColor="#9E9E9E"
+                        tools:text="2024年6月25日" />
+
+                    <TextView
+                        android:id="@+id/tv_on_this_day_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="#163536"
+                        tools:text="项目有了重要进展" />
+
+                    <TextView
+                        android:id="@+id/tv_on_this_day_snippet"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textSize="13sp"
+                        android:textColor="#7A7A7A"
+                        android:maxLines="2"
+                        android:ellipsize="end"
+                        tools:text="今天完成了代码审查，感觉..." />
+
+                    <TextView
+                        android:id="@+id/tv_on_this_day_action"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="查看 ›"
+                        android:textSize="13sp"
+                        android:textColor="#2F7D7A" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- 记忆卡片列表 -->
             <TextView
                 android:layout_width="wrap_content"

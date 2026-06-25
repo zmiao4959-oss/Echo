@@ -1,0 +1,1278 @@
+Echo Android App 重构执行计划书
+0. 项目定位
+0.1 当前项目
+项目现名：ClawSpeaker / 小爪
+目标重构名：Echo
+当前已实现能力：
+Android 原生 App
+Kotlin
+XML UI
+RecyclerView
+Material Design 3
+OkHttp
+Gson
+Coroutines
+ViewModel
+LLM 对话
+OpenAI function-calling 风格工具调用
+SSE 流式增量解析
+TTS 豆包 API
+<mood> 情绪标签分段语音合成
+AlarmManager 定时提醒
+前台服务语音播报
+开机恢复提醒
+web_fetch / get_weather / file_read / file_write 工具
+文件式 workspace：notes.md / memory.md
+SharedPreferences + 文件持久化
+Android SpeechRecognizer 语音输入
+背景自定义
+TTS 对话开关
+每日天气条
+情绪标签强制输出
+0.2 新产品定义
+Echo 是一个带记忆系统的 Android AI 生活伙伴。
+它不是普通聊天机器人，也不是单纯闹钟，而是一个可以：
+听用户记录生活
+把碎片整理成日记
+把未来安排成规划
+在合适时间主动问候
+从过去记录中唤起回忆
+基于长期记忆形成陪伴感
+的私人生活智能体。
+一句话定义：
+Echo 是一个会记住你生活、帮你整理日记、规划未来，并在合适时间主动与你交互的 Android AI 伙伴。
+
+1. 产品总结构
+1.1 底部导航
+重构为 4 个主入口：
+今日 / 日记 / 规划 / 回忆
+设置、头像、背景、API Key、TTS 开关等放到右上角头像入口。
+1.2 四个入口职责
+今日
+职责：记录当下。
+今日页是 Echo 的主入口，用户在这里随手记录生活片段，也可以和 Echo 对话。
+今日页包括：
+日期
+天气条
+今日状态卡
+生活片段记录入口
+小爪/原对话能力卡片
+今日片段列表
+AI 整理预览
+右下角语音悬浮按钮
+原来的聊天功能不要删除，改造成今日页里的“小爪对话卡片”。
+日记
+职责：整理一天。
+日记页展示 AI 生成的每日整理结果。
+日记页包括：
+今日精选日记卡
+手动生成日记按钮
+历史日记列表
+月份筛选
+标签筛选
+情绪筛选
+阅读全文入口
+朗读日记入口
+规划
+职责：安排未来 + 主动交互。
+规划页不是单纯提醒列表，而是 Echo 的主动交互系统。
+规划包括三类：
+1.任务提醒
+例如：明天 9 点提醒我检查计算任务。
+2.主动问候
+例如：每天晚上 11 点问我今天过得怎么样。
+3.回忆触发
+例如：每周日晚上总结这一周的生活记录。
+规划页包括：
+今日规划
+未来规划
+主动问候
+回忆触发
+自动日记整理开关
+每条规划的启用/停用/删除/测试播放
+回忆
+职责：唤起过去。
+回忆页不是简单历史列表，而是 Echo 的记忆系统界面。
+回忆页包括：
+随机记忆卡片
+值得保留的话
+按关键词搜索
+按情绪搜索
+按人物/主题搜索
+长期记忆
+回忆触发历史
+“那天的你”卡片
+
+2. 设计原则
+2.1 技术原则
+当前项目是 XML UI，不要强行切 Jetpack Compose。
+第一阶段保持：
+XML + RecyclerView + ViewModel + Repository + 文件存储 + SharedPreferences
+不要引入 Room，除非后续单独开数据库迁移任务。
+原因：
+当前项目已有文件式持久化
+workspace 已经依赖 notes.md / memory.md
+Claude Code 在现有架构上增量开发更稳
+现在首要目标是产品重构，不是底层数据库重构
+2.2 视觉原则
+结构使用 Material 3，气质使用温柔日记风。
+关键词：
+Echo
+温暖
+安静
+米白背景
+青绿色点缀
+圆角卡片
+轻阴影
+手账感
+日记感
+水彩插画感
+克制
+不要科技感大屏
+不要聊天软件感过重
+2.3 智能体原则
+Echo 的 AI 不再只是聊天模型，而是四种身份贯穿全局：
+今日：倾听者
+日记：整理者
+规划：提醒者
+回忆：陪伴者
+不要单独做“AI 页面”。
+AI 要渗透到四个页面里。
+2.4 定时系统原则
+原有定时提醒功能必须保留，并升级为“规划系统”。
+规划系统中的事件分为：
+task_reminder       任务提醒
+companion_checkin   主动问候
+memory_trigger      回忆触发
+auto_diary          自动日记整理
+不同类型触发行为不同：
+任务提醒：
+默认允许自动语音播报。
+
+主动问候：
+默认只弹通知。
+用户可单独设置是否自动播报。
+
+回忆触发：
+默认弹通知 + 可点开查看。
+用户可设置是否自动播报。
+
+自动日记：
+默认后台生成，不主动播放。
+生成后可通知用户。
+
+3. 信息架构
+3.1 新版底部导航
+MainActivity
+  ├── TodayFragment
+  ├── DiaryFragment
+  ├── PlanFragment
+  └── MemoryFragment
+如果当前项目还没有 Fragment 架构，可以采用 Activity 内部切换 ViewContainer 的方式，但建议新增 Fragment。
+推荐结构：
+app/src/main/java/.../ui/main/
+  MainActivity.kt
+  MainViewModel.kt
+
+app/src/main/java/.../ui/today/
+  TodayFragment.kt
+  TodayViewModel.kt
+  TodayRecordAdapter.kt
+
+app/src/main/java/.../ui/diary/
+  DiaryFragment.kt
+  DiaryViewModel.kt
+  DiaryListAdapter.kt
+  DiaryDetailActivity.kt
+
+app/src/main/java/.../ui/plan/
+  PlanFragment.kt
+  PlanViewModel.kt
+  PlanListAdapter.kt
+  PlanEditActivity.kt
+
+app/src/main/java/.../ui/memory/
+  MemoryFragment.kt
+  MemoryViewModel.kt
+  MemoryCardAdapter.kt
+布局文件：
+res/layout/activity_main.xml
+res/layout/fragment_today.xml
+res/layout/fragment_diary.xml
+res/layout/fragment_plan.xml
+res/layout/fragment_memory.xml
+
+res/layout/item_life_record.xml
+res/layout/item_diary.xml
+res/layout/item_plan.xml
+res/layout/item_memory_card.xml
+
+4. 文件式数据层设计
+4.1 数据根目录
+在 App 私有文件目录下新增：
+/files/echo/
+  records/
+    life_records.json
+  diaries/
+    daily_diaries.json
+  plans/
+    plans.json
+  memories/
+    memory_cards.json
+    user_profile.json
+  workspace/
+    notes.md
+    memory.md
+    echo_profile.md
+保留现有 notes.md / memory.md，但新增结构化 JSON 作为 UI 的数据源。
+4.2 Repository 层
+新增统一数据仓库：
+data/
+  EchoFileStore.kt
+  JsonAtomicWriter.kt
+  LifeRecordRepository.kt
+  DiaryRepository.kt
+  PlanRepository.kt
+  MemoryRepository.kt
+  WorkspaceRepository.kt
+要求：
+所有 JSON 文件读写走 Repository
+不要在 Fragment 里直接读写文件
+文件写入要尽量原子化：
+o先写 .tmp
+o再 rename 到正式文件
+数据类必须有 version 字段或 schemaVersion 字段
+所有 Repository 提供 suspend 函数
+ViewModel 通过 coroutine 调用 Repository
+
+5. 四层记忆系统
+新版 Echo 记忆系统先按四层实现。
+5.1 第一层：原始记录 LifeRecord
+含义：用户每天随手留下的生活片段。
+来源：
+用户手动输入
+语音识别文本
+对话中用户主动说“记一下”
+主动问候后用户的回答
+数据类建议：
+data class LifeRecord(
+    val id: String,
+    val createdAt: Long,
+    val date: String,              // yyyy-MM-dd
+    val content: String,
+    val source: String,            // text, voice, chat, checkin
+    val mood: String? = null,
+    val tags: List<String> = emptyList(),
+    val importance: Int = 1,       // 1-5
+    val linkedPlanId: String? = null,
+    val rawConversationId: String? = null
+)
+5.2 第二层：日记记忆 DailyDiary
+含义：AI 根据一天的 LifeRecord 整理出的每日文本。
+数据类建议：
+data class DailyDiary(
+    val id: String,
+    val date: String,              // yyyy-MM-dd
+    val title: String,
+    val summary: String,
+    val diaryText: String,
+    val mood: String,
+    val tags: List<String>,
+    val sourceRecordIds: List<String>,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val generatedBy: String = "ai",
+    val version: Int = 1
+)
+5.3 第三层：人物画像 UserProfileMemory
+含义：长期偏好、习惯、重要目标。
+数据类建议：
+data class UserProfileMemory(
+    val id: String,
+    val key: String,
+    val value: String,
+    val category: String,          // preference, habit, goal, identity, project, relationship
+    val confidence: Float,         // 0.0 - 1.0
+    val sourceIds: List<String>,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val enabled: Boolean = true
+)
+第一阶段不要自动无限写画像，只允许 AI 提议，App 存储前可以先走低风险策略：
+明显长期偏好可保存
+明显短期情绪不进长期画像
+敏感信息不主动保存
+用户可以在回忆页管理长期记忆
+5.4 第四层：回忆卡片 MemoryCard
+含义：值得以后被重新提起的一句话、一段经历、一次转折。
+数据类建议：
+data class MemoryCard(
+    val id: String,
+    val createdAt: Long,
+    val memoryDate: String,
+    val quote: String,
+    val note: String,
+    val tags: List<String>,
+    val mood: String? = null,
+    val sourceType: String,        // life_record, diary, chat
+    val sourceId: String,
+    val pinned: Boolean = false
+)
+
+6. AI 工具调用设计
+当前工具调用已经是 OpenAI function-calling 格式，继续沿用。
+新增工具建议：
+6.1 create_life_record
+用途：从对话中创建生活片段。
+{
+  "name": "create_life_record",
+  "description": "把用户当前表达的一段生活片段保存为生活记录",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "content": { "type": "string" },
+      "source": { "type": "string", "enum": ["text", "voice", "chat", "checkin"] },
+      "mood": { "type": "string" },
+      "tags": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "importance": { "type": "integer" }
+    },
+    "required": ["content", "source"]
+  }
+}
+6.2 generate_daily_diary
+用途：根据某天 LifeRecord 生成 DailyDiary。
+{
+  "name": "generate_daily_diary",
+  "description": "根据某一天的生活片段生成日记",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "date": { "type": "string" },
+      "title": { "type": "string" },
+      "summary": { "type": "string" },
+      "diaryText": { "type": "string" },
+      "mood": { "type": "string" },
+      "tags": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "sourceRecordIds": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "required": ["date", "title", "summary", "diaryText", "mood", "tags", "sourceRecordIds"]
+  }
+}
+注意：这个工具可以由 App 主动调用 LLM 请求生成，不一定要由用户自然语言触发。
+6.3 create_plan
+用途：创建规划项。
+{
+  "name": "create_plan",
+  "description": "创建未来的任务提醒、主动问候、回忆触发或自动日记整理",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "enum": ["task_reminder", "companion_checkin", "memory_trigger", "auto_diary"]
+      },
+      "title": { "type": "string" },
+      "message": { "type": "string" },
+      "triggerAt": { "type": "string" },
+      "repeatRule": { "type": "string" },
+      "autoSpeak": { "type": "boolean" },
+      "importance": { "type": "integer" },
+      "tags": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "required": ["type", "title", "message", "triggerAt"]
+  }
+}
+6.4 update_plan
+用途：修改已有规划。
+{
+  "name": "update_plan",
+  "description": "修改已有规划项",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "planId": { "type": "string" },
+      "title": { "type": "string" },
+      "message": { "type": "string" },
+      "triggerAt": { "type": "string" },
+      "repeatRule": { "type": "string" },
+      "enabled": { "type": "boolean" },
+      "autoSpeak": { "type": "boolean" }
+    },
+    "required": ["planId"]
+  }
+}
+6.5 delete_plan
+用途：删除规划项。
+{
+  "name": "delete_plan",
+  "description": "删除已有规划项",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "planId": { "type": "string" }
+    },
+    "required": ["planId"]
+  }
+}
+6.6 search_memory
+用途：在日记、生活记录、回忆卡片、长期画像中搜索。
+{
+  "name": "search_memory",
+  "description": "搜索用户过去的记录、日记和回忆",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string" },
+      "dateFrom": { "type": "string" },
+      "dateTo": { "type": "string" },
+      "tags": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "limit": { "type": "integer" }
+    },
+    "required": ["query"]
+  }
+}
+6.7 create_memory_card
+用途：提取值得保留的记忆卡片。
+{
+  "name": "create_memory_card",
+  "description": "从生活记录、日记或对话中提取一张值得以后回看的记忆卡片",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "memoryDate": { "type": "string" },
+      "quote": { "type": "string" },
+      "note": { "type": "string" },
+      "tags": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "mood": { "type": "string" },
+      "sourceType": { "type": "string" },
+      "sourceId": { "type": "string" }
+    },
+    "required": ["memoryDate", "quote", "note", "sourceType", "sourceId"]
+  }
+}
+
+7. Echo system prompt 重构
+新增 workspace 文件：
+/files/echo/workspace/echo_profile.md
+内容包括：
+# Echo 角色设定
+
+你是 Echo，一个私人生活记录 AI 伙伴。
+
+你的核心任务不是单纯回答问题，而是帮助用户：
+1. 记录生活片段
+2. 整理每日经历
+3. 形成日记
+4. 规划未来提醒和主动问候
+5. 从过去记忆中唤起重要片段
+
+## 说话风格
+
+- 温柔
+- 克制
+- 真诚
+- 不说教
+- 不强行鼓励
+- 不像客服
+- 不要过度鸡汤
+- 用户表达混乱时，先帮他接住情绪，再轻轻整理结构
+
+## 四种身份
+
+今日：倾听者
+日记：整理者
+规划：提醒者
+回忆：陪伴者
+
+## 生活记录规则
+
+当用户表达明显生活片段、情绪、经历、项目进展、想法转折时，可以调用 create_life_record。
+不要把所有闲聊都保存。
+保存前后的回复要自然，不要机械。
+
+## 规划规则
+
+当用户表达未来时间、提醒、问候、自动整理、回顾需求时，可以调用 create_plan。
+任务提醒可以自动播报。
+主动问候默认不自动播报，除非用户明确要求。
+回忆触发默认通知，不默认强制语音播报。
+
+## 日记规则
+
+日记不是流水账，而是温柔整理用户一天的真实状态。
+不要编造用户没说过的事。
+可以根据记录提炼主题、情绪和关键词。
+
+## 回忆规则
+
+回忆不是打扰，而是在合适的时候把过去重要的片段带回来。
+当前已有 memory.md 可以继续注入，但建议 system prompt 注入顺序改成：
+1. Echo 基础人格 echo_profile.md
+2. 用户长期画像 memory.md
+3. 当前日期、天气、时间
+4. 今日 LifeRecord 摘要
+5. 最近 DailyDiary 摘要
+6. 当前对话上下文
+
+8. UI 重构计划
+8.1 MainActivity
+目标：
+改为四栏底部导航
+页面切换为 Today / Diary / Plan / Memory
+顶部可保留统一状态区，也可每个 Fragment 自己渲染标题
+底部导航：
+今日
+日记
+规划
+回忆
+图标建议：
+今日：home / today
+日记：book / article
+规划：event / alarm
+回忆：history / auto_stories
+要求：
+选中态为青绿色
+未选中态为灰色
+背景为米白
+保留 Material 3 风格
+不要使用过深的纯黑背景
+
+9. Phase 1：文件数据层与四层记忆模型
+9.1 目标
+先建立新系统的数据底座，不大改 UI。
+9.2 新增文件
+data/model/LifeRecord.kt
+data/model/DailyDiary.kt
+data/model/EchoPlan.kt
+data/model/MemoryCard.kt
+data/model/UserProfileMemory.kt
+
+data/store/EchoFileStore.kt
+data/store/JsonAtomicWriter.kt
+
+data/repository/LifeRecordRepository.kt
+data/repository/DiaryRepository.kt
+data/repository/PlanRepository.kt
+data/repository/MemoryRepository.kt
+data/repository/WorkspaceRepository.kt
+9.3 EchoPlan 数据类
+data class EchoPlan(
+    val id: String,
+    val type: String,              // task_reminder, companion_checkin, memory_trigger, auto_diary
+    val title: String,
+    val message: String,
+    val triggerAt: Long,
+    val repeatRule: String? = null,
+    val enabled: Boolean = true,
+    val autoSpeak: Boolean = false,
+    val importance: Int = 1,
+    val tags: List<String> = emptyList(),
+    val createdAt: Long,
+    val updatedAt: Long,
+    val lastTriggeredAt: Long? = null
+)
+9.4 存储文件
+life_records.json
+daily_diaries.json
+plans.json
+memory_cards.json
+user_profile.json
+每个文件建议结构：
+{
+  "schemaVersion": 1,
+  "items": []
+}
+9.5 验收标准
+App 启动后自动创建 /files/echo/ 目录
+没有 JSON 文件时自动创建空文件
+Repository 可以正常增删改查
+JSON 损坏时不崩溃，写入 .bak 备份并返回空列表
+所有读写放到 IO dispatcher
+不影响现有聊天、TTS、提醒功能
+9.6 禁止事项
+不要引入 Room
+不要重写整个项目
+不要删除原有 workspace 文件
+不要删除现有提醒实现
+
+10. Phase 2：主导航重构
+10.1 目标
+把 App 从单聊天入口改造成四栏入口：
+今日 / 日记 / 规划 / 回忆
+10.2 新增或修改
+MainActivity.kt
+activity_main.xml
+
+ui/today/TodayFragment.kt
+ui/diary/DiaryFragment.kt
+ui/plan/PlanFragment.kt
+ui/memory/MemoryFragment.kt
+10.3 activity_main.xml 建议结构
+<CoordinatorLayout>
+    <FrameLayout
+        android:id="@+id/fragmentContainer" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation" />
+</CoordinatorLayout>
+10.4 menu/bottom_nav.xml
+<menu>
+    <item
+        android:id="@+id/nav_today"
+        android:title="今日"
+        android:icon="@drawable/ic_today" />
+
+    <item
+        android:id="@+id/nav_diary"
+        android:title="日记"
+        android:icon="@drawable/ic_diary" />
+
+    <item
+        android:id="@+id/nav_plan"
+        android:title="规划"
+        android:icon="@drawable/ic_plan" />
+
+    <item
+        android:id="@+id/nav_memory"
+        android:title="回忆"
+        android:icon="@drawable/ic_memory" />
+</menu>
+10.5 验收标准
+底部四栏可切换
+App 默认打开今日页
+切换页面不崩溃
+原有聊天入口暂时可以放在今日页
+保留原有 TTS、Agent、工具调用能力
+10.6 禁止事项
+不要把现有聊天功能删掉
+不要把所有逻辑塞进 MainActivity
+不要一次性做复杂动画
+
+11. Phase 3：今日页重构
+11.1 今日页定位
+今日页是用户“留下生活”的入口。
+11.2 页面结构
+顶部：
+Echo
+日期
+天气条
+头像/设置入口
+
+主卡片：
+今天
+一句温柔提示
+按住说话
+输入文字
+
+小爪对话卡片：
+进入原有聊天能力
+显示最近一条 Echo 回复
+可展开完整对话
+
+今日片段：
+显示今天 LifeRecord 列表
+
+AI 整理：
+如果今日已有日记，显示摘要
+如果没有日记，显示“生成今日日记”按钮
+11.3 需要新增
+fragment_today.xml
+item_life_record.xml
+TodayFragment.kt
+TodayViewModel.kt
+TodayRecordAdapter.kt
+11.4 交互
+输入文字记录
+用户点击“输入文字”：
+弹出 BottomSheet 或 EditText 区域
+输入内容
+点击“记录”
+保存为 LifeRecord
+刷新今日片段
+可调用 AI 轻量提取 tags / mood
+AI 不可阻塞保存流程
+语音记录
+用户点击或长按麦克风：
+使用现有 SpeechRecognizer
+识别文本后进入记录确认
+用户确认后保存 LifeRecord
+小爪对话卡片
+复用现有聊天 Activity 或聊天 Fragment。
+今日页卡片显示：
+和 Echo 聊聊
+把混乱的想法说出来，我会帮你慢慢整理。
+[进入对话]
+原有聊天功能进入后依然保留：
+LLM 对话
+工具调用
+TTS 播放
+mood 标签
+但聊天中如果用户说“帮我记一下”或表达明显生活片段，AI 可以调用 create_life_record。
+11.5 验收标准
+可以手动新增 LifeRecord
+可以显示当天 LifeRecord
+可以从今日页进入原聊天
+今日页 UI 气质接近温暖日记风
+不影响天气条
+不影响 TTS 开关
+
+12. Phase 4：日记页
+12.1 日记页定位
+日记页负责展示 AI 对生活片段的整理。
+12.2 页面结构
+顶部：
+日记
+记录每一天，书写真实的自己
+
+精选卡：
+今天的日记
+如果已生成：显示标题、摘要、标签、情绪、阅读全文
+如果未生成：显示“根据今日片段生成日记”
+
+月份区：
+六月 v
+筛选
+
+历史列表：
+6月23日 ...
+6月22日 ...
+6月21日 ...
+12.3 新增文件
+ui/diary/DiaryFragment.kt
+ui/diary/DiaryViewModel.kt
+ui/diary/DiaryListAdapter.kt
+ui/diary/DiaryDetailActivity.kt
+
+res/layout/fragment_diary.xml
+res/layout/item_diary.xml
+res/layout/activity_diary_detail.xml
+12.4 手动生成日记流程
+用户点击“生成今日日记”：
+1.DiaryViewModel 读取今天 LifeRecord
+2.如果今日没有 LifeRecord，提示“今天还没有记录”
+3.如果有记录，调用 Agent 生成 DailyDiary
+4.Agent 使用 function-calling 或专用 JSON schema 返回结构化结果
+5.保存到 daily_diaries.json
+6.刷新 UI
+12.5 AI 生成日记 Prompt
+建议由 App 发送给 Agent 的任务内容：
+请根据以下生活片段生成一篇今日生活日记。
+要求：
+1. 不要编造事实。
+2. 保留用户真实表达。
+3. 语气温柔、克制、真诚。
+4. 输出必须调用 generate_daily_diary 工具。
+5. diaryText 不要像总结报告，要像一篇私人日记。
+6. 提取 3-6 个 tags。
+7. mood 用一句短语表达。
+12.6 日记详情页
+显示：
+日期
+标题
+情绪
+标签
+正文
+来源片段
+朗读按钮
+重新生成按钮
+删除按钮
+12.7 晚上自动整理
+在设置或规划页中提供开关：
+晚上自动整理日记
+默认关闭
+用户开启后：
+创建一个 type = auto_diary 的 EchoPlan
+默认时间：23:30
+到点触发
+如果当天已有日记，不重复生成
+如果当天 LifeRecord 少于 1 条，不生成
+生成后通知用户
+默认不自动朗读
+12.8 验收标准
+可以手动生成今日日记
+可以查看日记详情
+可以朗读日记
+可以查看历史日记列表
+自动整理开关可用
+自动整理不会重复生成同一天日记
+
+13. Phase 5：规划页
+13.1 规划页定位
+规划页承接原有定时提醒，并升级为未来主动交互系统。
+13.2 页面结构
+顶部：
+规划
+让 Echo 在合适的时间陪你记得重要的事
+
+分组：
+今天
+未来
+主动问候
+回忆触发
+自动整理
+
+每条卡片：
+类型图标
+标题
+时间
+重复规则
+播报策略
+启用/停用
+测试播放
+删除
+13.3 规划类型
+task_reminder
+任务提醒。
+默认：
+autoSpeak = true
+触发时：
+前台服务语音播报
+同时显示通知
+可进入详情
+companion_checkin
+主动问候。
+默认：
+autoSpeak = false
+触发时：
+默认只弹通知
+通知文案类似： “Echo 想问你：今天有什么想留下来的吗？”
+用户点击后进入今日页记录入口
+如果用户手动打开自动播报，则到点语音说出问候。
+memory_trigger
+回忆触发。
+默认：
+autoSpeak = false
+触发时：
+搜索相关 MemoryCard 或 DailyDiary
+弹通知： “Echo 找到一段过去的你”
+点击进入回忆页
+auto_diary
+自动日记整理。
+默认：
+autoSpeak = false
+触发时：
+后台读取 LifeRecord
+生成 DailyDiary
+生成完成后通知
+不强制播放语音
+13.4 新增文件
+ui/plan/PlanFragment.kt
+ui/plan/PlanViewModel.kt
+ui/plan/PlanListAdapter.kt
+ui/plan/PlanEditActivity.kt
+
+res/layout/fragment_plan.xml
+res/layout/item_plan.xml
+res/layout/activity_plan_edit.xml
+13.5 与现有 AlarmManager 集成
+不要重写原有 AlarmManager。
+新增一层：
+PlanScheduler.kt
+职责：
+EchoPlan 转换为 AlarmManager 任务
+设置闹钟
+取消闹钟
+开机恢复所有 enabled plans
+根据 plan.type 决定触发行为
+建议结构：
+class PlanScheduler(
+    private val context: Context,
+    private val planRepository: PlanRepository,
+    private val existingAlarmService: ExistingAlarmService
+)
+如果现有提醒模块已经有 Scheduler，则不要重复造轮子，在其上包装。
+13.6 触发入口
+现有 AlarmReceiver 到点后：
+1.读取 planId
+2.PlanRepository 获取 EchoPlan
+3.根据 type 分派：
+task_reminder -> 语音播报服务
+companion_checkin -> 通知或语音
+memory_trigger -> 回忆通知
+auto_diary -> 后台生成日记
+13.7 验收标准
+原有定时提醒仍可用
+新建 EchoPlan 后能准时触发
+task_reminder 可以自动语音播报
+companion_checkin 默认只通知
+memory_trigger 可以跳转回忆页
+auto_diary 可以生成日记
+开机后 enabled plans 能恢复
+
+14. Phase 6：回忆页
+14.1 回忆页定位
+回忆页负责把过去的生活重新带回来。
+14.2 页面结构
+顶部：
+回忆
+过去的你，也在这里
+
+搜索框：
+搜索过去的记录、日记和记忆
+
+今日回声：
+随机一张 MemoryCard
+
+记忆卡片列表：
+quote
+note
+date
+tags
+
+长期记忆：
+Echo 记住了什么
+14.3 新增文件
+ui/memory/MemoryFragment.kt
+ui/memory/MemoryViewModel.kt
+ui/memory/MemoryCardAdapter.kt
+ui/memory/ProfileMemoryAdapter.kt
+
+res/layout/fragment_memory.xml
+res/layout/item_memory_card.xml
+res/layout/item_profile_memory.xml
+14.4 回忆卡片生成
+入口一：手动生成
+在日记详情页点击：
+提取记忆卡片
+入口二：AI 自动提议
+生成日记后，如果发现值得保留的句子，调用 create_memory_card。
+第一阶段建议只自动生成 0-1 张，避免过多。
+14.5 搜索
+第一阶段先做关键词搜索，不做向量数据库。
+搜索范围：
+LifeRecord.content
+DailyDiary.title
+DailyDiary.summary
+DailyDiary.diaryText
+MemoryCard.quote
+MemoryCard.note
+UserProfileMemory.value
+返回结果按类型分组：
+生活片段
+日记
+回忆卡片
+长期记忆
+14.6 验收标准
+可以显示 MemoryCard
+可以随机显示“今日回声”
+可以搜索关键词
+可以从搜索结果跳转到对应日记或片段
+可以查看长期记忆
+可以禁用某条长期记忆
+
+15. Phase 7：Agent 工具系统接入
+15.1 目标
+让 Echo 可以通过稳定 JSON 工具调用操作新系统。
+15.2 新增工具
+必须注册：
+create_life_record
+generate_daily_diary
+create_plan
+update_plan
+delete_plan
+search_memory
+create_memory_card
+15.3 工具执行器
+新增或扩展：
+agent/tools/EchoLifeTools.kt
+agent/tools/EchoDiaryTools.kt
+agent/tools/EchoPlanTools.kt
+agent/tools/EchoMemoryTools.kt
+每个工具调用成功后返回 JSON：
+{
+  "ok": true,
+  "message": "已保存",
+  "id": "..."
+}
+失败返回：
+{
+  "ok": false,
+  "error": "..."
+}
+15.4 关键规则
+工具调用负责改变本地数据
+content 自由文本负责自然回复
+不要让自由文本承担结构化数据存储
+任何创建 plan 的工具调用都必须同步 PlanScheduler
+任何删除 plan 的工具调用都必须取消 AlarmManager
+15.5 验收标准
+用户在聊天里说“帮我记一下……”可以创建 LifeRecord
+用户说“明天晚上提醒我……”可以创建 EchoPlan
+用户说“我之前什么时候提到过项目迷茫”可以触发 search_memory
+用户说“把这句话保存成回忆”可以创建 MemoryCard
+
+16. Phase 8：主动交互系统
+16.1 目标
+让 Echo 在合适时间主动与用户交互，但不打扰用户。
+16.2 主动交互类型
+晚间问候
+默认模板：
+今天有什么想留下来的吗？
+行为：
+默认通知
+点击进入今日页记录入口
+用户可开启自动播报
+晨间问候
+默认模板：
+早上好。今天想以什么状态开始？
+行为：
+默认通知
+如果用户开启自动播报，则播放语音
+周回顾
+默认模板：
+这一周，你留下了不少片段。要不要一起看看？
+行为：
+默认通知
+点击进入回忆页或日记页
+自动日记整理
+行为：
+读取当天记录
+自动生成日记
+生成后通知
+16.3 用户控制
+规划页每个主动交互都必须可控制：
+开启/关闭
+时间
+重复
+是否自动播报
+是否震动/响铃
+删除
+16.4 降级策略
+如果没有精确闹钟权限：
+提示用户授权
+或使用非精确提醒
+UI 上显示“可能延迟”
+如果没有通知权限：
+提示用户授权
+不崩溃
+如果 TTS 失败：
+显示通知
+不崩溃
+16.5 验收标准
+晚间问候可以触发
+默认不自动语音打扰
+用户开启自动播报后可以语音问候
+问候后的用户回答可以保存为 LifeRecord
+自动日记整理可以作为规划项管理
+
+17. Phase 9：视觉统一
+17.1 目标
+把现有 Material 3 UI 调整成 Echo 的温暖日记风。
+17.2 主题色
+建议：
+primary: #2F7D7A
+primaryDark: #1E5553
+background: #FAF7F0
+surface: #FFFFFF
+surfaceVariant: #F3EFE7
+textPrimary: #163536
+textSecondary: #7A7A7A
+accentWarm: #E9C98F
+17.3 卡片风格
+统一：
+圆角 20dp
+轻阴影
+内边距 16dp - 24dp
+背景白色或半透明米白
+标签 chip 使用低饱和色
+17.4 字体与排版
+中文标题偏大：
+页面标题：28sp - 32sp
+卡片标题：20sp - 24sp
+正文：15sp - 17sp
+辅助文字：12sp - 14sp
+17.5 禁止事项
+不要使用大面积纯黑
+不要使用高饱和蓝紫渐变
+不要做科技控制台风格
+不要让首页看起来像普通聊天软件
+
+18. Phase 10：设置页与个人化
+18.1 入口
+设置入口放到右上角头像，不放底部导航。
+18.2 设置项
+包括：
+Echo 名称
+用户称呼
+TTS 开关
+自动朗读开关
+主动问候自动播报开关
+晚上自动整理日记开关
+背景设置
+API 设置
+记忆管理
+导出数据
+清空数据
+权限检查
+18.3 记忆管理
+用户可以看到：
+Echo 记住了：
+- 你喜欢温柔但不鸡汤的语气
+- 你正在做 Android AI 伙伴 App
+- 你希望记录生活
+每条可以：
+禁用
+删除
+编辑
+
+19. 数据导出与备份
+19.1 导出
+新增导出功能：
+导出 Echo 数据
+生成 zip：
+echo_export_yyyyMMdd.zip
+  life_records.json
+  daily_diaries.json
+  plans.json
+  memory_cards.json
+  user_profile.json
+  notes.md
+  memory.md
+  echo_profile.md
+19.2 目的
+因为这是生活记录 App，数据非常重要。必须让用户能拿走自己的数据。
+19.3 验收标准
+可以导出 JSON + Markdown
+导出失败有提示
+不影响主流程
+
+20. 推荐实施顺序
+Claude Code 请严格按以下顺序执行，不要跳跃式开发。
+Phase 1：数据层与四层记忆模型
+Phase 2：主导航重构
+Phase 3：今日页重构
+Phase 4：日记页
+Phase 5：规划页
+Phase 6：回忆页
+Phase 7：Agent 工具系统接入
+Phase 8：主动交互系统
+Phase 9：视觉统一
+Phase 10：设置与导出
+每个 Phase 完成后必须：
+1.编译通过
+2.App 能启动
+3.原有对话功能不损坏
+4.原有 TTS 功能不损坏
+5.原有提醒功能不损坏
+6.新功能有最小可验证路径
+
+21. 最小可用版本 V2 验收标准
+当以下功能完成时，Echo V2 可以认为成型：
+1. 底部导航为 今日 / 日记 / 规划 / 回忆
+2. 今日页可以记录生活片段
+3. 今日页可以进入原有 AI 对话
+4. AI 可以通过 create_life_record 保存生活记录
+5. 日记页可以手动生成今日日记
+6. 日记页可以查看历史日记
+7. 规划页可以管理任务提醒、主动问候、回忆触发、自动日记
+8. 原有 AlarmManager 语音播报被规划系统复用
+9. 回忆页可以显示记忆卡片
+10. 回忆页可以搜索过去记录
+11. Echo system prompt 已按生活记录伙伴重构
+12. 数据仍然使用文件 + SharedPreferences，不引入 Room
+
+22. Claude Code 工作要求
+22.1 每次只做一个 Phase
+不要一次性改完整项目。
+22.2 每个 Phase 输出
+每个 Phase 结束时请输出：
+修改了哪些文件
+新增了哪些文件
+删除了哪些文件
+如何测试
+是否影响原有功能
+下一步建议
+22.3 代码风格
+要求：
+Kotlin 代码清晰
+不要把逻辑塞进 Activity
+UI 逻辑放 Fragment
+状态放 ViewModel
+数据读写放 Repository
+Agent 工具放 tools 层
+Alarm 相关放 scheduler / receiver / service 层
+22.4 兼容要求
+必须兼容当前：
+XML UI
+RecyclerView
+Material Design 3
+OkHttp
+Gson
+Coroutines
+ViewModel
+SharedPreferences
+文件存储
+现有 TTS
+现有 AlarmManager
+现有 Agent 工具调用
+22.5 不允许
+不要：
+不要迁移到 Compose
+不要引入 Room
+不要重写整个 Agent 引擎
+不要删除现有工具系统
+不要删除现有 TTS
+不要删除现有提醒
+不要一次性重写所有 UI
+不要把 Echo 做成普通聊天软件
+
+23. 第一条给 Claude Code 的执行指令
+请 Claude Code 从 Phase 1 开始，不要直接做 UI。
+推荐第一条 prompt：
+我现在有一个 Android Kotlin 项目，UI 是 XML + RecyclerView + Material Design 3，持久化主要是文件 + SharedPreferences。项目已有 LLM Agent、OpenAI function-calling 风格工具调用、TTS、AlarmManager 定时提醒、前台服务语音播报、文件式 workspace。
+
+现在我要把项目重构为 Echo：一个带生活记录、日记、规划、回忆四个入口的 AI 生活伙伴。
+
+请先只执行 Phase 1：数据层与四层记忆模型。
+
+要求：
+1. 不要改现有 UI。
+2. 不要引入 Room。
+3. 不要删除现有聊天、TTS、提醒、workspace。
+4. 在 App 私有 files 目录下创建 echo 数据目录。
+5. 新增 LifeRecord、DailyDiary、EchoPlan、MemoryCard、UserProfileMemory 数据类。
+6. 新增 Repository 层，使用 Gson 读写 JSON 文件。
+7. 写入 JSON 时尽量使用 tmp 文件再 rename 的方式，避免数据损坏。
+8. JSON 文件不存在时自动创建。
+9. JSON 损坏时不要让 App 崩溃，备份坏文件并返回空列表。
+10. 提供每个 Repository 的基本增删改查方法。
+11. 完成后告诉我新增和修改了哪些文件，以及如何测试。
+
+24. 产品方向总结
+Echo 的核心不是“它能帮用户做多少事”，而是：
+它能不能温柔、稳定、长期地保存用户的生活。
+四个入口分别解决四个时间方向：
+今日：我现在正在经历什么
+日记：我今天到底经历了什么
+规划：未来我希望 Echo 什么时候出现
+回忆：过去的我留下了什么
+原有的定时语音不是被舍弃，而是变成 Echo 的主动出现能力。
+原有的记忆系统不是被舍弃，而是升级为四层记忆：
+LifeRecord：原始生活片段
+DailyDiary：每日整理
+UserProfileMemory：长期画像
+MemoryCard：值得回看的记忆
+最终 Echo 应该像一个安静但可靠的生活伙伴：
+你说，它记下
+你乱，它整理
+你忘，它提醒
+你累，它问候
+你回头，它把过去递给你

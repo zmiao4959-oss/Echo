@@ -142,7 +142,7 @@ $staticPrompt
 
         val notif = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("⏰ 小爪提醒")
+            .setContentTitle("⏰ Echo 提醒")
             .setContentText(displayText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(displayText))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -278,7 +278,7 @@ $staticPrompt
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (nm.getNotificationChannel(CHANNEL_ID) == null) {
                 nm.createNotificationChannel(NotificationChannel(
-                    CHANNEL_ID, "小爪提醒", NotificationManager.IMPORTANCE_HIGH
+                    CHANNEL_ID, "Echo 提醒", NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = "定时提醒通知"
                     setSound(null, null)

@@ -5,8 +5,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.content.res.ColorStateList
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -14,8 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
-import com.example.myapplication.data.model.DailyDiary
-import com.google.android.material.card.MaterialCardView
+import com.google.android.material.chip.Chip
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -37,6 +39,8 @@ class DiaryFragment : Fragment() {
     private lateinit var recyclerDiaries: RecyclerView
     private lateinit var tvDiaryCount: TextView
     private lateinit var tvEmptyDiaries: TextView
+    private lateinit var chipContainerMonths: LinearLayout
+    private lateinit var btnFilter: TextView
 
     private var diaryAdapter: DiaryListAdapter? = null
 
@@ -80,6 +84,8 @@ class DiaryFragment : Fragment() {
         recyclerDiaries = view.findViewById(R.id.recycler_diaries)
         tvDiaryCount = view.findViewById(R.id.tv_diary_count)
         tvEmptyDiaries = view.findViewById(R.id.tv_empty_diaries)
+        chipContainerMonths = view.findViewById(R.id.chip_container_months)
+        btnFilter = view.findViewById(R.id.btn_filter)
     }
 
     private fun setupRecycler() {
@@ -103,6 +109,80 @@ class DiaryFragment : Fragment() {
                 startActivity(intent)
             }
         }
+        btnFilter.setOnClickListener { showFilterDialog() }
+    }
+
+    private fun showFilterDialog() {
+        val moods = viewModel.availableMoods.value
+        val tags = viewModel.availableTags.value
+        if (moods.isEmpty() && tags.isEmpty()) {
+            Toast.makeText(requireContext(), "暂无筛选选项", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val items = mutableListOf<String>()
+        items.add("全部（清除筛选）")
+        if (moods.isNotEmpty()) {
+            items.add("── 情绪 ──")
+            items.addAll(moods)
+        }
+        if (tags.isNotEmpty()) {
+            items.add("── 标签 ──")
+            items.addAll(tags)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle("筛选日记")
+            .setItems(items.toTypedArray()) { _, which ->
+                val selected = items[which]
+                when {
+                    selected == "全部（清除筛选）" -> viewModel.clearFilters()
+                    selected.startsWith("──") -> {} // section header, do nothing
+                    moods.contains(selected) -> viewModel.setMoodFilter(selected)
+                    tags.contains(selected) -> viewModel.setTagFilter(selected)
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun buildMonthChips() {
+        chipContainerMonths.removeAllViews()
+        val months = viewModel.availableMonths.value
+        val selected = viewModel.filterMonth.value
+
+        // "全部" chip
+        addMonthChip("全部", null, selected == null)
+
+        for (month in months) {
+            val display = formatMonthLabel(month)
+            addMonthChip(display, month, month == selected)
+        }
+    }
+
+    private fun addMonthChip(label: String, monthValue: String?, isSelected: Boolean) {
+        val chip = Chip(requireContext())
+        chip.text = label
+        chip.chipStrokeWidth = 1f
+        chip.chipStrokeColor = ColorStateList.valueOf(
+            if (isSelected) 0xFF2F7D7A.toInt() else 0xFFE0E0E0.toInt()
+        )
+        chip.chipBackgroundColor = ColorStateList.valueOf(
+            if (isSelected) 0xFF2F7D7A.toInt() else 0xFFFFFFFF.toInt()
+        )
+        chip.setTextColor(
+            ColorStateList.valueOf(if (isSelected) 0xFFFFFFFF.toInt() else 0xFF163536.toInt())
+        )
+        chip.isCheckable = false
+        chip.isClickable = true
+        chip.textSize = 13f
+        chip.setOnClickListener { viewModel.setMonthFilter(monthValue) }
+        chipContainerMonths.addView(chip)
+    }
+
+    private fun formatMonthLabel(month: String): String {
+        return try {
+            val parts = month.split("-")
+            "${parts[1].toInt()}月"
+        } catch (_: Exception) { month }
     }
 
     private fun observeViewModel() {
@@ -128,13 +208,16 @@ class DiaryFragment : Fragment() {
         }
 
         lifecycleScope.launch {
-            viewModel.diaries.collectLatest { diaries ->
-                val sorted = diaries.sortedByDescending { it.date }
-                diaryAdapter?.submitList(sorted)
+            viewModel.filteredDiaries.collectLatest { diaries ->
+                diaryAdapter?.submitList(diaries)
                 tvDiaryCount.text = if (diaries.isNotEmpty()) "共 ${diaries.size} 篇日记" else ""
                 tvEmptyDiaries.visibility = if (diaries.isEmpty()) View.VISIBLE else View.GONE
                 recyclerDiaries.visibility = if (diaries.isEmpty()) View.GONE else View.VISIBLE
             }
+        }
+
+        lifecycleScope.launch {
+            viewModel.availableMonths.collectLatest { buildMonthChips() }
         }
 
         lifecycleScope.launch {

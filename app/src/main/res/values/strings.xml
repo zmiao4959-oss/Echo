@@ -54,6 +54,18 @@
     <string name="memory_profile_section">Echo 记住了什么</string>
     <string name="memory_no_profile">Echo 还在慢慢了解你…</string>
 
+    <!-- 个人中心 -->
+    <string name="profile_entry">个人中心</string>
+    <string name="profile_subtitle">你的 AI 生活伙伴</string>
+    <string name="profile_settings">设置</string>
+    <string name="profile_settings_desc">API 密钥、TTS 语音、背景主题</string>
+    <string name="profile_workspace">工作区文件</string>
+    <string name="profile_workspace_desc">Echo 人格配置、记忆文件</string>
+    <string name="profile_schedules">定时提醒</string>
+    <string name="profile_schedules_desc">管理旧版闹钟提醒</string>
+    <string name="profile_export">导出数据</string>
+    <string name="profile_export_desc">打包下载所有生活数据</string>
+
     <!-- 主页 -->
     <string name="settings">设置</string>
     <string name="new_chat">新建对话</string>
@@ -65,7 +77,7 @@
     <string name="voice_input">语音输入</string>
     <string name="voice_listening">正在聆听…</string>
     <string name="role_you">你</string>
-    <string name="role_claw">小爪</string>
+    <string name="role_claw">Echo</string>
 
     <!-- 设置页面标题 -->
     <string name="settings_title">⚙️ 设置</string>
@@ -144,5 +156,5 @@
     <string name="delete_schedule_message">确定要删除 %1$s 的\"%2$s\"吗？</string>
     <string name="save">保存</string>
     <string name="schedule_status_generating">正在生成提醒…</string>
-    <string name="schedule_notification_title">⏰ 小爪提醒</string>
+    <string name="schedule_notification_title">⏰ Echo 提醒</string>
 </resources>

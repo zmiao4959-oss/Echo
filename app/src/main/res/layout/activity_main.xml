@@ -13,6 +13,7 @@
         android:orientation="vertical">
 
         <!-- 顶部栏 -->
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
@@ -27,43 +28,22 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/app_title"
+                android:textColor="#163536"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="#163536"
                 tools:ignore="VisualLintSystemUi" />
 
             <ImageButton
-                android:id="@+id/btn_schedules"
+                android:id="@+id/btn_profile"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/profile_entry"
                 android:padding="10dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_lock_idle_alarm"
-                android:contentDescription="@string/schedule_list_title"
-                android:onClick="openSchedules"
-                app:tint="#555555" />
+                android:src="@android:drawable/ic_menu_myplaces"
+                app:tint="#1E5553" />
 
-            <ImageButton
-                android:id="@+id/btn_workspace_files"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="10dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_edit"
-                android:contentDescription="@string/workspace_files_title"
-                android:onClick="openWorkspaceFiles"
-                app:tint="#555555" />
-
-            <ImageButton
-                android:id="@+id/btn_settings"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="8dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_preferences"
-                android:contentDescription="@string/settings"
-                android:onClick="openSettings"
-                app:tint="#555555" />
+            <!-- 个人中心入口 -->
         </LinearLayout>
 
         <!-- 每日天气条 -->
@@ -114,6 +94,7 @@
         app:menu="@menu/bottom_nav"
         app:labelVisibilityMode="labeled"
         app:itemIconTint="@color/bottom_nav_selector"
-        app:itemTextColor="@color/bottom_nav_selector" />
+        app:itemTextColor="@color/bottom_nav_selector"
+        tools:ignore="VisualLintBottomNav" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
