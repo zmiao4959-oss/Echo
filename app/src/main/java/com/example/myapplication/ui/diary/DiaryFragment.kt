@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.ThemeColors
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
@@ -29,6 +30,7 @@ class DiaryFragment : Fragment() {
     private lateinit var viewModel: DiaryViewModel
 
     // Today card
+    private lateinit var cardTodayDiary: MaterialCardView
     private lateinit var layoutDiaryPreview: View
     private lateinit var layoutNoDiary: View
     private lateinit var layoutGenerating: View
@@ -74,14 +76,25 @@ class DiaryFragment : Fragment() {
         setupRecycler()
         setupButtons()
         observeViewModel()
+        applyCardTextures()
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.loadDiaries()
+        applyCardTextures()
+    }
+
+    private fun applyCardTextures() {
+        val config = (requireActivity().application as MyApplication).appConfig
+        val key = config.getCardTextureKey(CardTextureManager.DIARY)
+
+        CardTextureManager.apply(cardTodayDiary, key, R.attr.echoSurface)
+        CardTextureManager.apply(cardMoodChart, key, R.attr.echoSurface)
     }
 
     private fun bindViews(view: View) {
+        cardTodayDiary = view.findViewById(R.id.card_today_diary)
         layoutDiaryPreview = view.findViewById(R.id.layout_diary_preview)
         layoutNoDiary = view.findViewById(R.id.layout_no_diary)
         layoutGenerating = view.findViewById(R.id.layout_generating)

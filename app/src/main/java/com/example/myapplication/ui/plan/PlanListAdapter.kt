@@ -5,8 +5,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.model.EchoPlan
+import com.example.myapplication.ui.CardTextureManager
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import java.text.SimpleDateFormat
@@ -28,6 +30,10 @@ class PlanListAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val plan = getItem(position)
+
+        // 卡片纹理
+        val app = holder.card.context.applicationContext as MyApplication
+        CardTextureManager.apply(holder.card, app.appConfig.getCardTextureKey(CardTextureManager.PLAN), R.attr.echoSurface)
 
         // 类型图标
         val iconView = holder.card.findViewById<android.widget.TextView>(R.id.tv_type_icon)

@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.diary.DiaryDetailActivity
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.flow.collectLatest
@@ -32,6 +33,7 @@ class MemoryFragment : Fragment() {
     private lateinit var layoutDefault: View
 
     // Default mode
+    private lateinit var cardSearchResults: MaterialCardView
     private lateinit var cardRandom: MaterialCardView
     private lateinit var tvRandomQuote: TextView
     private lateinit var tvRandomDate: TextView
@@ -68,12 +70,23 @@ class MemoryFragment : Fragment() {
         setupAdapters()
         setupSearch()
         observeViewModel()
+        applyCardTextures()
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.loadMemories()
         viewModel.loadOnThisDay()
+        applyCardTextures()
+    }
+
+    private fun applyCardTextures() {
+        val config = (requireActivity().application as MyApplication).appConfig
+        val key = config.getCardTextureKey(CardTextureManager.MEMORY)
+
+        CardTextureManager.apply(cardRandom, key, R.attr.echoSurfaceVariant)
+        CardTextureManager.apply(cardOnThisDay, key, R.attr.echoSurface)
+        CardTextureManager.apply(cardSearchResults, key, R.attr.echoSurface)
     }
 
     private fun bindViews(view: View) {
@@ -81,6 +94,7 @@ class MemoryFragment : Fragment() {
         layoutSearchResults = view.findViewById(R.id.layout_search_results)
         layoutDefault = view.findViewById(R.id.layout_default)
 
+        cardSearchResults = view.findViewById(R.id.card_search_results)
         cardRandom = view.findViewById(R.id.card_random)
         tvRandomQuote = view.findViewById(R.id.tv_random_quote)
         tvRandomDate = view.findViewById(R.id.tv_random_date)

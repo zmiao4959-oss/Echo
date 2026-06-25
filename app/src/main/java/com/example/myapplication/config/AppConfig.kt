@@ -82,6 +82,14 @@ class AppConfig(context: Context) {
         get() = prefs.getString(KEY_WEATHER_CITY, "") ?: ""
         set(value) = prefs.edit().putString(KEY_WEATHER_CITY, value).apply()
 
+    // ── 卡片纹理（按类别） ──
+    fun getCardTextureKey(category: String): String =
+        prefs.getString("card_texture_$category", "none") ?: "none"
+
+    fun setCardTextureKey(category: String, key: String) {
+        prefs.edit().putString("card_texture_$category", key).apply()
+    }
+
     // ── 背景配置 ──
     var backgroundKey: String
         get() = prefs.getString(KEY_BACKGROUND, "bg_default_1") ?: "bg_default_1"

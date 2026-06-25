@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.ThemeColors
 import com.example.myapplication.ui.ChatActivity
 import com.google.android.material.card.MaterialCardView
@@ -47,6 +48,8 @@ class TodayFragment : Fragment() {
     private lateinit var tvLastReply: TextView
     private lateinit var btnEnterChat: View
     private lateinit var tvDiaryPreview: TextView
+    private lateinit var cardInput: MaterialCardView
+    private lateinit var cardAiPreview: MaterialCardView
     private lateinit var cardTodayStatus: MaterialCardView
     private lateinit var tvStatusSummary: TextView
 
@@ -76,11 +79,25 @@ class TodayFragment : Fragment() {
         setupChatCard()
         observeViewModel()
         initSpeechRecognizer()
+        applyCardTextures()
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.loadToday()
+        applyCardTextures()
+    }
+
+    private fun applyCardTextures() {
+        val config = (requireActivity().application as MyApplication).appConfig
+
+        // 生活记录
+        CardTextureManager.apply(cardTodayStatus, config.getCardTextureKey(CardTextureManager.LIFE_RECORD), R.attr.echoSurfaceVariant)
+
+        // 对话互动
+        CardTextureManager.apply(cardInput, config.getCardTextureKey(CardTextureManager.CHAT), R.attr.echoSurface)
+        CardTextureManager.apply(cardChatEntry, config.getCardTextureKey(CardTextureManager.CHAT), R.attr.echoSurface)
+        CardTextureManager.apply(cardAiPreview, config.getCardTextureKey(CardTextureManager.CHAT), R.attr.echoSurfaceVariant)
     }
 
     override fun onDestroy() {
@@ -97,10 +114,12 @@ class TodayFragment : Fragment() {
         tvRecordCount = view.findViewById(R.id.tv_record_count)
         recyclerRecords = view.findViewById(R.id.recycler_records)
         tvEmptyRecords = view.findViewById(R.id.tv_empty_records)
+        cardInput = view.findViewById(R.id.card_input)
         cardChatEntry = view.findViewById(R.id.card_chat_entry)
         tvLastReply = view.findViewById(R.id.tv_last_reply)
         btnEnterChat = view.findViewById(R.id.btn_enter_chat)
         tvDiaryPreview = view.findViewById(R.id.tv_diary_preview)
+        cardAiPreview = view.findViewById(R.id.card_ai_preview)
         cardTodayStatus = view.findViewById(R.id.card_today_status)
         tvStatusSummary = view.findViewById(R.id.tv_status_summary)
     }

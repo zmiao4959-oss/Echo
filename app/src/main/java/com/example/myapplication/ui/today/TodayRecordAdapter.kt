@@ -5,8 +5,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.model.LifeRecord
+import com.example.myapplication.ui.CardTextureManager
 import com.google.android.material.chip.Chip
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -28,6 +30,10 @@ class TodayRecordAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val record = getItem(position)
         val ctx = holder.itemView.context
+
+        // 卡片纹理
+        val app = ctx.applicationContext as MyApplication
+        CardTextureManager.apply(holder.view, app.appConfig.getCardTextureKey(CardTextureManager.LIFE_RECORD), R.attr.echoSurface)
 
         // 时间
         val timeView = holder.view.findViewById<android.widget.TextView>(R.id.tv_time)

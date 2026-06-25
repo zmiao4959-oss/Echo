@@ -33,6 +33,7 @@ class ProfileActivity : ThemedActivity() {
         tvFontCurrent.text = FontManager.fontNames[config.fontKey] ?: getString(R.string.font_default)
 
         findViewById<View>(R.id.entry_theme).setOnClickListener { showThemePickerDialog() }
+        findViewById<View>(R.id.entry_card_texture).setOnClickListener { showCardCategoryPicker() }
         findViewById<View>(R.id.entry_font).setOnClickListener { showFontPickerDialog() }
 
         findViewById<View>(R.id.entry_settings).setOnClickListener {
@@ -123,6 +124,49 @@ class ProfileActivity : ThemedActivity() {
                 val newKey = fonts[which].key
                 if (newKey != currentKey) {
                     config.fontKey = newKey
+                    ThemeManager.pendingChange = true
+                    dialog.dismiss()
+                    finish()
+                    startActivity(Intent(this@ProfileActivity, ProfileActivity::class.java))
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    // ── 卡片纹理选择 ──
+
+    private fun showCardCategoryPicker() {
+        val config = (application as MyApplication).appConfig
+        val categories = CardTextureManager.ALL_CATEGORIES
+        val labels = categories.map {
+            val key = config.getCardTextureKey(it)
+            "${CardTextureManager.categoryLabel(it)}  →  ${CardTextureManager.textureLabel(key)}"
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("选择卡片类型")
+            .setItems(labels) { _, which ->
+                val cat = categories[which]
+                showCardTexturePicker(cat)
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showCardTexturePicker(category: String) {
+        val config = (application as MyApplication).appConfig
+        val textureKeys = listOf(CardTextureManager.NONE, "texture_1", "texture_2", "texture_3")
+        val names = textureKeys.map { CardTextureManager.textureLabel(it) }.toTypedArray()
+        val currentKey = config.getCardTextureKey(category)
+        val currentIndex = textureKeys.indexOf(currentKey).coerceAtLeast(0)
+
+        AlertDialog.Builder(this)
+            .setTitle("${CardTextureManager.categoryLabel(category)} — 纹理")
+            .setSingleChoiceItems(names, currentIndex) { dialog, which ->
+                val newKey = textureKeys[which]
+                if (newKey != currentKey) {
+                    config.setCardTextureKey(category, newKey)
                     ThemeManager.pendingChange = true
                     dialog.dismiss()
                     finish()
