@@ -77,6 +77,11 @@ class AppConfig(context: Context) {
         get() = prefs.getString(KEY_FONT, "default") ?: "default"
         set(value) = prefs.edit().putString(KEY_FONT, value).apply()
 
+    // ── 天气城市 ──
+    var weatherCity: String
+        get() = prefs.getString(KEY_WEATHER_CITY, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_WEATHER_CITY, value).apply()
+
     // ── 背景配置 ──
     var backgroundKey: String
         get() = prefs.getString(KEY_BACKGROUND, "bg_default_1") ?: "bg_default_1"
@@ -105,6 +110,7 @@ class AppConfig(context: Context) {
         private const val KEY_TTS_ENABLED = "tts_enabled"
         private const val KEY_THEME = "theme_key"
         private const val KEY_FONT = "font_key"
+        private const val KEY_WEATHER_CITY = "weather_city"
         private const val KEY_BACKGROUND = "background_key"
     }
 }

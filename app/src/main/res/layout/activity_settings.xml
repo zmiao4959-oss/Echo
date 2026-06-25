@@ -146,6 +146,29 @@
 
         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
+        <!-- 天气设置 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/weather_config"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/weather_city_label" android:textSize="13sp" android:textColor="#666"/>
+        <EditText android:id="@+id/weather_city" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/weather_city_hint" android:singleLine="true" android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/weather_city_auto_note"
+            android:textSize="12sp"
+            android:textColor="#999"
+            android:layout_marginBottom="8dp" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
+
         <!-- 背景设置 -->
         <TextView
             android:layout_width="match_parent"

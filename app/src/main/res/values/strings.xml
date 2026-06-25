@@ -155,6 +155,12 @@
     <string name="cancel">取消</string>
     <string name="conversation_deleted">对话已删除</string>
 
+    <!-- 天气设置 -->
+    <string name="weather_config">天气设置</string>
+    <string name="weather_city_label">手动设置城市</string>
+    <string name="weather_city_hint">如：上海、北京、Tokyo</string>
+    <string name="weather_city_auto_note">留空则自动定位（可能不准确）</string>
+
     <!-- 背景设置 -->
     <string name="bg_config">背景设置</string>
     <string name="bg_default_1">默认 1</string>

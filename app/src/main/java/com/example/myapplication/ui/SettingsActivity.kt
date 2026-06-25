@@ -81,6 +81,10 @@ class SettingsActivity : ThemedActivity() {
         maxToolRounds.setText(config.maxToolRounds.toString())
         maxContextTokens.setText(config.maxContextTokens.toString())
 
+        // 天气城市
+        val weatherCity = findViewById<EditText>(R.id.weather_city)
+        weatherCity.setText(config.weatherCity)
+
         // 背景选择按钮
         findViewById<Button>(R.id.bg_select_1).setOnClickListener {
             config.backgroundKey = "bg_default_1"
@@ -114,6 +118,7 @@ class SettingsActivity : ThemedActivity() {
             config.ttsApiKey = ttsApiKey.text.toString().trim()
             config.ttsResourceId = ttsResourceId.text.toString().trim()
             config.ttsSpeaker = ttsSpeaker.text.toString().trim()
+            config.weatherCity = weatherCity.text.toString().trim()
             config.ttsUrl = normalizeUrl(ttsUrl.text.toString().trim())
             config.maxToolRounds = maxToolRounds.text.toString().toIntOrNull() ?: 10
             config.maxContextTokens = maxContextTokens.text.toString().toIntOrNull() ?: 32000

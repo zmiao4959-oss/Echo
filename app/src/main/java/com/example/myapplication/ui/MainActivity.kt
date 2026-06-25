@@ -189,7 +189,11 @@ class MainActivity : ThemedActivity() {
         val prefs = getSharedPreferences("clawspeaker_config", MODE_PRIVATE)
         val cacheTime = prefs.getLong("weather_cache_time", 0L)
         val cacheAge = System.currentTimeMillis() - cacheTime
+        val app = application as MyApplication
+        val currentCity = app.appConfig.weatherCity
+        val cachedCity = prefs.getString("weather_cache_city", null)
         val cacheValid = cacheAge in 0..30 * 60 * 1000L
+                && cachedCity == currentCity  // 城市变了则失效缓存
 
         if (cacheValid) {
             val icon = prefs.getString("weather_icon", null) ?: return
@@ -202,23 +206,51 @@ class MainActivity : ThemedActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                val manualCity = currentCity
+                val url = if (manualCity.isNotBlank()) {
+                    "https://wttr.in/${java.net.URLEncoder.encode(manualCity, "UTF-8")}?format=j1"
+                } else {
+                    "https://wttr.in/?format=j1"
+                }
+
+                // 用 JSON API 获取天气 emoji + 温度 + 城市名
                 val request = Request.Builder()
-                    .url("https://wttr.in/?format=%c+%t+%l")
+                    .url(url)
                     .build()
                 val response = weatherClient.newCall(request).execute()
                 val body = response.body?.string()?.trim() ?: return@launch
 
-                val parts = body.split(" ", limit = 3)
-                if (parts.size < 2) return@launch
-                val emoji = parts[0]
-                val temp = parts.getOrElse(1) { "" }
-                val city = parts.getOrElse(2) { "" }
+                val json = com.google.gson.JsonParser.parseString(body).asJsonObject
+                val current = json.getAsJsonArray("current_condition")
+                    ?.get(0)?.asJsonObject ?: return@launch
 
-                val infoText = if (city.isNotEmpty()) "$temp  $city" else temp
+                val tempC = current.get("temp_C")?.asString ?: ""
+                val desc = current.getAsJsonArray("weatherDesc")
+                    ?.get(0)?.asJsonObject?.get("value")?.asString ?: ""
+
+                // 手动设置了城市则直接用它，否则从 nearest_area 提取
+                val city = if (manualCity.isNotBlank()) {
+                    manualCity
+                } else {
+                    json.getAsJsonArray("nearest_area")
+                        ?.get(0)?.asJsonObject
+                        ?.getAsJsonArray("areaName")
+                        ?.get(0)?.asJsonObject
+                        ?.get("value")?.asString ?: ""
+                }
+
+                // 映射天气描述到 emoji
+                val emoji = weatherEmoji(desc)
+
+                val infoText = buildString {
+                    append("${tempC}°C")
+                    if (city.isNotEmpty()) append("  $city")
+                }
 
                 withContext(Dispatchers.Main) {
                     prefs.edit()
                         .putLong("weather_cache_time", System.currentTimeMillis())
+                        .putString("weather_cache_city", currentCity)
                         .putString("weather_icon", emoji)
                         .putString("weather_info", infoText)
                         .apply()
@@ -230,6 +262,25 @@ class MainActivity : ThemedActivity() {
             } catch (_: Exception) {
                 // 网络失败静默
             }
+        }
+    }
+
+    /** 简单天气描述 → emoji 映射 */
+    private fun weatherEmoji(desc: String): String {
+        val d = desc.lowercase()
+        return when {
+            "sunny" in d || "clear" in d -> "☀️"
+            "cloud" in d && ("sunny" in d || "clear" in d) -> "⛅"
+            "cloud" in d -> "☁️"
+            "overcast" in d -> "☁️"
+            "rain" in d && "light" in d -> "🌦"
+            "rain" in d -> "🌧"
+            "drizzle" in d -> "🌦"
+            "thunder" in d -> "⛈"
+            "snow" in d -> "🌨"
+            "fog" in d || "mist" in d -> "🌫"
+            "haze" in d -> "🌫"
+            else -> "🌡"
         }
     }
 }

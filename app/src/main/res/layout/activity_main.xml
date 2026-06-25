@@ -24,14 +24,40 @@
             android:elevation="2dp">
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="@string/app_title"
                 android:textColor="?attr/echoTextPrimary"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 tools:ignore="VisualLintSystemUi" />
+
+            <!-- 天气信息（顶部栏居中） -->
+            <LinearLayout
+                android:id="@+id/weather_bar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/weather_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:layout_marginEnd="4dp" />
+
+                <TextView
+                    android:id="@+id/weather_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="?attr/echoTextSecondary"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+            </LinearLayout>
 
             <ImageButton
                 android:id="@+id/btn_profile"
@@ -42,37 +68,6 @@
                 android:padding="10dp"
                 android:src="@android:drawable/ic_menu_myplaces"
                 app:tint="?attr/echoPrimaryDark" />
-
-            <!-- 个人中心入口 -->
-        </LinearLayout>
-
-        <!-- 每日天气条 -->
-        <LinearLayout
-            android:id="@+id/weather_bar"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="16dp"
-            android:background="?attr/echoSurfaceVariant"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/weather_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:layout_marginEnd="8dp" />
-
-            <TextView
-                android:id="@+id/weather_info"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textSize="13sp"
-                android:textColor="?attr/echoTextSecondary"
-                android:maxLines="1"
-                android:ellipsize="end" />
         </LinearLayout>
 
         <!-- Fragment 容器（底部留出导航栏空间） -->
