@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAF7F0">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="80dp">
+
+            <!-- 标题 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="24dp"
+                android:paddingBottom="4dp"
+                android:text="@string/plan_page_title"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#163536" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingBottom="16dp"
+                android:text="@string/plan_page_subtitle"
+                android:textSize="14sp"
+                android:textColor="#7A7A7A" />
+
+            <!-- 分组标题：今日 -->
+            <TextView
+                android:id="@+id/tv_section_today"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="4dp"
+                android:text="@string/plan_section_today"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#2F7D7A" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_today_plans"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_plan" />
+
+            <TextView
+                android:id="@+id/tv_empty_today"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="20dp"
+                android:text="@string/plan_no_today"
+                android:textSize="13sp"
+                android:textColor="#BDBDBD"
+                android:visibility="gone" />
+
+            <!-- 分组标题：未来 -->
+            <TextView
+                android:id="@+id/tv_section_future"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="4dp"
+                android:text="@string/plan_section_future"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#7A7A7A" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_future_plans"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_plan" />
+
+            <TextView
+                android:id="@+id/tv_empty_future"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="20dp"
+                android:text="@string/plan_no_future"
+                android:textSize="13sp"
+                android:textColor="#BDBDBD"
+                android:visibility="gone" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- FAB 新建规划（在导航栏上方） -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_plan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="32dp"
+        android:src="@android:drawable/ic_input_add"
+        android:contentDescription="新建规划"
+        app:backgroundTint="#2F7D7A"
+        app:tint="@android:color/white" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

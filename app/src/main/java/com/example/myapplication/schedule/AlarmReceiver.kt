@@ -32,6 +32,14 @@ import java.time.format.DateTimeFormatter
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        // Phase 8: EchoPlan 闹钟 → 路由到 PlanScheduler
+        val planId = intent.getStringExtra("plan_id")
+        if (planId != null && intent.action == "com.example.myapplication.ECHO_PLAN_ALARM") {
+            Log.i(TAG, "⏰ EchoPlan alarm: ${planId.take(8)}")
+            PlanScheduler.handleTrigger(context, planId)
+            return
+        }
+
         val taskId = intent.getStringExtra("task_id")
             ?: intent.data?.lastPathSegment
             ?: run {

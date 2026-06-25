@@ -5,12 +5,11 @@
     android:id="@+id/root_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="#FAF7F0">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
         android:orientation="vertical">
 
         <!-- 顶部栏 -->
@@ -30,7 +29,7 @@
                 android:text="@string/app_title"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/black"
+                android:textColor="#163536"
                 tools:ignore="VisualLintSystemUi" />
 
             <ImageButton
@@ -42,7 +41,7 @@
                 android:src="@android:drawable/ic_lock_idle_alarm"
                 android:contentDescription="@string/schedule_list_title"
                 android:onClick="openSchedules"
-                app:tint="#333333" />
+                app:tint="#555555" />
 
             <ImageButton
                 android:id="@+id/btn_workspace_files"
@@ -53,7 +52,7 @@
                 android:src="@android:drawable/ic_menu_edit"
                 android:contentDescription="@string/workspace_files_title"
                 android:onClick="openWorkspaceFiles"
-                app:tint="#333333" />
+                app:tint="#555555" />
 
             <ImageButton
                 android:id="@+id/btn_settings"
@@ -64,7 +63,7 @@
                 android:src="@android:drawable/ic_menu_preferences"
                 android:contentDescription="@string/settings"
                 android:onClick="openSettings"
-                app:tint="#333333" />
+                app:tint="#555555" />
         </LinearLayout>
 
         <!-- 每日天气条 -->
@@ -96,38 +95,25 @@
                 android:ellipsize="end" />
         </LinearLayout>
 
-        <!-- 空状态 -->
-        <TextView
-            android:id="@+id/text_empty"
+        <!-- Fragment 容器（底部留出导航栏空间） -->
+        <FrameLayout
+            android:id="@+id/fragment_container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/empty_conversations"
-            android:textAlignment="center"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="16sp"
-            android:visibility="gone" />
-
-        <!-- 对话列表 -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_conversations"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipToPadding="false" />
+            android:paddingBottom="64dp" />
     </LinearLayout>
 
-    <!-- FAB 新建对话 -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_new_chat"
-        android:layout_width="wrap_content"
+    <!-- 底部导航 -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:src="@android:drawable/ic_input_add"
-        android:contentDescription="@string/new_chat"
-        app:backgroundTint="#4A90D9"
-        app:tint="@android:color/white" />
+        android:layout_gravity="bottom"
+        android:background="@android:color/white"
+        app:menu="@menu/bottom_nav"
+        app:labelVisibilityMode="labeled"
+        app:itemIconTint="@color/bottom_nav_selector"
+        app:itemTextColor="@color/bottom_nav_selector" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

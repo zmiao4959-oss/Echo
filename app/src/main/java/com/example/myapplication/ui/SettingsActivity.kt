@@ -13,6 +13,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.config.AppConfig
+import com.example.myapplication.data.store.DataExporter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -116,6 +121,23 @@ class SettingsActivity : AppCompatActivity() {
 
             Toast.makeText(this, getString(R.string.toast_config_saved), Toast.LENGTH_SHORT).show()
             finish()
+        }
+
+        // 导出按钮
+        findViewById<Button>(R.id.btn_export).setOnClickListener {
+            Toast.makeText(this, "正在导出…", Toast.LENGTH_SHORT).show()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val zipFile = DataExporter.exportAll(this@SettingsActivity)
+                    withContext(Dispatchers.Main) {
+                        DataExporter.shareZip(this@SettingsActivity, zipFile)
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@SettingsActivity, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
     }
 

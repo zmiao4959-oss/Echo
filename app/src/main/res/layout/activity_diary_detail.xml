@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAF7F0">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="32dp">
+
+        <!-- 顶栏：返回 + 操作 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="8dp"
+            android:background="@android:color/white"
+            android:elevation="2dp">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_revert"
+                android:contentDescription="返回"
+                app:tint="#163536" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="日记详情"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#163536" />
+
+            <ImageButton
+                android:id="@+id/btn_read_aloud"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="10dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_btn_speak_now"
+                android:contentDescription="朗读"
+                app:tint="#2F7D7A" />
+
+            <ImageButton
+                android:id="@+id/btn_delete"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:padding="10dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_delete"
+                android:contentDescription="删除"
+                app:tint="#E53935" />
+        </LinearLayout>
+
+        <!-- 内容区 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/tv_detail_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#9E9E9E"
+                tools:text="2025年6月24日" />
+
+            <TextView
+                android:id="@+id/tv_detail_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#163536"
+                tools:text="今天的项目有了新进展" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_detail_mood"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textColor="#2F7D7A"
+                    android:background="@drawable/bg_message_assistant"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    tools:text="平静充实" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chip_detail_tags"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    app:singleLine="false"
+                    app:chipSpacingHorizontal="4dp"
+                    app:chipSpacingVertical="2dp" />
+            </LinearLayout>
+
+            <!-- 分隔线 -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:background="#E0DCD5" />
+
+            <TextView
+                android:id="@+id/tv_detail_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#163536"
+                android:lineSpacingExtra="6dp"
+                tools:text="日记正文内容..." />
+
+            <!-- 来源片段 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="来源片段"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#7A7A7A" />
+
+            <TextView
+                android:id="@+id/tv_source_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="13sp"
+                android:textColor="#BDBDBD"
+                tools:text="基于 3 条生活记录生成" />
+
+            <!-- 重新生成按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_regenerate"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="16dp"
+                android:text="重新生成"
+                android:textSize="13sp"
+                app:cornerRadius="12dp"
+                app:strokeColor="#2F7D7A"
+                android:textColor="#2F7D7A" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

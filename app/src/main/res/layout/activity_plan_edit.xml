@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAF7F0">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- 类型选择 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="类型"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#7A7A7A"
+            android:layout_marginTop="8dp" />
+
+        <LinearLayout
+            android:id="@+id/layout_type_selector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/chip_type_reminder"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:gravity="center"
+                android:paddingHorizontal="14dp"
+                android:text="⏰ 任务提醒"
+                android:textSize="13sp"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_send_button"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/chip_type_checkin"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:gravity="center"
+                android:paddingHorizontal="14dp"
+                android:text="👋 主动问候"
+                android:textSize="13sp"
+                android:textColor="#7A7A7A"
+                android:background="@drawable/bg_input"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/chip_type_memory"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:gravity="center"
+                android:paddingHorizontal="14dp"
+                android:text="💭 回忆触发"
+                android:textSize="13sp"
+                android:textColor="#7A7A7A"
+                android:background="@drawable/bg_input"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/chip_type_autodiary"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:gravity="center"
+                android:paddingHorizontal="14dp"
+                android:text="📝 自动日记"
+                android:textSize="13sp"
+                android:textColor="#7A7A7A"
+                android:background="@drawable/bg_input"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+
+        <!-- 标题 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="标题"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#7A7A7A"
+            android:layout_marginTop="20dp" />
+
+        <EditText
+            android:id="@+id/et_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="例如：检查计算任务"
+            android:textSize="16sp"
+            android:textColor="#163536"
+            android:inputType="text"
+            android:minHeight="48dp"
+            android:background="@drawable/bg_input"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp" />
+
+        <!-- 消息内容 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="提醒内容"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#7A7A7A"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/et_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Echo 会说的话…"
+            android:textSize="15sp"
+            android:textColor="#163536"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:background="@drawable/bg_input"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp" />
+
+        <!-- 触发时间 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="触发时间"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#7A7A7A"
+            android:layout_marginTop="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:background="@drawable/bg_input"
+                android:clickable="true"
+                android:focusable="true"
+                android:id="@+id/btn_pick_date">
+
+                <TextView
+                    android:id="@+id/tv_picked_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textColor="#163536"
+                    android:text="今天" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:gravity="center"
+                android:background="@drawable/bg_input"
+                android:clickable="true"
+                android:focusable="true"
+                android:id="@+id/btn_pick_time">
+
+                <TextView
+                    android:id="@+id/tv_picked_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textColor="#163536"
+                    android:text="09:00" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 重复规则 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="重复"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#7A7A7A"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/et_repeat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="留空不重复，或输入如：daily / weekly"
+            android:textSize="15sp"
+            android:textColor="#163536"
+            android:inputType="text"
+            android:minHeight="48dp"
+            android:background="@drawable/bg_input"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp" />
+
+        <!-- 选项 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="自动语音播报"
+                android:textSize="15sp"
+                android:textColor="#163536" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_auto_speak"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="启用"
+                android:textSize="15sp"
+                android:textColor="#163536" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_enabled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true" />
+        </LinearLayout>
+
+        <!-- 保存按钮 -->
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="24dp"
+            android:text="保存"
+            android:textSize="16sp"
+            android:textColor="@android:color/white"
+            android:background="@drawable/bg_send_button"
+            app:cornerRadius="14dp" />
+
+        <Button
+            android:id="@+id/btn_delete"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="删除规划"
+            android:textSize="16sp"
+            android:textColor="#E53935"
+            android:visibility="gone"
+            android:background="@android:color/transparent" />
+
+    </LinearLayout>
+</ScrollView>

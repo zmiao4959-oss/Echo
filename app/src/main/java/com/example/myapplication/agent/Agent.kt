@@ -7,6 +7,7 @@ import com.example.myapplication.llm.LLMMessage
 import com.example.myapplication.llm.LLMProvider
 import com.example.myapplication.llm.LLMResponse
 import com.example.myapplication.llm.OpenAICompatProvider
+import com.example.myapplication.data.store.EchoFileStore
 import com.example.myapplication.memory.*
 import com.example.myapplication.tools.ToolRegistry
 import com.google.gson.Gson
@@ -15,7 +16,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Agent 核心引擎 — 移植自 clawspeaker agent.py。
@@ -29,15 +33,22 @@ class Agent(
 ) {
     private val gson = Gson()
 
-    /** 构建 System Prompt（缓存 + 工具列表 + 运行时信息） */
+    /** 构建 System Prompt（Echo 人格 + 记忆 + 工具 + 运行时） */
     private fun buildSystemPrompt(): String {
-        val static = FileStore.buildStaticSystemPrompt()
+        // 1. Echo 基础人格（echo_profile.md）
+        val echoProfile = readEchoProfile()
 
-        // 注入工具描述
+        // 2. 用户长期记忆（旧 workspace MEMORY.md）
+        val longTermMemory = FileStore.readWorkspaceFile("MEMORY.md")
+
+        // 3. 工具描述
         val toolsDesc = ToolRegistry.getDescriptions()
 
+        // 4. 运行时信息
+        val todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy年M月d日"))
         val runtime = """
 ## Runtime Info
+- 今天是 $todayStr
 - Current time: ${LocalDateTime.now()}
 - Platform: Android
 
@@ -45,7 +56,19 @@ class Agent(
 $toolsDesc
         """.trimIndent()
 
-        return "$static\n\n$runtime"
+        val parts = mutableListOf<String>()
+        if (echoProfile.isNotBlank()) parts.add(echoProfile)
+        if (longTermMemory.isNotBlank()) parts.add("## 用户长期记忆\n$longTermMemory")
+        parts.add(runtime)
+
+        return parts.joinToString("\n\n")
+    }
+
+    private fun readEchoProfile(): String {
+        return try {
+            val file = EchoFileStore.workspaceDir.resolve("echo_profile.md")
+            if (file.exists()) file.readText(Charsets.UTF_8) else ""
+        } catch (_: Exception) { "" }
     }
 
     /** 记忆搜索前缀 */

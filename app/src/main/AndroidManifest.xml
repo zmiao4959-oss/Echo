@@ -44,6 +44,12 @@
             android:name=".ui.WorkspaceFilesActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.diary.DiaryDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.plan.PlanEditActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.ScheduleListActivity"
             android:exported="false" />
 
@@ -55,6 +61,16 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Plays a user-configured scheduled voice reminder." />
         </service>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <receiver
             android:name=".schedule.AlarmReceiver"

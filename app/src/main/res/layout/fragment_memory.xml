@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAF7F0">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="24dp">
+
+        <!-- 标题 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="4dp"
+            android:text="@string/memory_page_title"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#163536" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="20dp"
+            android:paddingBottom="16dp"
+            android:text="@string/memory_page_subtitle"
+            android:textSize="14sp"
+            android:textColor="#7A7A7A" />
+
+        <!-- 搜索框 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="8dp">
+
+            <EditText
+                android:id="@+id/et_search"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:hint="@string/memory_search_hint"
+                android:textSize="14sp"
+                android:textColor="#163536"
+                android:textColorHint="#BDBDBD"
+                android:background="@drawable/bg_input"
+                android:paddingHorizontal="16dp"
+                android:inputType="text"
+                android:imeOptions="actionSearch"
+                android:maxLines="1" />
+
+            <ImageButton
+                android:id="@+id/btn_search"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="4dp"
+                android:padding="10dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_search"
+                android:contentDescription="搜索"
+                app:tint="#2F7D7A" />
+        </LinearLayout>
+
+        <!-- 搜索结果模式 -->
+        <LinearLayout
+            android:id="@+id/layout_search_results"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="8dp">
+
+                <TextView
+                    android:id="@+id/tv_search_info"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="14sp"
+                    android:textColor="#7A7A7A"
+                    tools:text='搜索 "项目": 5 条结果' />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_clear_search"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="清除"
+                    android:textSize="12sp"
+                    android:textColor="#2F7D7A" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_search_section_records"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="8dp"
+                android:text="生活片段"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#2F7D7A"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_search_records"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+            <TextView
+                android:id="@+id/tv_search_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="32dp"
+                android:text="@string/memory_search_empty"
+                android:textSize="14sp"
+                android:textColor="#BDBDBD" />
+        </LinearLayout>
+
+        <!-- 默认模式 -->
+        <LinearLayout
+            android:id="@+id/layout_default"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <!-- 今日回声卡片 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="4dp"
+                android:text="@string/memory_today_echo"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#163536" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_random"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                app:cardBackgroundColor="#F3EFE7"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:id="@+id/tv_random_quote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="18sp"
+                        android:textStyle="italic"
+                        android:textColor="#163536"
+                        android:gravity="center"
+                        android:lineSpacingExtra="6dp"
+                        tools:text="「今天的项目有了新进展」" />
+
+                    <TextView
+                        android:id="@+id/tv_random_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textSize="13sp"
+                        android:textColor="#9E9E9E"
+                        tools:text="2025年6月24日" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tv_no_random"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="24dp"
+                android:text="@string/memory_no_cards"
+                android:textSize="14sp"
+                android:textColor="#BDBDBD"
+                android:visibility="gone" />
+
+            <!-- 记忆卡片列表 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="4dp"
+                android:text="@string/memory_cards_section"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#163536" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_cards"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_memory_card" />
+
+            <TextView
+                android:id="@+id/tv_empty_cards"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="@string/memory_empty_cards"
+                android:textSize="13sp"
+                android:textColor="#BDBDBD"
+                android:visibility="gone" />
+
+            <!-- 长期记忆 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="4dp"
+                android:text="@string/memory_profile_section"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#163536" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_profiles"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_profile_memory" />
+
+            <TextView
+                android:id="@+id/tv_empty_profiles"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="@string/memory_no_profile"
+                android:textSize="13sp"
+                android:textColor="#BDBDBD"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

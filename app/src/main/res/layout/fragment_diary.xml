@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAF7F0">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
+
+            <!-- 标题 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="24dp"
+                android:paddingBottom="4dp"
+                android:text="@string/diary_page_title"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#163536" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingBottom="16dp"
+                android:text="@string/diary_page_subtitle"
+                android:textSize="14sp"
+                android:textColor="#7A7A7A" />
+
+            <!-- 今日日记卡片 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_today_diary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="3dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/diary_today_card_title"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#2F7D7A" />
+
+                    <!-- 如果有日记，显示摘要 -->
+                    <LinearLayout
+                        android:id="@+id/layout_diary_preview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <TextView
+                            android:id="@+id/tv_today_diary_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#163536"
+                            tools:text="今天的项目有了新进展" />
+
+                        <TextView
+                            android:id="@+id/tv_today_diary_summary"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textSize="14sp"
+                            android:textColor="#7A7A7A"
+                            android:maxLines="3"
+                            android:ellipsize="end"
+                            android:lineSpacingExtra="3dp"
+                            tools:text="上午完成了代码审查..." />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="8dp">
+
+                            <TextView
+                                android:id="@+id/tv_today_diary_mood"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textSize="13sp"
+                                android:textColor="#2F7D7A"
+                                tools:text="平静充实" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_view_diary"
+                                style="@style/Widget.Material3.Button.TextButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="36dp"
+                                android:text="@string/diary_read_full"
+                                android:textSize="13sp"
+                                android:textColor="#2F7D7A" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- 如果无日记，显示生成按钮 -->
+                    <LinearLayout
+                        android:id="@+id/layout_no_diary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:visibility="visible">
+
+                        <TextView
+                            android:id="@+id/tv_no_diary_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:textSize="14sp"
+                            android:textColor="#9E9E9E"
+                            android:text="@string/diary_no_today" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_generate_diary"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/diary_generate_button"
+                            android:textSize="14sp"
+                            app:cornerRadius="12dp"
+                            app:backgroundTint="#2F7D7A"
+                            android:textColor="@android:color/white" />
+                    </LinearLayout>
+
+                    <!-- 生成中的进度 -->
+                    <LinearLayout
+                        android:id="@+id/layout_generating"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:visibility="gone">
+
+                        <ProgressBar
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="8dp"
+                            style="?android:attr/progressBarStyle"
+                            android:indeterminateTint="#2F7D7A" />
+
+                        <TextView
+                            android:id="@+id/tv_generating_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="14sp"
+                            android:textColor="#7A7A7A"
+                            android:text="正在生成日记…" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 历史日记标题 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="24dp"
+                android:paddingBottom="4dp"
+                android:text="@string/diary_history_title"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#163536" />
+
+            <TextView
+                android:id="@+id/tv_diary_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingBottom="8dp"
+                android:textSize="13sp"
+                android:textColor="#9E9E9E"
+                tools:text="共 5 篇日记" />
+
+            <!-- 日记列表 -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_diaries"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_diary" />
+
+            <!-- 空列表 -->
+            <TextView
+                android:id="@+id/tv_empty_diaries"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="32dp"
+                android:text="@string/diary_empty_list"
+                android:textSize="14sp"
+                android:textColor="#BDBDBD"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

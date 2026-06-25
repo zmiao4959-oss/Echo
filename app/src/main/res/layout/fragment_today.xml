@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAF7F0"
+    android:paddingBottom="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- ═══ 问候区 ═══ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:id="@+id/tv_today_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#7A7A7A"
+                tools:text="2025年6月24日 星期二" />
+
+            <TextView
+                android:id="@+id/tv_greeting"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/today_greeting"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#163536"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- ═══ 快速输入卡片 ═══ -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <EditText
+                        android:id="@+id/et_quick_input"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minHeight="48dp"
+                        android:hint="@string/today_input_hint"
+                        android:textSize="15sp"
+                        android:textColor="#163536"
+                        android:textColorHint="#BDBDBD"
+                        android:background="@null"
+                        android:inputType="textMultiLine"
+                        android:maxLines="4"
+                        android:paddingHorizontal="8dp" />
+
+                    <ImageButton
+                        android:id="@+id/btn_voice"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="4dp"
+                        android:padding="10dp"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_btn_speak_now"
+                        android:contentDescription="@string/voice_input"
+                        app:tint="#2F7D7A" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:layout_marginTop="4dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_record"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="@string/today_record_button"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp"
+                        app:backgroundTint="#2F7D7A"
+                        android:textColor="@android:color/white" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ═══ 今日片段标题 ═══ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/today_records_title"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#163536" />
+
+            <TextView
+                android:id="@+id/tv_record_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#9E9E9E"
+                tools:text="3 条记录" />
+        </LinearLayout>
+
+        <!-- ═══ LifeRecord 列表 ═══ -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_records"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_life_record" />
+
+        <!-- ═══ 空状态 ═══ -->
+        <TextView
+            android:id="@+id/tv_empty_records"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="32dp"
+            android:text="@string/today_no_records"
+            android:textSize="14sp"
+            android:textColor="#BDBDBD"
+            android:visibility="gone" />
+
+        <!-- ═══ 小爪对话卡片 ═══ -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="4dp"
+            android:text="@string/today_chat_section"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#163536" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_chat_entry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:strokeWidth="0dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/today_chat_card_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#2F7D7A" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/today_chat_card_subtitle"
+                    android:textSize="14sp"
+                    android:textColor="#7A7A7A"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="2dp" />
+
+                <TextView
+                    android:id="@+id/tv_last_reply"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="#9E9E9E"
+                    android:layout_marginTop="8dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:visibility="gone"
+                    tools:text="最近: 是的，这确实是一个值得记录的想法..." />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:layout_marginTop="8dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_enter_chat"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="@string/today_enter_chat"
+                        android:textSize="13sp"
+                        android:textColor="#2F7D7A" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ═══ AI 预览卡片 ═══ -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_ai_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="#F3EFE7"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/today_ai_preview_title"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#163536" />
+
+                <TextView
+                    android:id="@+id/tv_diary_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="#7A7A7A"
+                    android:layout_marginTop="6dp"
+                    tools:text="已记录 3 个片段，可以生成今日日记" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -21,6 +21,7 @@ class BootReceiver : BroadcastReceiver() {
         Log.d("BootReceiver", "BOOT_COMPLETED — rescheduling tasks")
         scope.launch {
             ScheduleEngine.rescheduleAll(context)
+            PlanScheduler.rescheduleAll(context)
         }
     }
 }

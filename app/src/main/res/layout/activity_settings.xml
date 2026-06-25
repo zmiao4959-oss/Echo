@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="#FAF7F0">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,7 +16,7 @@
             android:text="@string/settings_title"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
+            android:textColor="#163536"
             android:layout_marginBottom="24dp" />
 
         <!-- LLM 配置 -->
@@ -228,6 +228,16 @@
             android:textSize="12sp"
             android:textColor="@android:color/darker_gray"
             android:gravity="center" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
+
+        <Button
+            android:id="@+id/btn_export"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="导出所有数据"
+            android:textColor="#2F7D7A"
+            android:backgroundTint="#F3EFE7" />
 
     </LinearLayout>
 </ScrollView>
