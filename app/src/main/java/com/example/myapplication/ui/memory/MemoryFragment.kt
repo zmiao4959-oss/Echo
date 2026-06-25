@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.ui.CardTextureManager
+import com.example.myapplication.ui.PageTextureManager
 import com.example.myapplication.ui.diary.DiaryDetailActivity
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.flow.collectLatest
@@ -71,6 +72,7 @@ class MemoryFragment : Fragment() {
         setupSearch()
         observeViewModel()
         applyCardTextures()
+        applyPageTexture()
     }
 
     override fun onResume() {
@@ -78,6 +80,13 @@ class MemoryFragment : Fragment() {
         viewModel.loadMemories()
         viewModel.loadOnThisDay()
         applyCardTextures()
+        applyPageTexture()
+    }
+
+    private fun applyPageTexture() {
+        val config = (requireActivity().application as MyApplication).appConfig
+        val key = config.getPageTextureKey(PageTextureManager.MEMORY_PAGE)
+        PageTextureManager.apply(requireView(), key)
     }
 
     private fun applyCardTextures() {

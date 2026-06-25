@@ -90,6 +90,14 @@ class AppConfig(context: Context) {
         prefs.edit().putString("card_texture_$category", key).apply()
     }
 
+    // ── 页面纹理（四个底栏页） ──
+    fun getPageTextureKey(category: String): String =
+        prefs.getString("page_texture_$category", "none") ?: "none"
+
+    fun setPageTextureKey(category: String, key: String) {
+        prefs.edit().putString("page_texture_$category", key).apply()
+    }
+
     // ── 背景配置 ──
     var backgroundKey: String
         get() = prefs.getString(KEY_BACKGROUND, "bg_default_1") ?: "bg_default_1"

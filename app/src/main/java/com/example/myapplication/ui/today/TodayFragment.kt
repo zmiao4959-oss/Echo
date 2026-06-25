@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.ui.CardTextureManager
+import com.example.myapplication.ui.PageTextureManager
 import com.example.myapplication.ui.ThemeColors
 import com.example.myapplication.ui.ChatActivity
 import com.google.android.material.card.MaterialCardView
@@ -80,12 +81,20 @@ class TodayFragment : Fragment() {
         observeViewModel()
         initSpeechRecognizer()
         applyCardTextures()
+        applyPageTexture()
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.loadToday()
         applyCardTextures()
+        applyPageTexture()
+    }
+
+    private fun applyPageTexture() {
+        val config = (requireActivity().application as MyApplication).appConfig
+        val key = config.getPageTextureKey(PageTextureManager.TODAY_PAGE)
+        PageTextureManager.apply(requireView(), key)
     }
 
     private fun applyCardTextures() {

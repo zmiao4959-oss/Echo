@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit
 
 class MainActivity : ThemedActivity() {
 
+    private lateinit var topBar: View
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var weatherBar: View
     private lateinit var weatherIcon: TextView
@@ -58,6 +59,7 @@ class MainActivity : ThemedActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
+        topBar = findViewById(R.id.top_bar)
         weatherBar = findViewById(R.id.weather_bar)
         weatherIcon = findViewById(R.id.weather_icon)
         weatherInfo = findViewById(R.id.weather_info)
@@ -88,6 +90,7 @@ class MainActivity : ThemedActivity() {
 
         // 请求通知权限 (Android 13+)
         requestNotificationPermissionIfNeeded()
+        applyPageTextures()
     }
 
     override fun onResume() {
@@ -100,6 +103,13 @@ class MainActivity : ThemedActivity() {
         val app = application as MyApplication
         BackgroundManager.apply(this, app.appConfig.backgroundKey)
         fetchDailyWeather()
+        applyPageTextures()
+    }
+
+    private fun applyPageTextures() {
+        val config = (application as MyApplication).appConfig
+        PageTextureManager.apply(topBar, config.getPageTextureKey(PageTextureManager.TOP_BAR))
+        PageTextureManager.apply(bottomNav, config.getPageTextureKey(PageTextureManager.BOTTOM_BAR))
     }
 
     // ── Fragment 切换 ──

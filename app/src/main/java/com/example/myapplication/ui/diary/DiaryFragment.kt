@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.ui.CardTextureManager
+import com.example.myapplication.ui.PageTextureManager
 import com.example.myapplication.ui.ThemeColors
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
@@ -77,12 +78,20 @@ class DiaryFragment : Fragment() {
         setupButtons()
         observeViewModel()
         applyCardTextures()
+        applyPageTexture()
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.loadDiaries()
         applyCardTextures()
+        applyPageTexture()
+    }
+
+    private fun applyPageTexture() {
+        val config = (requireActivity().application as MyApplication).appConfig
+        val key = config.getPageTextureKey(PageTextureManager.DIARY_PAGE)
+        PageTextureManager.apply(requireView(), key)
     }
 
     private fun applyCardTextures() {

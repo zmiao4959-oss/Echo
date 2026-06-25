@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.model.EchoPlan
+import com.example.myapplication.ui.PageTextureManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -69,11 +70,19 @@ class PlanFragment : Fragment() {
         fabAddPlan.setOnClickListener { openEdit(null) }
 
         observeViewModel()
+        applyPageTexture()
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.loadPlans()
+        applyPageTexture()
+    }
+
+    private fun applyPageTexture() {
+        val config = (requireActivity().application as MyApplication).appConfig
+        val key = config.getPageTextureKey(PageTextureManager.PLAN_PAGE)
+        PageTextureManager.apply(requireView(), key)
     }
 
     private fun setupAdapters() {
