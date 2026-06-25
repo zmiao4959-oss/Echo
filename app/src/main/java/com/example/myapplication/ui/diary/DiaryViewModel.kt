@@ -11,7 +11,6 @@ import com.example.myapplication.data.repository.DiaryRepository
 import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.llm.LLMMessage
 import com.example.myapplication.llm.OpenAICompatProvider
-import com.google.gson.Gson
 import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,16 +18,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import java.util.UUID
 
+@Suppress("SpellCheckingInspection")
 class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     private val app = application as MyApplication
     private val diaryRepo = DiaryRepository()
     private val recordRepo = LifeRecordRepository()
-    private val gson = Gson()
 
     private val _diaries = MutableStateFlow<List<DailyDiary>>(emptyList())
     val diaries: StateFlow<List<DailyDiary>> = _diaries.asStateFlow()
@@ -46,14 +46,12 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 
     // ── 筛选状态 ──
-    private val _filterMonth = MutableStateFlow<String?>(null)  // "yyyy-MM" or null = all
+    private val _filterMonth = MutableStateFlow<String?>(null)
     val filterMonth: StateFlow<String?> = _filterMonth.asStateFlow()
 
     private val _filterMood = MutableStateFlow<String?>(null)
-    val filterMood: StateFlow<String?> = _filterMood.asStateFlow()
 
     private val _filterTag = MutableStateFlow<String?>(null)
-    val filterTag: StateFlow<String?> = _filterTag.asStateFlow()
 
     /** 所有可用月份（从已有日记中提取） */
     private val _availableMonths = MutableStateFlow<List<String>>(emptyList())
@@ -96,6 +94,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             applyFilters(all)
             _todayDiary.value = diaryRepo.getByDate(today())
             _todayRecords.value = recordRepo.getByDate(today())
+            computeMoodStats(_moodStatsDays.value)
         }
     }
 
@@ -133,6 +132,57 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             result = result.filter { it.tags.contains(tag) }
         }
         _filteredDiaries.value = result.sortedByDescending { it.date }
+    }
+
+    // ── 情绪趋势 ──
+
+    private val _moodStats = MutableStateFlow<List<MoodStat>>(emptyList())
+    val moodStats: StateFlow<List<MoodStat>> = _moodStats.asStateFlow()
+
+    private val _moodStatsDays = MutableStateFlow(7)
+    val moodStatsDays: StateFlow<Int> = _moodStatsDays.asStateFlow()
+
+    fun computeMoodStats(days: Int = 7) {
+        _moodStatsDays.value = days
+        viewModelScope.launch {
+            val cal = Calendar.getInstance()
+            cal.add(Calendar.DAY_OF_YEAR, -days)
+            val cutoff = dateFormat.format(cal.time)
+            val allDiaries = _diaries.value.filter { it.date >= cutoff }
+            val allRecords = recordRepo.getAll().filter { it.date >= cutoff }
+
+            // 汇总所有 mood
+            val moodCounts = mutableMapOf<String, Int>()
+            for (d in allDiaries) {
+                if (d.mood.isNotBlank()) {
+                    moodCounts[d.mood] = (moodCounts[d.mood] ?: 0) + 1
+                }
+            }
+            for (r in allRecords) {
+                val mood = r.mood
+                if (!mood.isNullOrBlank()) {
+                    moodCounts[mood] = (moodCounts[mood] ?: 0) + 1
+                }
+            }
+
+            val palette = listOf(
+                0xFF2F7D7A.toInt(),  // echo primary
+                0xFFE9C98F.toInt(),  // warm accent
+                0xFF7A9E9B.toInt(),  // soft teal
+                0xFFC4A882.toInt(),  // warm brown
+                0xFF8FB5B3.toInt(),  // light teal
+                0xFFD4B896.toInt(),  // lighter brown
+                0xFF5A8F8B.toInt(),  // mid teal
+                0xFFB8956E.toInt(),  // dark warm
+            )
+
+            _moodStats.value = moodCounts.entries
+                .sortedByDescending { it.value }
+                .take(8)
+                .mapIndexed { i, (mood, count) ->
+                    MoodStat(mood, count, palette[i % palette.size])
+                }
+        }
     }
 
     /** 手动生成今日日记 */
@@ -279,13 +329,21 @@ $fragmentsText
         // 找到第一个 { 和最后一个 }
         val start = t.indexOf('{')
         val end = t.lastIndexOf('}')
-        if (start >= 0 && end > start) {
+        if (start in 0 until end) {
             t = t.substring(start, end + 1)
         }
         return t
     }
 
     companion object {
-        fun today(): String = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+
+        fun today(): String = dateFormat.format(Calendar.getInstance().time)
     }
 }
+
+data class MoodStat(
+    val mood: String,
+    val count: Int,
+    val color: Int
+)

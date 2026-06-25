@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -41,6 +43,13 @@ class DiaryFragment : Fragment() {
     private lateinit var tvEmptyDiaries: TextView
     private lateinit var chipContainerMonths: LinearLayout
     private lateinit var btnFilter: TextView
+
+    // Mood chart
+    private lateinit var cardMoodChart: MaterialCardView
+    private lateinit var moodBarsContainer: LinearLayout
+    private lateinit var tvMoodEmpty: TextView
+    private lateinit var btnMood7d: TextView
+    private lateinit var btnMood30d: TextView
 
     private var diaryAdapter: DiaryListAdapter? = null
 
@@ -86,6 +95,12 @@ class DiaryFragment : Fragment() {
         tvEmptyDiaries = view.findViewById(R.id.tv_empty_diaries)
         chipContainerMonths = view.findViewById(R.id.chip_container_months)
         btnFilter = view.findViewById(R.id.btn_filter)
+
+        cardMoodChart = view.findViewById(R.id.card_mood_chart)
+        moodBarsContainer = view.findViewById(R.id.mood_bars_container)
+        tvMoodEmpty = view.findViewById(R.id.tv_mood_empty)
+        btnMood7d = view.findViewById(R.id.btn_mood_7d)
+        btnMood30d = view.findViewById(R.id.btn_mood_30d)
     }
 
     private fun setupRecycler() {
@@ -110,6 +125,13 @@ class DiaryFragment : Fragment() {
             }
         }
         btnFilter.setOnClickListener { showFilterDialog() }
+
+        btnMood7d.setOnClickListener {
+            viewModel.computeMoodStats(7)
+        }
+        btnMood30d.setOnClickListener {
+            viewModel.computeMoodStats(30)
+        }
     }
 
     private fun showFilterDialog() {
@@ -185,6 +207,94 @@ class DiaryFragment : Fragment() {
         } catch (_: Exception) { month }
     }
 
+    private fun buildMoodBars(stats: List<MoodStat>) {
+        moodBarsContainer.removeAllViews()
+
+        cardMoodChart.visibility = View.VISIBLE
+
+        if (stats.isEmpty()) {
+            tvMoodEmpty.visibility = View.VISIBLE
+            moodBarsContainer.visibility = View.GONE
+            return
+        }
+
+        tvMoodEmpty.visibility = View.GONE
+        moodBarsContainer.visibility = View.VISIBLE
+
+        val maxCount = stats.maxOf { it.count }
+        val density = requireContext().resources.displayMetrics.density
+        val maxBarWidth = (200 * density).toInt() // max 200dp
+
+        for (stat in stats) {
+            val row = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = (6 * density).toInt() }
+            }
+
+            // mood label
+            val label = TextView(requireContext()).apply {
+                text = stat.mood
+                textSize = 13f
+                setTextColor(0xFF163536.toInt())
+                layoutParams = LinearLayout.LayoutParams(
+                    (72 * density).toInt(),
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+            }
+            row.addView(label)
+
+            // bar
+            val barWidth = ((stat.count.toFloat() / maxCount) * maxBarWidth).toInt().coerceAtLeast((4 * density).toInt())
+            val bar = View(requireContext()).apply {
+                setBackgroundColor(stat.color)
+                layoutParams = LinearLayout.LayoutParams(
+                    barWidth,
+                    (20 * density).toInt()
+                ).apply {
+                    marginStart = (8 * density).toInt()
+                }
+            }
+            row.addView(bar)
+
+            // count
+            val countText = TextView(requireContext()).apply {
+                text = "${stat.count}"
+                textSize = 12f
+                setTextColor(0xFF9E9E9E.toInt())
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { marginStart = (8 * density).toInt() }
+            }
+            row.addView(countText)
+
+            moodBarsContainer.addView(row)
+        }
+    }
+
+    private fun updateMoodDaysToggle() {
+        val days = viewModel.moodStatsDays.value
+        val activeBg = AppCompatResources.getDrawable(requireContext(), R.drawable.bg_send_button)
+        val inactiveBg = AppCompatResources.getDrawable(requireContext(), R.drawable.bg_input)
+        if (days == 7) {
+            btnMood7d.background = activeBg
+            btnMood7d.setTextColor(0xFFFFFFFF.toInt())
+            btnMood30d.background = inactiveBg
+            btnMood30d.setTextColor(0xFF7A7A7A.toInt())
+        } else {
+            btnMood7d.background = inactiveBg
+            btnMood7d.setTextColor(0xFF7A7A7A.toInt())
+            btnMood30d.background = activeBg
+            btnMood30d.setTextColor(0xFFFFFFFF.toInt())
+        }
+    }
+
     private fun observeViewModel() {
         lifecycleScope.launch {
             viewModel.todayDiary.collectLatest { diary ->
@@ -218,6 +328,13 @@ class DiaryFragment : Fragment() {
 
         lifecycleScope.launch {
             viewModel.availableMonths.collectLatest { buildMonthChips() }
+        }
+
+        lifecycleScope.launch {
+            viewModel.moodStats.collectLatest { stats ->
+                buildMoodBars(stats)
+                updateMoodDaysToggle()
+            }
         }
 
         lifecycleScope.launch {

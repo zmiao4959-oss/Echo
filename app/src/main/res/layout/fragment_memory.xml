@@ -105,25 +105,29 @@
                     android:textColor="#2F7D7A" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tv_search_section_records"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="20dp"
-                android:paddingTop="8dp"
-                android:text="生活片段"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#2F7D7A"
-                android:visibility="gone" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_search_records"
+            <!-- 搜索结果内容 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_search_results"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:visibility="gone"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="4dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:strokeWidth="0dp">
+
+                <TextView
+                    android:id="@+id/tv_search_results"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:textSize="14sp"
+                    android:textColor="#163536"
+                    android:lineSpacingExtra="6dp"
+                    android:textIsSelectable="true"
+                    tools:text="── 生活片段 ──&#10;✏️ 今天完成了代码审查..." />
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:id="@+id/tv_search_empty"
@@ -133,7 +137,8 @@
                 android:padding="32dp"
                 android:text="@string/memory_search_empty"
                 android:textSize="14sp"
-                android:textColor="#BDBDBD" />
+                android:textColor="#BDBDBD"
+                android:visibility="gone" />
         </LinearLayout>
 
         <!-- 默认模式 -->

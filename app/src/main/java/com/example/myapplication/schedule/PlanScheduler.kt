@@ -108,10 +108,7 @@ object PlanScheduler {
         if (prefs.getBoolean("echo_default_plans_v1", false)) return
 
         val allPlans = repo.getAll()
-        if (allPlans.isNotEmpty()) {
-            prefs.edit().putBoolean("echo_default_plans_v1", true).apply()
-            return
-        }
+        val existingTitles = allPlans.map { it.title }.toSet()
 
         val now = System.currentTimeMillis()
         val dayMs = 86_400_000L
@@ -126,9 +123,11 @@ object PlanScheduler {
         val daysUntilSunday = (java.util.Calendar.SUNDAY - cal.get(java.util.Calendar.DAY_OF_WEEK) + 7) % 7
         val nextSunday9pm = (now / dayMs + if (daysUntilSunday == 0) 7 else daysUntilSunday) * dayMs + 21 * 3_600_000L
 
-        val defaults = listOf(
-            EchoPlan(
-                id = "default_morning",
+        val defaults = mutableListOf<EchoPlan>()
+
+        if ("晨间问候" !in existingTitles) {
+            defaults.add(EchoPlan(
+                id = UUID.randomUUID().toString(),
                 type = "companion_checkin",
                 title = "晨间问候",
                 message = "早上好。今天想以什么状态开始？",
@@ -141,9 +140,12 @@ object PlanScheduler {
                 createdAt = now,
                 updatedAt = now,
                 lastTriggeredAt = null
-            ),
-            EchoPlan(
-                id = "default_evening",
+            ))
+        }
+
+        if ("晚间问候" !in existingTitles) {
+            defaults.add(EchoPlan(
+                id = UUID.randomUUID().toString(),
                 type = "companion_checkin",
                 title = "晚间问候",
                 message = "今天有什么想留下来的吗？",
@@ -156,9 +158,12 @@ object PlanScheduler {
                 createdAt = now,
                 updatedAt = now,
                 lastTriggeredAt = null
-            ),
-            EchoPlan(
-                id = "default_weekly",
+            ))
+        }
+
+        if ("周回顾" !in existingTitles) {
+            defaults.add(EchoPlan(
+                id = UUID.randomUUID().toString(),
                 type = "memory_trigger",
                 title = "周回顾",
                 message = "这一周，你留下了不少片段。要不要一起看看？",
@@ -171,8 +176,8 @@ object PlanScheduler {
                 createdAt = now,
                 updatedAt = now,
                 lastTriggeredAt = null
-            )
-        )
+            ))
+        }
 
         for (plan in defaults) {
             repo.add(plan)
@@ -180,7 +185,7 @@ object PlanScheduler {
             Log.d(TAG, "Created default plan: ${plan.title}")
         }
 
-        prefs.edit().putBoolean("echo_default_plans_v1", true).apply()
+        prefs.edit().putBoolean("echo_default_plans_v1", true).commit()
     }
 
     /**

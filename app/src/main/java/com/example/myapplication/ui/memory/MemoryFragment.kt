@@ -207,43 +207,51 @@ class MemoryFragment : Fragment() {
         infoView.text = "搜索「${result.query}」: ${result.totalCount} 条结果"
 
         val emptyView = requireView().findViewById<TextView>(R.id.tv_search_empty)
-        emptyView.visibility = if (result.totalCount == 0) View.VISIBLE else View.GONE
+        val cardResults = requireView().findViewById<View>(R.id.card_search_results)
+        val resultsText = requireView().findViewById<TextView>(R.id.tv_search_results)
 
-        // 简化搜索结果展示（用 TextView 拼接）
+        if (result.totalCount == 0) {
+            emptyView.visibility = View.VISIBLE
+            cardResults.visibility = View.GONE
+            return
+        }
+
+        emptyView.visibility = View.GONE
+        cardResults.visibility = View.VISIBLE
+
         val sb = StringBuilder()
         if (result.lifeRecords.isNotEmpty()) {
             sb.appendLine("── 生活片段 ──")
-            for (r in result.lifeRecords.take(3)) {
-                sb.appendLine("✏️ ${r.content.take(80)}")
+            for (r in result.lifeRecords.take(5)) {
+                sb.appendLine("✏️ ${r.content.take(100)}")
+                sb.appendLine()
             }
         }
         if (result.diaries.isNotEmpty()) {
-            sb.appendLine("\n── 日记 ──")
-            for (d in result.diaries.take(3)) {
+            sb.appendLine("── 日记 ──")
+            for (d in result.diaries.take(5)) {
                 sb.appendLine("📖 ${d.title}")
+                sb.appendLine("   ${d.summary.take(80)}")
+                sb.appendLine()
             }
         }
         if (result.memoryCards.isNotEmpty()) {
-            sb.appendLine("\n── 记忆卡片 ──")
-            for (c in result.memoryCards.take(3)) {
-                sb.appendLine("💭 ${c.quote.take(80)}")
+            sb.appendLine("── 记忆卡片 ──")
+            for (c in result.memoryCards.take(5)) {
+                sb.appendLine("💭 「${c.quote.take(80)}」")
+                if (c.note.isNotBlank()) sb.appendLine("   ${c.note.take(60)}")
+                sb.appendLine()
             }
         }
         if (result.profileMemories.isNotEmpty()) {
-            sb.appendLine("\n── 长期记忆 ──")
-            for (p in result.profileMemories.take(3)) {
+            sb.appendLine("── 长期记忆 ──")
+            for (p in result.profileMemories.take(5)) {
                 sb.appendLine("💡 ${p.value}")
+                sb.appendLine()
             }
         }
 
-        // Put results in a simple text view
-        val resultsText = requireView().findViewById<android.widget.TextView>(R.id.tv_search_empty)
-        if (result.totalCount > 0) {
-            resultsText.text = sb.toString().trim()
-            resultsText.gravity = android.view.Gravity.START or android.view.Gravity.TOP
-            resultsText.textSize = 14f
-            resultsText.setTextColor(0xFF163536.toInt())
-        }
+        resultsText.text = sb.toString().trim()
     }
 
     private fun showCardOptions(card: com.example.myapplication.data.model.MemoryCard) {
