@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.ui.ThemeColors
 import com.example.myapplication.ui.ChatActivity
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.flow.collectLatest
@@ -235,7 +236,7 @@ class TodayFragment : Fragment() {
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
                 isListening = true
-                btnVoice.setColorFilter(0xFFE53935.toInt())
+                btnVoice.setColorFilter(ThemeColors.destructive(requireContext()))
             }
 
             override fun onBeginningOfSpeech() {}

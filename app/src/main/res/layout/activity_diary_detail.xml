@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF7F0">
+    android:background="?attr/echoBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,7 +19,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="8dp"
-            android:background="@android:color/white"
+            android:background="?attr/echoSurface"
             android:elevation="2dp">
 
             <ImageButton
@@ -30,7 +30,7 @@
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_revert"
                 android:contentDescription="返回"
-                app:tint="#163536" />
+                app:tint="?attr/echoTextPrimary" />
 
             <TextView
                 android:layout_width="0dp"
@@ -39,7 +39,7 @@
                 android:text="日记详情"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <ImageButton
                 android:id="@+id/btn_read_aloud"
@@ -49,7 +49,7 @@
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_btn_speak_now"
                 android:contentDescription="朗读"
-                app:tint="#2F7D7A" />
+                app:tint="?attr/echoPrimary" />
 
             <ImageButton
                 android:id="@+id/btn_delete"
@@ -59,7 +59,7 @@
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_delete"
                 android:contentDescription="删除"
-                app:tint="#E53935" />
+                app:tint="?attr/echoDestructive" />
         </LinearLayout>
 
         <!-- 内容区 -->
@@ -74,7 +74,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="13sp"
-                android:textColor="#9E9E9E"
+                android:textColor="?attr/echoHint"
                 tools:text="2025年6月24日" />
 
             <TextView
@@ -84,7 +84,7 @@
                 android:layout_marginTop="8dp"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                android:textColor="#163536"
+                android:textColor="?attr/echoTextPrimary"
                 tools:text="今天的项目有了新进展" />
 
             <LinearLayout
@@ -99,7 +99,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="15sp"
-                    android:textColor="#2F7D7A"
+                    android:textColor="?attr/echoPrimary"
                     android:background="@drawable/bg_message_assistant"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="4dp"
@@ -122,14 +122,14 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="16dp"
-                android:background="#E0DCD5" />
+                android:background="?attr/echoBorder" />
 
             <TextView
                 android:id="@+id/tv_detail_body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
-                android:textColor="#163536"
+                android:textColor="?attr/echoTextPrimary"
                 android:lineSpacingExtra="6dp"
                 tools:text="日记正文内容..." />
 
@@ -141,7 +141,7 @@
                 android:text="来源片段"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="#7A7A7A" />
+                android:textColor="?attr/echoTextSecondary" />
 
             <TextView
                 android:id="@+id/tv_source_count"
@@ -149,7 +149,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:textSize="13sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 tools:text="基于 3 条生活记录生成" />
 
             <!-- 重新生成按钮 -->
@@ -162,8 +162,8 @@
                 android:text="重新生成"
                 android:textSize="13sp"
                 app:cornerRadius="12dp"
-                app:strokeColor="#2F7D7A"
-                android:textColor="#2F7D7A" />
+                app:strokeColor="?attr/echoPrimary"
+                android:textColor="?attr/echoPrimary" />
         </LinearLayout>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

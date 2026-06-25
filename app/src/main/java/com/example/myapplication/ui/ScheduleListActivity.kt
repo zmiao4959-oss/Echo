@@ -9,7 +9,6 @@ import android.view.View
 import android.widget.*
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DiffUtil
@@ -31,7 +30,7 @@ import java.util.Locale
 /**
  * 定时提醒列表管理页。
  */
-class ScheduleListActivity : AppCompatActivity() {
+class ScheduleListActivity : ThemedActivity() {
 
     private lateinit var recycler: RecyclerView
     private lateinit var textEmpty: TextView

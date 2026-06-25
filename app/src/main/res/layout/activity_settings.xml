@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF7F0">
+    android:background="?attr/echoBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,7 +16,7 @@
             android:text="@string/settings_title"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="#163536"
+            android:textColor="?attr/echoTextPrimary"
             android:layout_marginBottom="24dp" />
 
         <!-- LLM 配置 -->
@@ -26,7 +26,7 @@
             android:text="@string/llm_config"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#4A90D9"
+            android:textColor="?attr/echoPrimary"
             android:layout_marginBottom="8dp" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/api_base_url" android:textSize="13sp" android:textColor="#666"/>
@@ -64,7 +64,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
         <!-- TTS 配置 -->
         <TextView
@@ -73,7 +73,7 @@
             android:text="@string/tts_config"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#4A90D9"
+            android:textColor="?attr/echoPrimary"
             android:layout_marginBottom="8dp" />
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tts_api_key" android:textSize="13sp" android:textColor="#666"/>
@@ -107,7 +107,7 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
         <!-- Agent 配置 -->
         <TextView
@@ -116,7 +116,7 @@
             android:text="@string/agent_config"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#4A90D9"
+            android:textColor="?attr/echoPrimary"
             android:layout_marginBottom="8dp" />
 
         <LinearLayout
@@ -144,7 +144,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
         <!-- 背景设置 -->
         <TextView
@@ -153,7 +153,7 @@
             android:text="@string/bg_config"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#4A90D9"
+            android:textColor="?attr/echoPrimary"
             android:layout_marginBottom="8dp" />
 
         <LinearLayout
@@ -196,8 +196,8 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="@string/bg_select_custom"
-            android:textColor="@android:color/white"
-            android:backgroundTint="#888888"
+            android:textColor="?attr/echoOnPrimary"
+            android:backgroundTint="?attr/echoHint"
             android:layout_marginBottom="4dp" />
 
         <TextView
@@ -208,7 +208,7 @@
             android:textColor="#888"
             android:gravity="center" />
 
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
         <!-- 保存按钮 -->
         <Button
@@ -217,8 +217,8 @@
             android:layout_height="48dp"
             android:layout_marginTop="24dp"
             android:text="@string/save_config"
-            android:textColor="@android:color/white"
-            android:backgroundTint="#4A90D9" />
+            android:textColor="?attr/echoOnPrimary"
+            android:backgroundTint="?attr/echoPrimary" />
 
         <TextView
             android:layout_width="match_parent"
@@ -229,15 +229,15 @@
             android:textColor="@android:color/darker_gray"
             android:gravity="center" />
 
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="16dp"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
         <Button
             android:id="@+id/btn_export"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="导出所有数据"
-            android:textColor="#2F7D7A"
-            android:backgroundTint="#F3EFE7" />
+            android:textColor="?attr/echoPrimary"
+            android:backgroundTint="?attr/echoSurfaceVariant" />
 
     </LinearLayout>
 </ScrollView>

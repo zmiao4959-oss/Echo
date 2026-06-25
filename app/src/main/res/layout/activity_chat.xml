@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    android:background="#FAF7F0">
+    android:background="?attr/echoBackground">
 
     <!-- 状态栏 -->
     <TextView
@@ -45,7 +45,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:background="#FAFAFA"
+        android:background="?attr/echoBackground"
         android:elevation="4dp">
 
         <EditText
@@ -67,7 +67,7 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_btn_speak_now"
             android:contentDescription="@string/voice_input"
-            app:tint="#666666" />
+            app:tint="?attr/echoTextSecondary" />
 
         <ImageButton
             android:id="@+id/btn_send"
@@ -77,6 +77,6 @@
             android:background="@drawable/bg_send_button"
             android:src="@android:drawable/ic_menu_send"
             android:contentDescription="@string/send"
-            app:tint="@android:color/white" />
+            app:tint="?attr/echoOnPrimary" />
     </LinearLayout>
 </LinearLayout>

@@ -11,6 +11,7 @@ import com.example.myapplication.data.repository.DiaryRepository
 import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.llm.LLMMessage
 import com.example.myapplication.llm.OpenAICompatProvider
+import com.example.myapplication.ui.ThemeColors
 import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -165,16 +166,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
-            val palette = listOf(
-                0xFF2F7D7A.toInt(),  // echo primary
-                0xFFE9C98F.toInt(),  // warm accent
-                0xFF7A9E9B.toInt(),  // soft teal
-                0xFFC4A882.toInt(),  // warm brown
-                0xFF8FB5B3.toInt(),  // light teal
-                0xFFD4B896.toInt(),  // lighter brown
-                0xFF5A8F8B.toInt(),  // mid teal
-                0xFFB8956E.toInt(),  // dark warm
-            )
+            val palette = ThemeColors.moodPalette(getApplication()).toList()
 
             _moodStats.value = moodCounts.entries
                 .sortedByDescending { it.value }

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF7F0">
+    android:background="?attr/echoBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -32,14 +32,14 @@
                 android:text="Echo"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/profile_subtitle"
                 android:textSize="13sp"
-                android:textColor="#9E9E9E"
+                android:textColor="?attr/echoHint"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 
@@ -49,7 +49,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="20dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@android:color/white"
+            app:cardBackgroundColor="?attr/echoSurface"
             app:strokeWidth="0dp">
 
             <LinearLayout
@@ -87,14 +87,14 @@
                             android:layout_height="wrap_content"
                             android:text="@string/profile_settings"
                             android:textSize="15sp"
-                            android:textColor="#163536" />
+                            android:textColor="?attr/echoTextPrimary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/profile_settings_desc"
                             android:textSize="12sp"
-                            android:textColor="#9E9E9E" />
+                            android:textColor="?attr/echoHint" />
                     </LinearLayout>
 
                     <TextView
@@ -102,10 +102,10 @@
                         android:layout_height="wrap_content"
                         android:text="›"
                         android:textSize="20sp"
-                        android:textColor="#BDBDBD" />
+                        android:textColor="?attr/echoHint" />
                 </LinearLayout>
 
-                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#F0EDE6" android:layout_marginStart="56dp" />
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="?attr/echoBorder" android:layout_marginStart="56dp" />
 
                 <LinearLayout
                     android:id="@+id/entry_workspace"
@@ -137,14 +137,14 @@
                             android:layout_height="wrap_content"
                             android:text="@string/profile_workspace"
                             android:textSize="15sp"
-                            android:textColor="#163536" />
+                            android:textColor="?attr/echoTextPrimary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/profile_workspace_desc"
                             android:textSize="12sp"
-                            android:textColor="#9E9E9E" />
+                            android:textColor="?attr/echoHint" />
                     </LinearLayout>
 
                     <TextView
@@ -152,10 +152,10 @@
                         android:layout_height="wrap_content"
                         android:text="›"
                         android:textSize="20sp"
-                        android:textColor="#BDBDBD" />
+                        android:textColor="?attr/echoHint" />
                 </LinearLayout>
 
-                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#F0EDE6" android:layout_marginStart="56dp" />
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="?attr/echoBorder" android:layout_marginStart="56dp" />
 
                 <LinearLayout
                     android:id="@+id/entry_schedules"
@@ -187,14 +187,14 @@
                             android:layout_height="wrap_content"
                             android:text="@string/profile_schedules"
                             android:textSize="15sp"
-                            android:textColor="#163536" />
+                            android:textColor="?attr/echoTextPrimary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/profile_schedules_desc"
                             android:textSize="12sp"
-                            android:textColor="#9E9E9E" />
+                            android:textColor="?attr/echoHint" />
                     </LinearLayout>
 
                     <TextView
@@ -202,7 +202,124 @@
                         android:layout_height="wrap_content"
                         android:text="›"
                         android:textSize="20sp"
-                        android:textColor="#BDBDBD" />
+                        android:textColor="?attr/echoHint" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 外观卡片 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="?attr/echoSurface"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/entry_theme"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:gravity="center"
+                        android:text="🎨"
+                        android:textSize="16sp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_theme"
+                            android:textSize="15sp"
+                            android:textColor="?attr/echoTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_theme_current"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/theme_warm_tea"
+                            android:textSize="12sp"
+                            android:textColor="?attr/echoHint" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textSize="20sp"
+                        android:textColor="?attr/echoHint" />
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="?attr/echoBorder" android:layout_marginStart="56dp" />
+
+                <LinearLayout
+                    android:id="@+id/entry_font"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:gravity="center"
+                        android:text="🔤"
+                        android:textSize="16sp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/profile_font"
+                            android:textSize="15sp"
+                            android:textColor="?attr/echoTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_font_current"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/font_default"
+                            android:textSize="12sp"
+                            android:textColor="?attr/echoHint" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textSize="20sp"
+                        android:textColor="?attr/echoHint" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -214,7 +331,7 @@
             android:layout_marginTop="16dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@android:color/white"
+            app:cardBackgroundColor="?attr/echoSurface"
             app:strokeWidth="0dp">
 
             <LinearLayout
@@ -252,14 +369,14 @@
                             android:layout_height="wrap_content"
                             android:text="@string/profile_export"
                             android:textSize="15sp"
-                            android:textColor="#163536" />
+                            android:textColor="?attr/echoTextPrimary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/profile_export_desc"
                             android:textSize="12sp"
-                            android:textColor="#9E9E9E" />
+                            android:textColor="?attr/echoHint" />
                     </LinearLayout>
 
                     <TextView
@@ -267,7 +384,7 @@
                         android:layout_height="wrap_content"
                         android:text="›"
                         android:textSize="20sp"
-                        android:textColor="#BDBDBD" />
+                        android:textColor="?attr/echoHint" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -279,7 +396,7 @@
             android:layout_marginTop="16dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="@android:color/white"
+            app:cardBackgroundColor="?attr/echoSurface"
             app:strokeWidth="0dp">
 
             <LinearLayout
@@ -317,14 +434,14 @@
                             android:layout_height="wrap_content"
                             android:text="清空数据"
                             android:textSize="15sp"
-                            android:textColor="#E53935" />
+                            android:textColor="?attr/echoDestructive" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="删除所有生活记录、日记、规划和记忆"
                             android:textSize="12sp"
-                            android:textColor="#9E9E9E" />
+                            android:textColor="?attr/echoHint" />
                     </LinearLayout>
 
                     <TextView
@@ -332,7 +449,7 @@
                         android:layout_height="wrap_content"
                         android:text="›"
                         android:textSize="20sp"
-                        android:textColor="#BDBDBD" />
+                        android:textColor="?attr/echoHint" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Echo 语义色属性 — 所有主题必须设置这些值 -->
+    <attr name="echoBackground" format="reference|color" />
+    <attr name="echoSurface" format="reference|color" />
+    <attr name="echoSurfaceVariant" format="reference|color" />
+    <attr name="echoPrimary" format="reference|color" />
+    <attr name="echoPrimaryDark" format="reference|color" />
+    <attr name="echoOnPrimary" format="reference|color" />
+    <attr name="echoTextPrimary" format="reference|color" />
+    <attr name="echoTextSecondary" format="reference|color" />
+    <attr name="echoAccent" format="reference|color" />
+    <attr name="echoBorder" format="reference|color" />
+    <attr name="echoDestructive" format="reference|color" />
+    <attr name="echoHint" format="reference|color" />
+
+    <!-- 聊天气泡专用色 -->
+    <attr name="echoBubbleUser" format="reference|color" />
+    <attr name="echoBubbleAssistant" format="reference|color" />
+    <attr name="echoToolInfoBg" format="reference|color" />
+</resources>

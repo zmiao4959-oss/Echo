@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="?attr/echoSurface">
 
     <!-- ========== 列表模式 ========== -->
     <LinearLayout
@@ -18,7 +18,7 @@
             android:layout_height="56dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:background="#FFFFFF"
+            android:background="?attr/echoSurface"
             android:elevation="2dp"
             android:paddingHorizontal="8dp">
 
@@ -29,7 +29,7 @@
                 android:padding="12dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_revert"
-                app:tint="#333333"
+                app:tint="?attr/echoTextPrimary"
                 android:contentDescription="返回" />
 
             <TextView
@@ -38,7 +38,7 @@
                 android:layout_weight="1"
                 android:text="@string/workspace_files_title"
                 android:textSize="18sp"
-                android:textColor="#333333"
+                android:textColor="?attr/echoTextPrimary"
                 android:textStyle="bold" />
 
         </LinearLayout>
@@ -51,7 +51,7 @@
             android:gravity="center"
             android:text="@string/empty_workspace_files"
             android:textSize="15sp"
-            android:textColor="#999999"
+            android:textColor="?attr/echoHint"
             android:visibility="gone" />
 
         <!-- 文件列表 -->
@@ -78,7 +78,7 @@
             android:layout_height="56dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:background="#FFFFFF"
+            android:background="?attr/echoSurface"
             android:elevation="2dp"
             android:paddingHorizontal="8dp">
 
@@ -89,7 +89,7 @@
                 android:padding="12dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_revert"
-                app:tint="#333333"
+                app:tint="?attr/echoTextPrimary"
                 android:contentDescription="返回" />
 
             <TextView
@@ -98,7 +98,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textSize="18sp"
-                android:textColor="#333333"
+                android:textColor="?attr/echoTextPrimary"
                 android:textStyle="bold" />
 
             <ImageButton
@@ -108,7 +108,7 @@
                 android:padding="10dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_edit"
-                app:tint="#4A90D9"
+                app:tint="?attr/echoPrimary"
                 android:contentDescription="编辑" />
 
         </LinearLayout>
@@ -130,7 +130,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
                     android:lineSpacingExtra="4dp"
-                    android:textColor="#333333"
+                    android:textColor="?attr/echoTextPrimary"
                     android:fontFamily="monospace"
                     android:textIsSelectable="true" />
 
@@ -141,7 +141,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
                     android:lineSpacingExtra="4dp"
-                    android:textColor="#333333"
+                    android:textColor="?attr/echoTextPrimary"
                     android:fontFamily="monospace"
                     android:gravity="top"
                     android:inputType="textMultiLine"

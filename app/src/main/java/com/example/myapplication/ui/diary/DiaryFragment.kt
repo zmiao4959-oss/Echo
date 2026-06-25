@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.ui.ThemeColors
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import kotlinx.coroutines.flow.collectLatest
@@ -181,17 +182,18 @@ class DiaryFragment : Fragment() {
     }
 
     private fun addMonthChip(label: String, monthValue: String?, isSelected: Boolean) {
-        val chip = Chip(requireContext())
+        val ctx = requireContext()
+        val chip = Chip(ctx)
         chip.text = label
         chip.chipStrokeWidth = 1f
         chip.chipStrokeColor = ColorStateList.valueOf(
-            if (isSelected) 0xFF2F7D7A.toInt() else 0xFFE0E0E0.toInt()
+            if (isSelected) ThemeColors.primary(ctx) else ThemeColors.border(ctx)
         )
         chip.chipBackgroundColor = ColorStateList.valueOf(
-            if (isSelected) 0xFF2F7D7A.toInt() else 0xFFFFFFFF.toInt()
+            if (isSelected) ThemeColors.primary(ctx) else ThemeColors.surface(ctx)
         )
         chip.setTextColor(
-            ColorStateList.valueOf(if (isSelected) 0xFFFFFFFF.toInt() else 0xFF163536.toInt())
+            ColorStateList.valueOf(if (isSelected) ThemeColors.onPrimary(ctx) else ThemeColors.textPrimary(ctx))
         )
         chip.isCheckable = false
         chip.isClickable = true
@@ -239,7 +241,7 @@ class DiaryFragment : Fragment() {
             val label = TextView(requireContext()).apply {
                 text = stat.mood
                 textSize = 13f
-                setTextColor(0xFF163536.toInt())
+                setTextColor(ThemeColors.textPrimary(requireContext()))
                 layoutParams = LinearLayout.LayoutParams(
                     (72 * density).toInt(),
                     LinearLayout.LayoutParams.WRAP_CONTENT
@@ -266,7 +268,7 @@ class DiaryFragment : Fragment() {
             val countText = TextView(requireContext()).apply {
                 text = "${stat.count}"
                 textSize = 12f
-                setTextColor(0xFF9E9E9E.toInt())
+                setTextColor(ThemeColors.hint(requireContext()))
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
@@ -282,16 +284,17 @@ class DiaryFragment : Fragment() {
         val days = viewModel.moodStatsDays.value
         val activeBg = AppCompatResources.getDrawable(requireContext(), R.drawable.bg_send_button)
         val inactiveBg = AppCompatResources.getDrawable(requireContext(), R.drawable.bg_input)
+        val ctx = requireContext()
         if (days == 7) {
             btnMood7d.background = activeBg
-            btnMood7d.setTextColor(0xFFFFFFFF.toInt())
+            btnMood7d.setTextColor(ThemeColors.onPrimary(ctx))
             btnMood30d.background = inactiveBg
-            btnMood30d.setTextColor(0xFF7A7A7A.toInt())
+            btnMood30d.setTextColor(ThemeColors.textSecondary(ctx))
         } else {
             btnMood7d.background = inactiveBg
-            btnMood7d.setTextColor(0xFF7A7A7A.toInt())
+            btnMood7d.setTextColor(ThemeColors.textSecondary(ctx))
             btnMood30d.background = activeBg
-            btnMood30d.setTextColor(0xFFFFFFFF.toInt())
+            btnMood30d.setTextColor(ThemeColors.onPrimary(ctx))
         }
     }
 

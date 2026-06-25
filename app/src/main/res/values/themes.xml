@@ -1,23 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme — Echo 温柔日记风 -->
-    <style name="Base.Theme.MyApplication" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/echo_primary</item>
-        <item name="colorPrimaryDark">@color/echo_primary_dark</item>
-        <item name="colorAccent">@color/echo_primary</item>
-        <item name="android:colorBackground">@color/echo_background</item>
-        <item name="colorSurface">@color/echo_surface</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorOnSurface">@color/echo_text_primary</item>
+    <!-- ============================================================
+    Echo 多主题系统 — Base + 5 套配色
+    父主题 Theme.Material3.DayNight.NoActionBar 提供 M3 基础设施
+    ============================================================ -->
+
+    <!-- ── Base 层：M3 映射 + EchoCard 样式 ── -->
+    <style name="Theme.MyApplication.Base" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- M3 属性映射到 echo 语义色 -->
+        <item name="colorPrimary">?attr/echoPrimary</item>
+        <item name="colorPrimaryDark">?attr/echoPrimaryDark</item>
+        <item name="colorAccent">?attr/echoPrimary</item>
+        <item name="android:colorBackground">?attr/echoBackground</item>
+        <item name="colorSurface">?attr/echoSurface</item>
+        <item name="colorOnPrimary">?attr/echoOnPrimary</item>
+        <item name="colorOnSurface">?attr/echoTextPrimary</item>
+        <item name="android:statusBarColor">?attr/echoBackground</item>
     </style>
 
-    <style name="Theme.MyApplication" parent="Base.Theme.MyApplication" />
-
-    <!-- Material3 卡片样式 -->
+    <!-- ── 卡片样式 ── -->
     <style name="EchoCard" parent="Widget.Material3.CardView.Filled">
         <item name="cardCornerRadius">20dp</item>
         <item name="cardElevation">2dp</item>
-        <item name="cardBackgroundColor">@color/echo_surface</item>
+        <item name="cardBackgroundColor">?attr/echoSurface</item>
         <item name="contentPadding">16dp</item>
+    </style>
+
+    <!-- ============================================================
+    主题 1: 暖茶 (Warm Tea) — 默认，teal + 暖白
+    ============================================================ -->
+    <style name="Theme.MyApplication" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#2F7D7A</item>
+        <item name="echoPrimaryDark">#1E5553</item>
+        <item name="echoBackground">#FAF7F0</item>
+        <item name="echoSurface">#FFFFFF</item>
+        <item name="echoSurfaceVariant">#F3EFE7</item>
+        <item name="echoTextPrimary">#163536</item>
+        <item name="echoTextSecondary">#7A7A7A</item>
+        <item name="echoAccent">#E9C98F</item>
+        <item name="echoOnPrimary">#FFFFFF</item>
+        <item name="echoBorder">#E0DCD5</item>
+        <item name="echoDestructive">#E53935</item>
+        <item name="echoHint">#BDBDBD</item>
+        <item name="echoBubbleUser">#2F7D7A</item>
+        <item name="echoBubbleAssistant">#F3EFE7</item>
+        <item name="echoToolInfoBg">#F3EFE7</item>
+    </style>
+
+    <!-- ============================================================
+    主题 2: 森林绿 (Forest)
+    ============================================================ -->
+    <style name="Theme.MyApplication.Forest" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#4A8C5C</item>
+        <item name="echoPrimaryDark">#2D6B3F</item>
+        <item name="echoBackground">#F6F9F0</item>
+        <item name="echoSurface">#FFFFFF</item>
+        <item name="echoSurfaceVariant">#EBF2E8</item>
+        <item name="echoTextPrimary">#1C3B28</item>
+        <item name="echoTextSecondary">#6B7F6D</item>
+        <item name="echoAccent">#D4A853</item>
+        <item name="echoOnPrimary">#FFFFFF</item>
+        <item name="echoBorder">#D8E4D2</item>
+        <item name="echoDestructive">#D9534F</item>
+        <item name="echoHint">#A8B8A0</item>
+        <item name="echoBubbleUser">#4A8C5C</item>
+        <item name="echoBubbleAssistant">#EBF2E8</item>
+        <item name="echoToolInfoBg">#EBF2E8</item>
+    </style>
+
+    <!-- ============================================================
+    主题 3: 深海蓝 (Ocean)
+    ============================================================ -->
+    <style name="Theme.MyApplication.Ocean" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#3A6999</item>
+        <item name="echoPrimaryDark">#234B73</item>
+        <item name="echoBackground">#F2F5FA</item>
+        <item name="echoSurface">#FFFFFF</item>
+        <item name="echoSurfaceVariant">#E8EDF5</item>
+        <item name="echoTextPrimary">#152238</item>
+        <item name="echoTextSecondary">#6B7B91</item>
+        <item name="echoAccent">#F4A460</item>
+        <item name="echoOnPrimary">#FFFFFF</item>
+        <item name="echoBorder">#D0D8E4</item>
+        <item name="echoDestructive">#C8553D</item>
+        <item name="echoHint">#A2B0C2</item>
+        <item name="echoBubbleUser">#3A6999</item>
+        <item name="echoBubbleAssistant">#E8EDF5</item>
+        <item name="echoToolInfoBg">#E8EDF5</item>
+    </style>
+
+    <!-- ============================================================
+    主题 4: 暮色紫 (Twilight)
+    ============================================================ -->
+    <style name="Theme.MyApplication.Twilight" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#7B5EA7</item>
+        <item name="echoPrimaryDark">#5A3F82</item>
+        <item name="echoBackground">#F6F4F8</item>
+        <item name="echoSurface">#FFFFFF</item>
+        <item name="echoSurfaceVariant">#EEEAF2</item>
+        <item name="echoTextPrimary">#2D1B3E</item>
+        <item name="echoTextSecondary">#7A7185</item>
+        <item name="echoAccent">#D4956A</item>
+        <item name="echoOnPrimary">#FFFFFF</item>
+        <item name="echoBorder">#D8D2E0</item>
+        <item name="echoDestructive">#C0392B</item>
+        <item name="echoHint">#B0A6BA</item>
+        <item name="echoBubbleUser">#7B5EA7</item>
+        <item name="echoBubbleAssistant">#EEEAF2</item>
+        <item name="echoToolInfoBg">#EEEAF2</item>
+    </style>
+
+    <!-- ============================================================
+    主题 5: 暗夜 (Dark)
+    ============================================================ -->
+    <style name="Theme.MyApplication.Dark" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#BB86FC</item>
+        <item name="echoPrimaryDark">#9C64E8</item>
+        <item name="echoBackground">#121212</item>
+        <item name="echoSurface">#1E1E1E</item>
+        <item name="echoSurfaceVariant">#2C2C2C</item>
+        <item name="echoTextPrimary">#E0E0E0</item>
+        <item name="echoTextSecondary">#A0A0A0</item>
+        <item name="echoAccent">#03DAC6</item>
+        <item name="echoOnPrimary">#000000</item>
+        <item name="echoBorder">#3D3D3D</item>
+        <item name="echoDestructive">#CF6679</item>
+        <item name="echoHint">#757575</item>
+        <item name="echoBubbleUser">#BB86FC</item>
+        <item name="echoBubbleAssistant">#2C2C2C</item>
+        <item name="echoToolInfoBg">#2C2C2C</item>
     </style>
 </resources>

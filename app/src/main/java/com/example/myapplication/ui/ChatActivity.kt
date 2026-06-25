@@ -16,7 +16,6 @@ import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,7 +24,7 @@ import com.example.myapplication.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class ChatActivity : AppCompatActivity() {
+class ChatActivity : ThemedActivity() {
 
     private lateinit var viewModel: ChatViewModel
     private lateinit var adapter: ChatAdapter
@@ -128,7 +127,7 @@ class ChatActivity : AppCompatActivity() {
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
                 isListening = true
-                btnVoice.setColorFilter(0xFFE53935.toInt()) // 红色表示正在听
+                btnVoice.setColorFilter(ThemeColors.destructive(this@ChatActivity)) // 红色表示正在听
                 statusText.text = getString(R.string.voice_listening)
                 statusText.visibility = View.VISIBLE
             }

@@ -5,8 +5,8 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.example.myapplication.ui.ThemedActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
@@ -22,7 +22,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class DiaryDetailActivity : AppCompatActivity() {
+class DiaryDetailActivity : ThemedActivity() {
 
     private lateinit var viewModel: DiaryViewModel
     private lateinit var audioPlayer: AudioPlayer

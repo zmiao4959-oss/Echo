@@ -63,6 +63,23 @@
     <string name="profile_workspace_desc">Echo 人格配置、记忆文件</string>
     <string name="profile_schedules">定时提醒</string>
     <string name="profile_schedules_desc">管理旧版闹钟提醒</string>
+    <!-- 主题选择 -->
+    <!-- 字体选择 -->
+    <string name="profile_font">字体风格</string>
+    <string name="profile_font_desc">选择你喜欢的字体</string>
+    <string name="font_default">系统默认</string>
+    <string name="font_light">轻体</string>
+    <string name="font_serif">衬线</string>
+    <string name="font_mono">等宽</string>
+
+    <string name="profile_theme">主题风格</string>
+    <string name="profile_theme_desc">选择你喜欢的颜色主题</string>
+    <string name="theme_warm_tea">暖茶</string>
+    <string name="theme_forest">森林绿</string>
+    <string name="theme_ocean">深海蓝</string>
+    <string name="theme_twilight">暮色紫</string>
+    <string name="theme_dark">暗夜</string>
+
     <string name="profile_export">导出数据</string>
     <string name="profile_export_desc">打包下载所有生活数据</string>
 

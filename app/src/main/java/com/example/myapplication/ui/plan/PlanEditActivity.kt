@@ -9,21 +9,22 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import com.example.myapplication.ui.ThemedActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.R
 import com.example.myapplication.MyApplication
 import com.example.myapplication.data.model.EchoPlan
 import com.example.myapplication.data.repository.PlanRepository
 import com.example.myapplication.schedule.PlanScheduler
+import com.example.myapplication.ui.ThemeColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.UUID
 
-class PlanEditActivity : AppCompatActivity() {
+class PlanEditActivity : ThemedActivity() {
 
     private var planId: String? = null
     private var editingPlan: EchoPlan? = null
@@ -117,8 +118,8 @@ class PlanEditActivity : AppCompatActivity() {
     private fun updateTypeChipAppearance() {
         val activeBg = getDrawable(R.drawable.bg_send_button)
         val inactiveBg = getDrawable(R.drawable.bg_input)
-        val activeColor = 0xFFFFFFFF.toInt()
-        val inactiveColor = 0xFF7A7A7A.toInt()
+        val activeColor = ThemeColors.onPrimary(this)
+        val inactiveColor = ThemeColors.textSecondary(this)
 
         for ((tv, type) in mapOf(
             chipReminder to "task_reminder",

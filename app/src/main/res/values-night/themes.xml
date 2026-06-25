@@ -1,7 +1,4 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.MyApplication" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
-    </style>
+    <!-- 暗夜模式由 Theme.MyApplication.Dark 提供，通过 ThemeManager 运行时切换。
+         values-night 资源目录保留用于未来可能系统暗色模式自动切换。 -->
 </resources>

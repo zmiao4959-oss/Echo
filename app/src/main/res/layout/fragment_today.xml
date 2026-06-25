@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF7F0"
+    android:background="?attr/echoBackground"
     android:paddingBottom="24dp">
 
     <LinearLayout
@@ -26,7 +26,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="13sp"
-                android:textColor="#7A7A7A"
+                android:textColor="?attr/echoTextSecondary"
                 tools:text="2025年6月24日 星期二" />
 
             <TextView
@@ -36,7 +36,7 @@
                 android:text="@string/today_greeting"
                 android:textSize="28sp"
                 android:textStyle="bold"
-                android:textColor="#163536"
+                android:textColor="?attr/echoTextPrimary"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 
@@ -49,7 +49,7 @@
             android:layout_marginTop="12dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="#F3EFE7"
+            app:cardBackgroundColor="?attr/echoSurfaceVariant"
             app:strokeWidth="0dp"
             android:visibility="gone">
 
@@ -66,7 +66,7 @@
                     android:text="今天的状态"
                     android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#2F7D7A" />
+                    android:textColor="?attr/echoPrimary" />
 
                 <TextView
                     android:id="@+id/tv_status_summary"
@@ -74,7 +74,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:textSize="14sp"
-                    android:textColor="#163536"
+                    android:textColor="?attr/echoTextPrimary"
                     android:lineSpacingExtra="4dp"
                     tools:text="今天记录了 3 个片段，心情平静充实。" />
             </LinearLayout>
@@ -89,7 +89,7 @@
             android:layout_marginTop="8dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="3dp"
-            app:cardBackgroundColor="@android:color/white"
+            app:cardBackgroundColor="?attr/echoSurface"
             app:strokeWidth="0dp">
 
             <LinearLayout
@@ -112,8 +112,8 @@
                         android:minHeight="48dp"
                         android:hint="@string/today_input_hint"
                         android:textSize="15sp"
-                        android:textColor="#163536"
-                        android:textColorHint="#BDBDBD"
+                        android:textColor="?attr/echoTextPrimary"
+                        android:textColorHint="?attr/echoHint"
                         android:background="@null"
                         android:inputType="textMultiLine"
                         android:maxLines="4"
@@ -128,7 +128,7 @@
                         android:background="?android:attr/selectableItemBackgroundBorderless"
                         android:src="@android:drawable/ic_btn_speak_now"
                         android:contentDescription="@string/voice_input"
-                        app:tint="#2F7D7A" />
+                        app:tint="?attr/echoPrimary" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -146,8 +146,8 @@
                         android:text="@string/today_record_button"
                         android:textSize="14sp"
                         app:cornerRadius="12dp"
-                        app:backgroundTint="#2F7D7A"
-                        android:textColor="@android:color/white" />
+                        app:backgroundTint="?attr/echoPrimary"
+                        android:textColor="?attr/echoOnPrimary" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -169,14 +169,14 @@
                 android:text="@string/today_records_title"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <TextView
                 android:id="@+id/tv_record_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="13sp"
-                android:textColor="#9E9E9E"
+                android:textColor="?attr/echoHint"
                 tools:text="3 条记录" />
         </LinearLayout>
 
@@ -200,7 +200,7 @@
             android:padding="32dp"
             android:text="@string/today_no_records"
             android:textSize="14sp"
-            android:textColor="#BDBDBD"
+            android:textColor="?attr/echoHint"
             android:visibility="gone" />
 
         <!-- ═══ 小爪对话卡片 ═══ -->
@@ -213,7 +213,7 @@
             android:text="@string/today_chat_section"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#163536" />
+            android:textColor="?attr/echoTextPrimary" />
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_chat_entry"
@@ -223,7 +223,7 @@
             android:layout_marginTop="8dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="3dp"
-            app:cardBackgroundColor="@android:color/white"
+            app:cardBackgroundColor="?attr/echoSurface"
             app:strokeWidth="0dp"
             android:clickable="true"
             android:focusable="true">
@@ -240,14 +240,14 @@
                     android:text="@string/today_chat_card_title"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="#2F7D7A" />
+                    android:textColor="?attr/echoPrimary" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/today_chat_card_subtitle"
                     android:textSize="14sp"
-                    android:textColor="#7A7A7A"
+                    android:textColor="?attr/echoTextSecondary"
                     android:layout_marginTop="4dp"
                     android:lineSpacingExtra="2dp" />
 
@@ -256,7 +256,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="13sp"
-                    android:textColor="#9E9E9E"
+                    android:textColor="?attr/echoHint"
                     android:layout_marginTop="8dp"
                     android:maxLines="1"
                     android:ellipsize="end"
@@ -276,7 +276,7 @@
                         android:layout_height="36dp"
                         android:text="@string/today_enter_chat"
                         android:textSize="13sp"
-                        android:textColor="#2F7D7A" />
+                        android:textColor="?attr/echoPrimary" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -290,7 +290,7 @@
             android:layout_marginTop="8dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="2dp"
-            app:cardBackgroundColor="#F3EFE7"
+            app:cardBackgroundColor="?attr/echoSurfaceVariant"
             app:strokeWidth="0dp">
 
             <LinearLayout
@@ -305,14 +305,14 @@
                     android:text="@string/today_ai_preview_title"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="#163536" />
+                    android:textColor="?attr/echoTextPrimary" />
 
                 <TextView
                     android:id="@+id/tv_diary_preview"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="13sp"
-                    android:textColor="#7A7A7A"
+                    android:textColor="?attr/echoTextSecondary"
                     android:layout_marginTop="6dp"
                     tools:text="已记录 3 个片段，可以生成今日日记" />
             </LinearLayout>

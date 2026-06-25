@@ -29,7 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="14sp"
-            android:textColor="#163536"
+            android:textColor="?attr/echoTextPrimary"
             android:maxLines="2"
             android:ellipsize="end"
             tools:text="你喜欢温柔但不鸡汤的语气" />
@@ -40,7 +40,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:textSize="12sp"
-            android:textColor="#BDBDBD"
+            android:textColor="?attr/echoHint"
             tools:text="偏好 · 语气" />
     </LinearLayout>
 

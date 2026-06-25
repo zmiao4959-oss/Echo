@@ -8,7 +8,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DiffUtil
@@ -25,7 +24,7 @@ import java.io.File
 /**
  * 工作区文件查看与编辑器。
  */
-class WorkspaceFilesActivity : AppCompatActivity() {
+class WorkspaceFilesActivity : ThemedActivity() {
 
     // ── 列表模式 ──
     private lateinit var listContainer: View

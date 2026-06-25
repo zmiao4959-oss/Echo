@@ -9,7 +9,7 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import android.content.res.ColorStateList
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MyApplication
@@ -27,7 +27,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ThemedActivity() {
 
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var weatherBar: View
@@ -65,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.btn_profile).setOnClickListener { openProfile(it) }
 
         bottomNav = findViewById(R.id.bottom_navigation)
+        applyBottomNavTint()
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_today -> showTodayFragment()
@@ -91,6 +92,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (ThemeManager.pendingChange) {
+            ThemeManager.pendingChange = false
+            recreate()
+            return
+        }
         val app = application as MyApplication
         BackgroundManager.apply(this, app.appConfig.backgroundKey)
         fetchDailyWeather()
@@ -158,6 +164,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── 顶部栏按钮 ──
+
+    private fun applyBottomNavTint() {
+        val checkedColor = ThemeColors.primary(this)
+        val defaultColor = ThemeColors.textSecondary(this)
+        val colorStateList = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf()
+            ),
+            intArrayOf(checkedColor, defaultColor)
+        )
+        bottomNav.itemIconTintList = colorStateList
+        bottomNav.itemTextColor = colorStateList
+    }
 
     fun openProfile(view: View) {
         startActivity(Intent(this, ProfileActivity::class.java))

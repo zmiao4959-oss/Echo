@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF7F0">
+    android:background="?attr/echoBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,7 +22,7 @@
             android:text="@string/memory_page_title"
             android:textSize="28sp"
             android:textStyle="bold"
-            android:textColor="#163536" />
+            android:textColor="?attr/echoTextPrimary" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -31,7 +31,7 @@
             android:paddingBottom="16dp"
             android:text="@string/memory_page_subtitle"
             android:textSize="14sp"
-            android:textColor="#7A7A7A" />
+            android:textColor="?attr/echoTextSecondary" />
 
         <!-- 搜索框 -->
         <LinearLayout
@@ -49,8 +49,8 @@
                 android:layout_weight="1"
                 android:hint="@string/memory_search_hint"
                 android:textSize="14sp"
-                android:textColor="#163536"
-                android:textColorHint="#BDBDBD"
+                android:textColor="?attr/echoTextPrimary"
+                android:textColorHint="?attr/echoHint"
                 android:background="@drawable/bg_input"
                 android:paddingHorizontal="16dp"
                 android:inputType="text"
@@ -66,7 +66,7 @@
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_search"
                 android:contentDescription="搜索"
-                app:tint="#2F7D7A" />
+                app:tint="?attr/echoPrimary" />
         </LinearLayout>
 
         <!-- 搜索结果模式 -->
@@ -92,7 +92,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textSize="14sp"
-                    android:textColor="#7A7A7A"
+                    android:textColor="?attr/echoTextSecondary"
                     tools:text='搜索 "项目": 5 条结果' />
 
                 <com.google.android.material.button.MaterialButton
@@ -102,7 +102,7 @@
                     android:layout_height="32dp"
                     android:text="清除"
                     android:textSize="12sp"
-                    android:textColor="#2F7D7A" />
+                    android:textColor="?attr/echoPrimary" />
             </LinearLayout>
 
             <!-- 搜索结果内容 -->
@@ -114,7 +114,7 @@
                 android:layout_marginTop="4dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="?attr/echoSurface"
                 app:strokeWidth="0dp">
 
                 <TextView
@@ -123,7 +123,7 @@
                     android:layout_height="wrap_content"
                     android:padding="16dp"
                     android:textSize="14sp"
-                    android:textColor="#163536"
+                    android:textColor="?attr/echoTextPrimary"
                     android:lineSpacingExtra="6dp"
                     android:textIsSelectable="true"
                     tools:text="── 生活片段 ──&#10;✏️ 今天完成了代码审查..." />
@@ -137,7 +137,7 @@
                 android:padding="32dp"
                 android:text="@string/memory_search_empty"
                 android:textSize="14sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 android:visibility="gone" />
         </LinearLayout>
 
@@ -159,7 +159,7 @@
                 android:text="@string/memory_today_echo"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_random"
@@ -169,7 +169,7 @@
                 android:layout_marginTop="8dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="3dp"
-                app:cardBackgroundColor="#F3EFE7"
+                app:cardBackgroundColor="?attr/echoSurfaceVariant"
                 app:strokeWidth="0dp">
 
                 <LinearLayout
@@ -185,7 +185,7 @@
                         android:layout_height="wrap_content"
                         android:textSize="18sp"
                         android:textStyle="italic"
-                        android:textColor="#163536"
+                        android:textColor="?attr/echoTextPrimary"
                         android:gravity="center"
                         android:lineSpacingExtra="6dp"
                         tools:text="「今天的项目有了新进展」" />
@@ -196,7 +196,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:textSize="13sp"
-                        android:textColor="#9E9E9E"
+                        android:textColor="?attr/echoHint"
                         tools:text="2025年6月24日" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -209,7 +209,7 @@
                 android:padding="24dp"
                 android:text="@string/memory_no_cards"
                 android:textSize="14sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 android:visibility="gone" />
 
             <!-- 那天的你卡片 -->
@@ -221,7 +221,7 @@
                 android:layout_marginTop="12dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="?attr/echoSurface"
                 app:strokeWidth="0dp"
                 android:clickable="true"
                 android:focusable="true"
@@ -240,7 +240,7 @@
                         android:text="那天的你"
                         android:textSize="13sp"
                         android:textStyle="bold"
-                        android:textColor="#E9C98F" />
+                        android:textColor="?attr/echoAccent" />
 
                     <TextView
                         android:id="@+id/tv_on_this_day_date"
@@ -248,7 +248,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:textSize="12sp"
-                        android:textColor="#9E9E9E"
+                        android:textColor="?attr/echoHint"
                         tools:text="2024年6月25日" />
 
                     <TextView
@@ -258,7 +258,7 @@
                         android:layout_marginTop="4dp"
                         android:textSize="15sp"
                         android:textStyle="bold"
-                        android:textColor="#163536"
+                        android:textColor="?attr/echoTextPrimary"
                         tools:text="项目有了重要进展" />
 
                     <TextView
@@ -267,7 +267,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:textSize="13sp"
-                        android:textColor="#7A7A7A"
+                        android:textColor="?attr/echoTextSecondary"
                         android:maxLines="2"
                         android:ellipsize="end"
                         tools:text="今天完成了代码审查，感觉..." />
@@ -279,7 +279,7 @@
                         android:layout_marginTop="8dp"
                         android:text="查看 ›"
                         android:textSize="13sp"
-                        android:textColor="#2F7D7A" />
+                        android:textColor="?attr/echoPrimary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -293,7 +293,7 @@
                 android:text="@string/memory_cards_section"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_cards"
@@ -311,7 +311,7 @@
                 android:padding="16dp"
                 android:text="@string/memory_empty_cards"
                 android:textSize="13sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 android:visibility="gone" />
 
             <!-- 长期记忆 -->
@@ -324,7 +324,7 @@
                 android:text="@string/memory_profile_section"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_profiles"
@@ -342,7 +342,7 @@
                 android:padding="16dp"
                 android:text="@string/memory_no_profile"
                 android:textSize="13sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>

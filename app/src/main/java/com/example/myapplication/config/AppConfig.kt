@@ -67,6 +67,16 @@ class AppConfig(context: Context) {
         get() = prefs.getBoolean(KEY_TTS_ENABLED, true)
         set(value) = prefs.edit().putBoolean(KEY_TTS_ENABLED, value).apply()
 
+    // ── 主题配置 ──
+    var themeKey: String
+        get() = prefs.getString(KEY_THEME, "warm_tea") ?: "warm_tea"
+        set(value) = prefs.edit().putString(KEY_THEME, value).apply()
+
+    // ── 字体配置 ──
+    var fontKey: String
+        get() = prefs.getString(KEY_FONT, "default") ?: "default"
+        set(value) = prefs.edit().putString(KEY_FONT, value).apply()
+
     // ── 背景配置 ──
     var backgroundKey: String
         get() = prefs.getString(KEY_BACKGROUND, "bg_default_1") ?: "bg_default_1"
@@ -93,6 +103,8 @@ class AppConfig(context: Context) {
         private const val KEY_TTS_SPEAKER = "tts_speaker"
         private const val KEY_TTS_URL = "tts_url"
         private const val KEY_TTS_ENABLED = "tts_enabled"
+        private const val KEY_THEME = "theme_key"
+        private const val KEY_FONT = "font_key"
         private const val KEY_BACKGROUND = "background_key"
     }
 }

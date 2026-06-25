@@ -5,7 +5,7 @@
     android:id="@+id/root_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF7F0">
+    android:background="?attr/echoBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,7 +20,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
-            android:background="@android:color/white"
+            android:background="?attr/echoSurface"
             android:elevation="2dp">
 
             <TextView
@@ -28,7 +28,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/app_title"
-                android:textColor="#163536"
+                android:textColor="?attr/echoTextPrimary"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 tools:ignore="VisualLintSystemUi" />
@@ -41,7 +41,7 @@
                 android:contentDescription="@string/profile_entry"
                 android:padding="10dp"
                 android:src="@android:drawable/ic_menu_myplaces"
-                app:tint="#1E5553" />
+                app:tint="?attr/echoPrimaryDark" />
 
             <!-- 个人中心入口 -->
         </LinearLayout>
@@ -54,7 +54,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
-            android:background="#F0F4F8"
+            android:background="?attr/echoSurfaceVariant"
             android:visibility="gone">
 
             <TextView
@@ -70,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textSize="13sp"
-                android:textColor="#555"
+                android:textColor="?attr/echoTextSecondary"
                 android:maxLines="1"
                 android:ellipsize="end" />
         </LinearLayout>
@@ -90,11 +90,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="@android:color/white"
+        android:background="?attr/echoSurface"
         app:menu="@menu/bottom_nav"
         app:labelVisibilityMode="labeled"
-        app:itemIconTint="@color/bottom_nav_selector"
-        app:itemTextColor="@color/bottom_nav_selector"
         tools:ignore="VisualLintBottomNav" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

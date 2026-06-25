@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/role_claw"
-        android:textColor="#4A90D9"
+        android:textColor="?attr/echoPrimary"
         android:textSize="11sp"
         android:textStyle="bold" />
 
@@ -34,7 +34,7 @@
         android:maxWidth="280dp"
         android:background="@drawable/bg_tool_info"
         android:padding="8dp"
-        android:textColor="#666666"
+        android:textColor="?attr/echoTextSecondary"
         android:textSize="11sp"
         android:fontFamily="monospace"
         android:visibility="gone" />

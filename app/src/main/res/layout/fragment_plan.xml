@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF7F0">
+    android:background="?attr/echoBackground">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -26,7 +26,7 @@
                 android:text="@string/plan_page_title"
                 android:textSize="28sp"
                 android:textStyle="bold"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -35,7 +35,7 @@
                 android:paddingBottom="16dp"
                 android:text="@string/plan_page_subtitle"
                 android:textSize="14sp"
-                android:textColor="#7A7A7A" />
+                android:textColor="?attr/echoTextSecondary" />
 
             <!-- ═══ 任务提醒 ═══ -->
             <TextView
@@ -48,7 +48,7 @@
                 android:text="⏰ 任务提醒"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#2F7D7A" />
+                android:textColor="?attr/echoPrimary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_reminder_plans"
@@ -66,7 +66,7 @@
                 android:padding="12dp"
                 android:text="暂无"
                 android:textSize="12sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 android:visibility="gone" />
 
             <!-- ═══ 主动问候 ═══ -->
@@ -80,7 +80,7 @@
                 android:text="💬 主动问候"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#7A7A7A" />
+                android:textColor="?attr/echoTextSecondary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_checkin_plans"
@@ -98,7 +98,7 @@
                 android:padding="12dp"
                 android:text="暂无"
                 android:textSize="12sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 android:visibility="gone" />
 
             <!-- ═══ 回忆触发 ═══ -->
@@ -112,7 +112,7 @@
                 android:text="💭 回忆触发"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#7A7A7A" />
+                android:textColor="?attr/echoTextSecondary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_memory_plans"
@@ -130,7 +130,7 @@
                 android:padding="12dp"
                 android:text="暂无"
                 android:textSize="12sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 android:visibility="gone" />
 
             <!-- ═══ 自动整理 ═══ -->
@@ -144,7 +144,7 @@
                 android:text="📖 自动整理"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#7A7A7A" />
+                android:textColor="?attr/echoTextSecondary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_autodiary_plans"
@@ -162,7 +162,7 @@
                 android:padding="12dp"
                 android:text="暂无"
                 android:textSize="12sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 android:visibility="gone" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
@@ -177,7 +177,7 @@
         android:layout_marginBottom="32dp"
         android:src="@android:drawable/ic_input_add"
         android:contentDescription="新建规划"
-        app:backgroundTint="#2F7D7A"
-        app:tint="@android:color/white" />
+        app:backgroundTint="?attr/echoPrimary"
+        app:tint="?attr/echoOnPrimary" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

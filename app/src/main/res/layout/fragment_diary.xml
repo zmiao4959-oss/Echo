@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF7F0">
+    android:background="?attr/echoBackground">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -26,7 +26,7 @@
                 android:text="@string/diary_page_title"
                 android:textSize="28sp"
                 android:textStyle="bold"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -35,7 +35,7 @@
                 android:paddingBottom="16dp"
                 android:text="@string/diary_page_subtitle"
                 android:textSize="14sp"
-                android:textColor="#7A7A7A" />
+                android:textColor="?attr/echoTextSecondary" />
 
             <!-- 今日日记卡片 -->
             <com.google.android.material.card.MaterialCardView
@@ -45,7 +45,7 @@
                 android:layout_marginHorizontal="16dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="3dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="?attr/echoSurface"
                 app:strokeWidth="0dp">
 
                 <LinearLayout
@@ -60,7 +60,7 @@
                         android:text="@string/diary_today_card_title"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="#2F7D7A" />
+                        android:textColor="?attr/echoPrimary" />
 
                     <!-- 如果有日记，显示摘要 -->
                     <LinearLayout
@@ -78,7 +78,7 @@
                             android:layout_marginTop="8dp"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            android:textColor="#163536"
+                            android:textColor="?attr/echoTextPrimary"
                             tools:text="今天的项目有了新进展" />
 
                         <TextView
@@ -87,7 +87,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:textSize="14sp"
-                            android:textColor="#7A7A7A"
+                            android:textColor="?attr/echoTextSecondary"
                             android:maxLines="3"
                             android:ellipsize="end"
                             android:lineSpacingExtra="3dp"
@@ -106,7 +106,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:textSize="13sp"
-                                android:textColor="#2F7D7A"
+                                android:textColor="?attr/echoPrimary"
                                 tools:text="平静充实" />
 
                             <com.google.android.material.button.MaterialButton
@@ -116,7 +116,7 @@
                                 android:layout_height="36dp"
                                 android:text="@string/diary_read_full"
                                 android:textSize="13sp"
-                                android:textColor="#2F7D7A" />
+                                android:textColor="?attr/echoPrimary" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -135,7 +135,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             android:textSize="14sp"
-                            android:textColor="#9E9E9E"
+                            android:textColor="?attr/echoHint"
                             android:text="@string/diary_no_today" />
 
                         <com.google.android.material.button.MaterialButton
@@ -147,8 +147,8 @@
                             android:text="@string/diary_generate_button"
                             android:textSize="14sp"
                             app:cornerRadius="12dp"
-                            app:backgroundTint="#2F7D7A"
-                            android:textColor="@android:color/white" />
+                            app:backgroundTint="?attr/echoPrimary"
+                            android:textColor="?attr/echoOnPrimary" />
                     </LinearLayout>
 
                     <!-- 生成中的进度 -->
@@ -165,14 +165,14 @@
                             android:layout_height="24dp"
                             android:layout_marginEnd="8dp"
                             style="?android:attr/progressBarStyle"
-                            android:indeterminateTint="#2F7D7A" />
+                            android:indeterminateTint="?attr/echoPrimary" />
 
                         <TextView
                             android:id="@+id/tv_generating_status"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="14sp"
-                            android:textColor="#7A7A7A"
+                            android:textColor="?attr/echoTextSecondary"
                             android:text="正在生成日记…" />
                     </LinearLayout>
                 </LinearLayout>
@@ -187,7 +187,7 @@
                 android:layout_marginTop="16dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="?attr/echoSurface"
                 app:strokeWidth="0dp"
                 android:visibility="gone"
                 tools:visibility="visible">
@@ -211,7 +211,7 @@
                             android:text="情绪趋势"
                             android:textSize="15sp"
                             android:textStyle="bold"
-                            android:textColor="#163536" />
+                            android:textColor="?attr/echoTextPrimary" />
 
                         <TextView
                             android:id="@+id/btn_mood_7d"
@@ -221,7 +221,7 @@
                             android:paddingHorizontal="8dp"
                             android:text="7天"
                             android:textSize="12sp"
-                            android:textColor="@android:color/white"
+                            android:textColor="?attr/echoOnPrimary"
                             android:background="@drawable/bg_send_button"
                             android:clickable="true"
                             android:focusable="true" />
@@ -234,7 +234,7 @@
                             android:paddingHorizontal="8dp"
                             android:text="30天"
                             android:textSize="12sp"
-                            android:textColor="#7A7A7A"
+                            android:textColor="?attr/echoTextSecondary"
                             android:background="@drawable/bg_input"
                             android:layout_marginStart="6dp"
                             android:clickable="true"
@@ -257,7 +257,7 @@
                         android:layout_marginTop="8dp"
                         android:text="还没有足够的情绪数据"
                         android:textSize="13sp"
-                        android:textColor="#BDBDBD"
+                        android:textColor="?attr/echoHint"
                         android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -279,7 +279,7 @@
                     android:text="@string/diary_history_title"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="#163536" />
+                    android:textColor="?attr/echoTextPrimary" />
 
                 <TextView
                     android:id="@+id/btn_filter"
@@ -289,7 +289,7 @@
                     android:paddingHorizontal="10dp"
                     android:text="筛选 ▾"
                     android:textSize="13sp"
-                    android:textColor="#2F7D7A"
+                    android:textColor="?attr/echoPrimary"
                     android:background="@drawable/bg_input"
                     android:clickable="true"
                     android:focusable="true" />
@@ -302,7 +302,7 @@
                 android:paddingHorizontal="20dp"
                 android:paddingBottom="8dp"
                 android:textSize="13sp"
-                android:textColor="#9E9E9E"
+                android:textColor="?attr/echoHint"
                 tools:text="共 5 篇日记" />
 
             <!-- 月份筛选 chip 行 -->
@@ -339,7 +339,7 @@
                 android:padding="32dp"
                 android:text="@string/diary_empty_list"
                 android:textSize="14sp"
-                android:textColor="#BDBDBD"
+                android:textColor="?attr/echoHint"
                 android:visibility="gone" />
 
         </LinearLayout>

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF7F0">
+    android:background="?attr/echoBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -18,7 +18,7 @@
             android:text="类型"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="#7A7A7A"
+            android:textColor="?attr/echoTextSecondary"
             android:layout_marginTop="8dp" />
 
         <LinearLayout
@@ -36,7 +36,7 @@
                 android:paddingHorizontal="14dp"
                 android:text="⏰ 任务提醒"
                 android:textSize="13sp"
-                android:textColor="@android:color/white"
+                android:textColor="?attr/echoOnPrimary"
                 android:background="@drawable/bg_send_button"
                 android:clickable="true"
                 android:focusable="true" />
@@ -50,7 +50,7 @@
                 android:paddingHorizontal="14dp"
                 android:text="👋 主动问候"
                 android:textSize="13sp"
-                android:textColor="#7A7A7A"
+                android:textColor="?attr/echoTextSecondary"
                 android:background="@drawable/bg_input"
                 android:clickable="true"
                 android:focusable="true" />
@@ -64,7 +64,7 @@
                 android:paddingHorizontal="14dp"
                 android:text="💭 回忆触发"
                 android:textSize="13sp"
-                android:textColor="#7A7A7A"
+                android:textColor="?attr/echoTextSecondary"
                 android:background="@drawable/bg_input"
                 android:clickable="true"
                 android:focusable="true" />
@@ -78,7 +78,7 @@
                 android:paddingHorizontal="14dp"
                 android:text="📝 自动日记"
                 android:textSize="13sp"
-                android:textColor="#7A7A7A"
+                android:textColor="?attr/echoTextSecondary"
                 android:background="@drawable/bg_input"
                 android:clickable="true"
                 android:focusable="true" />
@@ -91,7 +91,7 @@
             android:text="标题"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="#7A7A7A"
+            android:textColor="?attr/echoTextSecondary"
             android:layout_marginTop="20dp" />
 
         <EditText
@@ -101,7 +101,7 @@
             android:layout_marginTop="8dp"
             android:hint="例如：检查计算任务"
             android:textSize="16sp"
-            android:textColor="#163536"
+            android:textColor="?attr/echoTextPrimary"
             android:inputType="text"
             android:minHeight="48dp"
             android:background="@drawable/bg_input"
@@ -115,7 +115,7 @@
             android:text="提醒内容"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="#7A7A7A"
+            android:textColor="?attr/echoTextSecondary"
             android:layout_marginTop="16dp" />
 
         <EditText
@@ -125,7 +125,7 @@
             android:layout_marginTop="8dp"
             android:hint="Echo 会说的话…"
             android:textSize="15sp"
-            android:textColor="#163536"
+            android:textColor="?attr/echoTextPrimary"
             android:inputType="textMultiLine"
             android:minLines="2"
             android:background="@drawable/bg_input"
@@ -139,7 +139,7 @@
             android:text="触发时间"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="#7A7A7A"
+            android:textColor="?attr/echoTextSecondary"
             android:layout_marginTop="16dp" />
 
         <LinearLayout
@@ -164,7 +164,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="15sp"
-                    android:textColor="#163536"
+                    android:textColor="?attr/echoTextPrimary"
                     android:text="今天" />
             </LinearLayout>
 
@@ -184,7 +184,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="15sp"
-                    android:textColor="#163536"
+                    android:textColor="?attr/echoTextPrimary"
                     android:text="09:00" />
             </LinearLayout>
         </LinearLayout>
@@ -196,7 +196,7 @@
             android:text="重复"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="#7A7A7A"
+            android:textColor="?attr/echoTextSecondary"
             android:layout_marginTop="16dp" />
 
         <EditText
@@ -206,7 +206,7 @@
             android:layout_marginTop="8dp"
             android:hint="留空不重复，或输入如：daily / weekly"
             android:textSize="15sp"
-            android:textColor="#163536"
+            android:textColor="?attr/echoTextPrimary"
             android:inputType="text"
             android:minHeight="48dp"
             android:background="@drawable/bg_input"
@@ -227,7 +227,7 @@
                 android:layout_weight="1"
                 android:text="自动语音播报"
                 android:textSize="15sp"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switch_auto_speak"
@@ -248,7 +248,7 @@
                 android:layout_weight="1"
                 android:text="启用"
                 android:textSize="15sp"
-                android:textColor="#163536" />
+                android:textColor="?attr/echoTextPrimary" />
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switch_enabled"
@@ -265,7 +265,7 @@
             android:layout_marginTop="24dp"
             android:text="保存"
             android:textSize="16sp"
-            android:textColor="@android:color/white"
+            android:textColor="?attr/echoOnPrimary"
             android:background="@drawable/bg_send_button"
             app:cornerRadius="14dp" />
 
@@ -276,7 +276,7 @@
             android:layout_marginTop="8dp"
             android:text="删除规划"
             android:textSize="16sp"
-            android:textColor="#E53935"
+            android:textColor="?attr/echoDestructive"
             android:visibility="gone"
             android:background="@android:color/transparent" />
 

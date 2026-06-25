@@ -5,7 +5,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.TextView
+import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.store.DataExporter
 import com.example.myapplication.data.store.EchoFileStore
@@ -14,11 +15,25 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class ProfileActivity : AppCompatActivity() {
+class ProfileActivity : ThemedActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
+
+        val app = application as MyApplication
+        val config = app.appConfig
+
+        // 显示当前主题名
+        val tvThemeCurrent = findViewById<TextView>(R.id.tv_theme_current)
+        tvThemeCurrent.text = ThemeManager.themeNames[config.themeKey] ?: getString(R.string.theme_warm_tea)
+
+        // 显示当前字体名
+        val tvFontCurrent = findViewById<TextView>(R.id.tv_font_current)
+        tvFontCurrent.text = FontManager.fontNames[config.fontKey] ?: getString(R.string.font_default)
+
+        findViewById<View>(R.id.entry_theme).setOnClickListener { showThemePickerDialog() }
+        findViewById<View>(R.id.entry_font).setOnClickListener { showFontPickerDialog() }
 
         findViewById<View>(R.id.entry_settings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -69,6 +84,53 @@ class ProfileActivity : AppCompatActivity() {
                 .setNegativeButton("取消", null)
                 .show()
         }
+    }
+
+    private fun showThemePickerDialog() {
+        val config = (application as MyApplication).appConfig
+        val themes = ThemeManager.themeNames.entries.toList()
+        val currentKey = config.themeKey
+        val currentIndex = themes.indexOfFirst { it.key == currentKey }.coerceAtLeast(0)
+        val names = themes.map { it.value }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("选择主题")
+            .setSingleChoiceItems(names, currentIndex) { dialog, which ->
+                val newKey = themes[which].key
+                if (newKey != currentKey) {
+                    config.themeKey = newKey
+                    ThemeManager.pendingChange = true
+                    dialog.dismiss()
+                    // 用 finish + startActivity 替代 recreate()，确保主题立即生效
+                    finish()
+                    startActivity(Intent(this@ProfileActivity, ProfileActivity::class.java))
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showFontPickerDialog() {
+        val config = (application as MyApplication).appConfig
+        val fonts = FontManager.fontNames.entries.toList()
+        val currentKey = config.fontKey
+        val currentIndex = fonts.indexOfFirst { it.key == currentKey }.coerceAtLeast(0)
+        val names = fonts.map { it.value }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("选择字体")
+            .setSingleChoiceItems(names, currentIndex) { dialog, which ->
+                val newKey = fonts[which].key
+                if (newKey != currentKey) {
+                    config.fontKey = newKey
+                    ThemeManager.pendingChange = true
+                    dialog.dismiss()
+                    finish()
+                    startActivity(Intent(this@ProfileActivity, ProfileActivity::class.java))
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun clearAllData() {
