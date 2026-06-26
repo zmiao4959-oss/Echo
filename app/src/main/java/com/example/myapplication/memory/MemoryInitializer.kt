@@ -124,6 +124,8 @@ object MemoryInitializer {
 Agent 可以在对话中更新此文件以保存重要信息。
 
 ---
+
+## ✅ 确认的记忆
 （暂无记忆内容，Echo 会在对话中自动记录）
         """.trimIndent()
     )

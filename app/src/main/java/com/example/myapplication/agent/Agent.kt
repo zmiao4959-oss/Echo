@@ -33,51 +33,14 @@ class Agent(
     private val gson = Gson()
 
     /** 构建 System Prompt（Echo 人格 + 用户画像摘要 + 工具 + 运行时） */
-    private fun buildSystemPrompt(userMessage: String): String {
+    private fun buildSystemPrompt(memoryCtx: MemoryContextBuilder.MemoryContext): String {
         // 1. Echo 基础人格（echo_profile.md）
         val echoProfile = readEchoProfile()
 
-        // 2. 用户画像摘要：取 MEMORY.md 前 600 字符 + Echo 记住的事实
-        val fullMemory = FileStore.readWorkspaceFile("MEMORY.md")
-        val profileSummary = if (fullMemory.isNotBlank()) {
-            val lines = fullMemory.split("\n").filter { it.isNotBlank() }
-            val summary = lines.take(10).joinToString("\n")
-            if (summary.length > 600) summary.take(600) + "…" else summary
-        } else ""
-
-        // 3. 与本轮消息相关的记忆片段（通过 MemorySearch）
-        val relevantMemory = buildString {
-            if (userMessage.isNotBlank()) {
-                val results = MemorySearch.keywordSearch(
-                    FileStore.workspaceDir,
-                    userMessage,
-                    maxResults = 2
-                )
-                for (r in results) {
-                    val shortSnippet = r.snippet.take(300)
-                    append("\n[记忆: ${r.filePath}]\n$shortSnippet\n")
-                }
-            }
-            // 最近记忆卡片
-            val memoryDir = java.io.File(FileStore.workspaceDir, "memory")
-            if (memoryDir.exists()) {
-                val recent = memoryDir.listFiles()
-                    ?.filter { it.extension == "md" && it.name != "MEMORY.md" }
-                    ?.sortedByDescending { it.lastModified() }
-                    ?.take(2) ?: emptyList()
-                for (f in recent) {
-                    val text = try { f.readText(Charsets.UTF_8).take(300) } catch (_: Exception) { "" }
-                    if (text.isNotBlank()) {
-                        append("\n[最近: ${f.name}]\n$text\n")
-                    }
-                }
-            }
-        }
-
-        // 4. 工具描述
+        // 2. 工具描述
         val toolsDesc = ToolRegistry.getDescriptions()
 
-        // 5. 运行时信息
+        // 3. 运行时信息
         val now = System.currentTimeMillis()
         val sdf = SimpleDateFormat("yyyy年M月d日", Locale.CHINESE)
         val todayStr = sdf.format(Date(now))
@@ -96,8 +59,8 @@ $toolsDesc
 
         val parts = mutableListOf<String>()
         if (echoProfile.isNotBlank()) parts.add(echoProfile)
-        if (profileSummary.isNotBlank()) parts.add("## 用户画像\n$profileSummary")
-        if (relevantMemory.isNotBlank()) parts.add("## 相关记忆\n$relevantMemory")
+        if (memoryCtx.profileSummary.isNotBlank()) parts.add("## 用户画像\n${memoryCtx.profileSummary}")
+        if (memoryCtx.relevantMemorySection.isNotBlank()) parts.add("## 相关记忆\n${memoryCtx.relevantMemorySection}")
         parts.add(runtime)
 
         return parts.joinToString("\n\n")
@@ -110,45 +73,9 @@ $toolsDesc
         } catch (_: Exception) { "" }
     }
 
-    /** 记忆搜索前缀 */
-    private fun memoryPrefix(userMessage: String): String {
-        if (userMessage.isBlank()) return ""
-        val results = MemorySearch.keywordSearch(
-            FileStore.workspaceDir,
-            userMessage,
-            maxResults = 3
-        )
-        if (results.isEmpty()) return ""
-
-        val lines = mutableListOf("[Memory Search Results]")
-        for (r in results) {
-            lines.add("Source: ${r.filePath} (score: ${"%.2f".format(r.score)})")
-            lines.add(r.snippet)
-            lines.add("")
-        }
-        return lines.joinToString("\n")
-    }
-
-    /** 从 MemoryRepository 取启用+已确认的画像注入系统提示 */
-    private suspend fun buildStructuredProfileInjection(): String {
-        return try {
-            val repo = com.example.myapplication.data.repository.MemoryRepository()
-            val profiles = repo.getEnabledProfiles().filter { it.status == "confirmed" }
-            if (profiles.isEmpty()) return ""
-            val cats = linkedMapOf(
-                "identity" to "身份", "preference" to "偏好", "habit" to "习惯",
-                "goal" to "目标", "project" to "项目", "relationship" to "关系"
-            )
-            buildString {
-                append("\n\n## 结构化用户画像\n")
-                for ((cat, label) in cats) {
-                    val items = profiles.filter { it.category == cat }
-                    if (items.isNotEmpty()) {
-                        append("- $label: ${items.joinToString("；") { it.value }}\n")
-                    }
-                }
-            }
-        } catch (_: Exception) { "" }
+    /** 记忆搜索前缀（由 MemoryContextBuilder 统一提供） */
+    private fun memoryPrefix(memoryCtx: MemoryContextBuilder.MemoryContext): String {
+        return memoryCtx.memoryPrefix
     }
 
     private fun createProvider(): LLMProvider = ProviderFactory.createLLMProvider()
@@ -163,10 +90,10 @@ $toolsDesc
         }
     }
 
-    /** 添加用户消息（含记忆搜索前缀） */
-    private fun appendUserMessage(session: Session, userMessage: String) {
+    /** 添加用户消息（含记忆搜索前缀，由 MemoryContextBuilder 统一提供） */
+    private fun appendUserMessage(session: Session, userMessage: String, memoryCtx: MemoryContextBuilder.MemoryContext) {
         if (userMessage.isBlank()) return
-        val prefix = memoryPrefix(userMessage)
+        val prefix = memoryPrefix(memoryCtx)
         val fullContent = if (prefix.isNotBlank()) "$prefix\n$userMessage" else userMessage
         session.addMessage(LLMMessage(role = "user", content = fullContent))
     }
@@ -284,10 +211,12 @@ $toolsDesc
         val provider = createProvider()
         val session = resolveOrCreateSession(context)
 
-        appendUserMessage(session, context.userMessage)
+        val memoryCtx = MemoryContextBuilder.build(context.userMessage)
 
-        val systemPrompt = buildSystemPrompt(context.userMessage) +
-            withContext(Dispatchers.IO) { buildStructuredProfileInjection() }
+        appendUserMessage(session, context.userMessage, memoryCtx)
+
+        val systemPrompt = buildSystemPrompt(memoryCtx) +
+            memoryCtx.structuredProfileInjection
 
         val tools = ToolRegistry.listForLLM()
         val toolList = tools.ifEmpty { null }

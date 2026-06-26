@@ -69,7 +69,15 @@ object MemorySearch {
         val results = mutableListOf<SearchResult>()
 
         for (file in files) {
-            val content = file.readText(Charsets.UTF_8)
+            val rawContent = file.readText(Charsets.UTF_8)
+            // Section-aware: only search within confirmed sections for .md files
+            val content = if (file.extension == "md") {
+                MemoryMdParser.readConfirmedSection(rawContent)
+            } else {
+                rawContent
+            }
+            // If filtered content is empty, skip this file
+            if (content.isBlank()) continue
             val contentLower = content.lowercase()
 
             // ── 匹配计分 ──

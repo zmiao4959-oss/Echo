@@ -120,34 +120,125 @@ class MemorySearchTest {
     fun `keywordSearch ignores disabled facts section in MEMORY_md`() {
         val workspace = tmpDir.newFolder("workspace")
         File(workspace, "MEMORY.md").writeText("""
-## 用户画像
+## ✅ 确认的记忆
 用户叫小明，在北京工作。
 
-## 已禁用
+## 🚫 已禁用
 用户叫小红，在上海工作。
 """.trimIndent())
 
         val results = MemorySearch.keywordSearch(workspace, "小明")
         assertTrue("Should find active fact", results.isNotEmpty())
+
+        val resultsDisabled = MemorySearch.keywordSearch(workspace, "小红")
+        assertTrue("Should NOT find disabled fact", resultsDisabled.isEmpty())
     }
 
     @Test
     fun `keywordSearch does not return results for disabled section content`() {
         val workspace = tmpDir.newFolder("workspace")
         File(workspace, "MEMORY.md").writeText("""
-## 用户画像
+## ✅ 确认的记忆
 用户叫小明。
 
-## 已禁用
+## 🚫 已禁用
 用户叫小红。
 """.trimIndent())
 
-        // "小红" is in disabled section — MemorySearch scans entire file, so it matches.
-        // This is a known limitation: MemorySearch is text-based and doesn't parse sections.
-        // The structured UserProfileMemory filtering happens in Agent.buildSystemPrompt() and MemoryRepository.searchAll().
         val results = MemorySearch.keywordSearch(workspace, "小红")
-        // Document current behavior — currently matches because text-based search doesn't filter sections
-        assertTrue("Current implementation matches all text — section filtering is at Agent/Repository layer", results.size >= 0)
-        // Future: when MEMORY.md section parsing is added, expect results.isEmpty()
+        assertTrue("Disabled section content should not be searchable", results.isEmpty())
+    }
+
+    @Test
+    fun `keywordSearch skips disabled section in MEMORY_md`() {
+        val workspace = tmpDir.newFolder("workspace")
+        File(workspace, "MEMORY.md").writeText("""
+## ✅ 确认的记忆
+用户喜欢咖啡。
+
+## 🚫 已禁用
+用户喜欢奶茶。
+""".trimIndent())
+
+        val results = MemorySearch.keywordSearch(workspace, "奶茶")
+        assertTrue("Search for disabled-only term should return empty", results.isEmpty())
+    }
+
+    @Test
+    fun `keywordSearch skips pending section in MEMORY_md`() {
+        val workspace = tmpDir.newFolder("workspace")
+        File(workspace, "MEMORY.md").writeText("""
+## ✅ 确认的记忆
+用户叫小明。
+
+## ⏳ 待确认
+用户可能25岁。
+""".trimIndent())
+
+        val results = MemorySearch.keywordSearch(workspace, "25岁")
+        assertTrue("Pending section content should not be searchable", results.isEmpty())
+    }
+
+    @Test
+    fun `keywordSearch searches only confirmed section in MEMORY_md`() {
+        val workspace = tmpDir.newFolder("workspace")
+        File(workspace, "MEMORY.md").writeText("""
+## ✅ 确认的记忆
+用户在北京工作。
+
+## ⏳ 待确认
+用户可能喜欢游泳。
+
+## 🚫 已禁用
+用户以前在上海。
+""".trimIndent())
+
+        // Should find confirmed
+        val results = MemorySearch.keywordSearch(workspace, "北京")
+        assertEquals(1, results.size)
+
+        // Should NOT find pending
+        val resultsPending = MemorySearch.keywordSearch(workspace, "游泳")
+        assertTrue(resultsPending.isEmpty())
+
+        // Should NOT find disabled
+        val resultsDisabled = MemorySearch.keywordSearch(workspace, "上海")
+        assertTrue(resultsDisabled.isEmpty())
+    }
+
+    @Test
+    fun `keywordSearch with legacy marker treats content as confirmed`() {
+        val workspace = tmpDir.newFolder("workspace")
+        File(workspace, "MEMORY.md").writeText("""
+## Echo 记住的关于你的事
+用户叫小明。
+""".trimIndent())
+
+        // Legacy content should be treated as confirmed
+        val results = MemorySearch.keywordSearch(workspace, "小明")
+        assertEquals(1, results.size)
+        assertTrue(results[0].snippet.contains("小明"))
+    }
+
+    @Test
+    fun `confirmed memory_md files searchable pending ones not`() {
+        val workspace = tmpDir.newFolder("workspace")
+        val memoryDir = File(workspace, "memory")
+        memoryDir.mkdirs()
+        File(memoryDir, "card1.md").writeText("""
+## ✅ 确认的记忆
+重要回忆内容。
+""".trimIndent())
+        File(memoryDir, "card2.md").writeText("""
+## ⏳ 待确认
+待定回忆内容。
+""".trimIndent())
+
+        val confirmedResults = MemorySearch.keywordSearch(workspace, "重要回忆")
+        assertEquals(1, confirmedResults.size)
+
+        // Use a term unique to the pending section (won't match anything in confirmed)
+        val pendingResults = MemorySearch.keywordSearch(workspace, "待定")
+        assertTrue("Pending-only content should not be searchable", pendingResults.isEmpty())
     }
 }

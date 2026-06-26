@@ -120,6 +120,8 @@ UI (Fragment/Activity/ViewModel)
 | 会话管理 | `memory/SessionManager.kt` |
 | 会话数据模型 | `memory/Session.kt` |
 | 记忆检索 | `memory/MemorySearch.kt` |
+| 记忆章节解析 | `memory/MemoryMdParser.kt` |
+| 记忆注入入口 | `memory/MemoryContextBuilder.kt` |
 | 记忆仓库 | `data/repository/MemoryRepository.kt` |
 | LLM 对接 | `llm/OpenAICompatProvider.kt` |
 | LLM 工厂 | `llm/ProviderFactory.kt` |
@@ -131,7 +133,7 @@ UI (Fragment/Activity/ViewModel)
 | 时间解析 | `domain/TimeParser.kt` |
 | 诊断记录 | `diagnostics/ServiceHealth.kt` |
 | 原子 JSON | `data/store/JsonAtomicWriter.kt` |
-| 测试示例 | `app/src/test/` 下有 5 个测试文件（41 个用例） |
+| 测试示例 | `app/src/test/` 下有 7 个测试文件（59 个用例） |
 | 验收文档 | `dev-handover/manual-qa.md` |
 
 ---
@@ -170,6 +172,7 @@ UI (Fragment/Activity/ViewModel)
 - **Phase B**: OkHttpClient 共享单例 + ProviderFactory；调度恢复去重；Agent 循环拆解为 5 个方法
 - **Phase C**: Session 原子写入加固（rename 失败 copyTo 兜底）；短超时派生；MemorySearch 中文支持 + 时间加权；系统提示记忆瘦身；诊断面板
 - **Phase D**: MemoryManageActivity 记忆管理；置信度/待确认机制；ConversationListActivity 独立对话列表；主动陪伴 MVP（动态问候 + 智能回忆 + 静默控制）
+- **D-Fix2**: 记忆权限闭环收口 — MemoryMdParser 章节解析 + MemoryContextBuilder 统一注入入口；MEMORY.md 三区标记（✅/⏳/🚫）；MemorySearch 章节感知；禁用 MEMORY.md 事实后真正不可检索（~18 个新测试）
 
 ## 八、未来方向建议
 

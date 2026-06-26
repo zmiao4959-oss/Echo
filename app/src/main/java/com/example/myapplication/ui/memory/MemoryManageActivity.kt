@@ -254,73 +254,175 @@ class MemoryManageActivity : ThemedActivity() {
 
     // ── 长期记忆片段 (MEMORY.md) ──
 
-    data class MemoryFact(val index: Int, val content: String)
+    data class MemoryFact(val section: String, val content: String)
 
     private fun parseMemoryMd(): List<MemoryFact> {
         val md = FileStore.readWorkspaceFile("MEMORY.md")
-        val facts = mutableListOf<MemoryFact>()
-        var idx = 0
-        for (line in md.split("\n")) {
-            val trimmed = line.trim()
-            if (trimmed.startsWith("- [") && trimmed.length > 10) {
-                facts.add(MemoryFact(idx++, trimmed.removePrefix("- ")))
-            }
+        val parsed = com.example.myapplication.memory.MemoryMdParser.parse(md)
+
+        fun parseSection(text: String, section: String): List<MemoryFact> {
+            return text.split("\n")
+                .map { it.trim() }
+                .filter { it.startsWith("- [") && it.length > 10 }
+                .map { MemoryFact(section, it.removePrefix("- ")) }
         }
-        return facts
+
+        val allFacts = mutableListOf<MemoryFact>()
+        // prelude is treated as confirmed for backward compatibility
+        if (parsed.prelude.isNotBlank()) {
+            allFacts.addAll(parseSection(parsed.prelude, "confirmed"))
+        }
+        allFacts.addAll(parseSection(parsed.confirmed, "confirmed"))
+        allFacts.addAll(parseSection(parsed.pending, "pending"))
+        allFacts.addAll(parseSection(parsed.disabled, "disabled"))
+        return allFacts
     }
 
     private fun renderFacts(facts: List<MemoryFact>) {
         containerFacts.removeAllViews()
         if (facts.isEmpty()) { tvEmptyFacts.visibility = View.VISIBLE; return }
         tvEmptyFacts.visibility = View.GONE
-        for (f in facts) {
-            val card = MaterialCardView(this).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { bottomMargin = 8.dpToPx() }
-                radius = 12.dpToPx().toFloat()
-                cardElevation = 1.dpToPx().toFloat()
-                setCardBackgroundColor(0xFFF5F5F5.toInt())
-                setContentPadding(12.dpToPx(), 10.dpToPx(), 12.dpToPx(), 10.dpToPx())
+
+        val confirmedFacts = facts.filter { it.section == "confirmed" }
+        val pendingFacts = facts.filter { it.section == "pending" }
+        val disabledFacts = facts.filter { it.section == "disabled" }
+
+        // ── Confirmed section ──
+        if (confirmedFacts.isNotEmpty()) {
+            containerFacts.addView(createSectionHeader("✅ 确认的记忆"))
+            for (f in confirmedFacts) {
+                containerFacts.addView(createFactCard(f, isConfirmed = true, isDisabled = false))
             }
-            val row = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            val tv = TextView(this).apply {
-                text = f.content
-                textSize = 13f; setTextColor(0xFF333333.toInt())
+        }
+
+        // ── Pending section ──
+        if (pendingFacts.isNotEmpty()) {
+            containerFacts.addView(createSectionHeader("⏳ 待确认"))
+            for (f in pendingFacts) {
+                containerFacts.addView(createFactCard(f, isConfirmed = false, isDisabled = false))
             }
-            row.addView(tv)
-            val actions = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 6.dpToPx() }
+        }
+
+        // ── Disabled section ──
+        if (disabledFacts.isNotEmpty()) {
+            containerFacts.addView(createSectionHeader("🚫 已禁用"))
+            for (f in disabledFacts) {
+                containerFacts.addView(createFactCard(f, isConfirmed = false, isDisabled = true))
             }
-            actions.addView(createActionBtn("删除") {
+        }
+    }
+
+    private fun createSectionHeader(title: String): TextView {
+        return TextView(this).apply {
+            text = title
+            textSize = 14f
+            setTextColor(0xFF666666.toInt())
+            setPadding(0, 16.dpToPx(), 0, 8.dpToPx())
+        }
+    }
+
+    private fun createFactCard(f: MemoryFact, isConfirmed: Boolean, isDisabled: Boolean): View {
+        val card = MaterialCardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = 8.dpToPx() }
+            radius = 12.dpToPx().toFloat()
+            cardElevation = 1.dpToPx().toFloat()
+            setCardBackgroundColor(0xFFF5F5F5.toInt())
+            setContentPadding(12.dpToPx(), 10.dpToPx(), 12.dpToPx(), 10.dpToPx())
+        }
+        val row = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val tv = TextView(this).apply {
+            text = f.content
+            textSize = 13f; setTextColor(0xFF333333.toInt())
+        }
+        row.addView(tv)
+        val actions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 6.dpToPx() }
+        }
+
+        if (isConfirmed) {
+            // Confirmed → can disable or delete
+            actions.addView(createActionBtn("禁用") {
                 lifecycleScope.launch {
                     withContext(Dispatchers.IO) {
-                        removeMemoryMdFact(f.index)
+                        moveMemoryMdFact(f.content, "confirmed", "disabled")
                     }
                     loadAll()
                 }
             })
-            row.addView(actions)
-            card.addView(row)
-            containerFacts.addView(card)
+        } else if (isDisabled) {
+            // Disabled → can enable or delete
+            actions.addView(createActionBtn("启用") {
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        moveMemoryMdFact(f.content, "disabled", "confirmed")
+                    }
+                    loadAll()
+                }
+            })
+        } else {
+            // Pending → can confirm or disable
+            actions.addView(createActionBtn("确认") {
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        moveMemoryMdFact(f.content, "pending", "confirmed")
+                    }
+                    loadAll()
+                }
+            })
+            actions.addView(createActionBtn("禁用") {
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        moveMemoryMdFact(f.content, "pending", "disabled")
+                    }
+                    loadAll()
+                }
+            })
         }
+
+        actions.addView(createActionBtn("删除") {
+            lifecycleScope.launch {
+                withContext(Dispatchers.IO) {
+                    removeMemoryMdFact(f.content)
+                }
+                loadAll()
+            }
+        })
+        row.addView(actions)
+        card.addView(row)
+        return card
     }
 
-    private fun removeMemoryMdFact(targetIndex: Int) {
+    private fun moveMemoryMdFact(factContent: String, fromStatus: String, toStatus: String) {
         val md = FileStore.readWorkspaceFile("MEMORY.md")
-        val lines = md.split("\n").toMutableList()
-        var idx = 0
-        val toRemove = mutableListOf<Int>()
-        for (i in lines.indices) {
-            val trimmed = lines[i].trim()
-            if (trimmed.startsWith("- [") && trimmed.length > 10) {
-                if (idx == targetIndex) toRemove.add(i)
-                idx++
-            }
+        val factLine = "- $factContent"  // reconstruct full line with "- " prefix
+        val fromSection = when (fromStatus) {
+            "confirmed" -> com.example.myapplication.memory.MemoryMdParser.SECTION_CONFIRMED
+            "pending" -> com.example.myapplication.memory.MemoryMdParser.SECTION_PENDING
+            "disabled" -> com.example.myapplication.memory.MemoryMdParser.SECTION_DISABLED
+            else -> return
         }
-        for (i in toRemove.reversed()) lines.removeAt(i)
-        FileStore.writeWorkspaceFile("MEMORY.md", lines.joinToString("\n"))
+        val toSection = when (toStatus) {
+            "confirmed" -> com.example.myapplication.memory.MemoryMdParser.SECTION_CONFIRMED
+            "pending" -> com.example.myapplication.memory.MemoryMdParser.SECTION_PENDING
+            "disabled" -> com.example.myapplication.memory.MemoryMdParser.SECTION_DISABLED
+            else -> return
+        }
+        val updated = com.example.myapplication.memory.MemoryMdParser.moveFact(md, factLine, fromSection, toSection)
+        FileStore.writeWorkspaceFile("MEMORY.md", updated)
+    }
+
+    private fun removeMemoryMdFact(factContent: String) {
+        val md = FileStore.readWorkspaceFile("MEMORY.md")
+        val factLine = "- $factContent"
+        val lines = md.split("\n").toMutableList()
+        val toRemove = lines.indexOfFirst { it.trim() == factLine.trim() }
+        if (toRemove >= 0) {
+            lines.removeAt(toRemove)
+            FileStore.writeWorkspaceFile("MEMORY.md", lines.joinToString("\n"))
+        }
     }
 
     // ── 编辑对话框 ──

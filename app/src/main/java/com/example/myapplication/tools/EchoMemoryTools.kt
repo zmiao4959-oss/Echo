@@ -130,17 +130,7 @@ object EchoMemoryTools {
 
                 try {
                     val current = FileStore.readWorkspaceFile("MEMORY.md")
-                    val updated = if (current.contains("## Echo 记住的关于你的事")) {
-                        // 已有该段落，追加到其后
-                        val marker = "## Echo 记住的关于你的事"
-                        val idx = current.indexOf(marker)
-                        val afterHeader = current.indexOf("\n", idx)
-                        val insertAt = if (afterHeader >= 0) afterHeader + 1 else current.length
-                        current.substring(0, insertAt) + entry + current.substring(insertAt)
-                    } else {
-                        // 没有该段落，在文件末尾追加
-                        current.trimEnd() + "\n\n## Echo 记住的关于你的事\n$entry"
-                    }
+                    val updated = com.example.myapplication.memory.MemoryMdParser.appendFact(current, entry)
                     FileStore.writeWorkspaceFile("MEMORY.md", updated)
                     jsonOk("已记住: $fact", null)
                 } catch (e: Exception) {
