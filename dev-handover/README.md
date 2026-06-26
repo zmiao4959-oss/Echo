@@ -122,6 +122,7 @@ UI (Fragment/Activity/ViewModel)
 | 记忆检索 | `memory/MemorySearch.kt` |
 | 记忆章节解析 | `memory/MemoryMdParser.kt` |
 | 记忆注入入口 | `memory/MemoryContextBuilder.kt` |
+| 周回顾构建 | `memory/WeeklyReviewBuilder.kt` |
 | 记忆仓库 | `data/repository/MemoryRepository.kt` |
 | LLM 对接 | `llm/OpenAICompatProvider.kt` |
 | LLM 工厂 | `llm/ProviderFactory.kt` |
@@ -173,6 +174,7 @@ UI (Fragment/Activity/ViewModel)
 - **Phase C**: Session 原子写入加固（rename 失败 copyTo 兜底）；短超时派生；MemorySearch 中文支持 + 时间加权；系统提示记忆瘦身；诊断面板
 - **Phase D**: MemoryManageActivity 记忆管理；置信度/待确认机制；ConversationListActivity 独立对话列表；主动陪伴 MVP（动态问候 + 智能回忆 + 静默控制）
 - **D-Fix2**: 记忆权限闭环收口 — MemoryMdParser 章节解析 + MemoryContextBuilder 统一注入入口；MEMORY.md 三区标记（✅/⏳/🚫）；MemorySearch 章节感知；禁用 MEMORY.md 事实后真正不可检索（~18 个新测试）
+- **Phase E**: 体验质量升级 — E1 多源检索（画像+卡片+MD+记录+日记，统一打分）；E2 周回顾（规则聚合+LLM可选总结）；E3 陪伴文案（18 个变体，自然轻量）；E4 记忆引用透明化（Chat UI 轻提示）；E5 记忆确认 UX（来源+原因+编辑+丢弃去重）
 
 ## 八、未来方向建议
 

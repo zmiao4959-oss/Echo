@@ -144,6 +144,11 @@ class MemoryManageActivity : ThemedActivity() {
 
     // ── 待确认 ──
 
+    private val sourceLabelMap = mapOf(
+        "chat" to "对话记录", "life_record" to "生活记录",
+        "diary" to "日记", "manual" to "手动添加", "" to "未知来源"
+    )
+
     private fun renderPending(pending: List<UserProfileMemory>, all: List<UserProfileMemory>) {
         containerPending.removeAllViews()
         if (pending.isEmpty()) { tvEmptyPending.visibility = View.VISIBLE; return }
@@ -169,10 +174,29 @@ class MemoryManageActivity : ThemedActivity() {
                 textSize = 11f; setTextColor(0xFF999999.toInt())
             }
             row.addView(meta)
+            // Source info
+            if (p.source.isNotBlank()) {
+                val sourceTv = TextView(this).apply {
+                    text = "来源：${sourceLabelMap[p.source] ?: p.source}"
+                    textSize = 11f; setTextColor(0xFF888888.toInt())
+                }
+                row.addView(sourceTv)
+            }
+            // Reason info
+            if (p.reason.isNotBlank()) {
+                val reasonTv = TextView(this).apply {
+                    text = "原因：${p.reason}"
+                    textSize = 11f; setTextColor(0xFF888888.toInt())
+                }
+                row.addView(reasonTv)
+            }
             val actions = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 6.dpToPx() }
             }
+            actions.addView(createActionBtn("编辑") {
+                showEditProfileDialog(p)
+            })
             actions.addView(createActionBtn("确认") {
                 lifecycleScope.launch {
                     withContext(Dispatchers.IO) { memoryRepo.upsertProfile(p.copy(status = "confirmed")) }
@@ -181,7 +205,9 @@ class MemoryManageActivity : ThemedActivity() {
             })
             actions.addView(createActionBtn("丢弃") {
                 lifecycleScope.launch {
-                    withContext(Dispatchers.IO) { memoryRepo.deleteProfile(p.id) }
+                    withContext(Dispatchers.IO) {
+                        memoryRepo.discardWithDedup(p)
+                    }
                     loadAll()
                 }
             })

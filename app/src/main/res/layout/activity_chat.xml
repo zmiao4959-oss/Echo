@@ -57,6 +57,18 @@
         android:visibility="gone"
         android:gravity="center" />
 
+    <!-- 记忆引用提示 -->
+    <TextView
+        android:id="@+id/memory_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#E8F5E9"
+        android:padding="6dp"
+        android:textColor="#2E7D32"
+        android:textSize="11sp"
+        android:visibility="gone"
+        android:gravity="center" />
+
     <!-- 消息列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_messages"

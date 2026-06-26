@@ -116,6 +116,29 @@ class MemoryRepository {
         }
     }
 
+    /** 丢弃画像并加入去重列表，防止同内容再次出现 */
+    suspend fun discardWithDedup(profile: UserProfileMemory) = withContext(Dispatchers.IO) {
+        // Add to discarded list for dedup
+        val discardedFile = java.io.File(profileFile.parentFile, "discarded_profiles.json")
+        val discarded = JsonAtomicWriter.readItems<UserProfileMemory>(discardedFile).toMutableList()
+        discarded.add(profile.copy(enabled = false, status = "discarded"))
+        // Keep only last 100 discarded to avoid unbounded growth
+        val trimmed = discarded.takeLast(100)
+        JsonAtomicWriter.writeItems(discardedFile, trimmed)
+        // Delete from active profiles
+        deleteProfile(profile.id)
+    }
+
+    /** 检查相似的画像是否已被丢弃。true = 已丢弃，不应再创建 */
+    suspend fun isSimilarDiscarded(value: String, category: String): Boolean = withContext(Dispatchers.IO) {
+        val discardedFile = java.io.File(profileFile.parentFile, "discarded_profiles.json")
+        if (!discardedFile.exists()) return@withContext false
+        val discarded = JsonAtomicWriter.readItems<UserProfileMemory>(discardedFile)
+        discarded.any {
+            it.category == category && (it.value.contains(value) || value.contains(it.value))
+        }
+    }
+
     // ── 全文搜索（Phase 1 仅提供接口，具体搜索逻辑在 Phase 6 完善） ──
 
     /** 搜索所有记忆（LifeRecord / Diary / Card / Profile 的关键词匹配） */

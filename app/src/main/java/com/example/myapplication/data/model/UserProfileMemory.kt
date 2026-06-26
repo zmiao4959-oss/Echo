@@ -14,5 +14,7 @@ data class UserProfileMemory(
     val createdAt: Long,
     val updatedAt: Long,
     val enabled: Boolean = true,
-    val status: String = "confirmed"  // "confirmed" | "pending"
+    val status: String = "confirmed",  // "confirmed" | "pending"
+    val source: String = "",       // "chat" | "life_record" | "diary" | "manual"
+    val reason: String = ""        // e.g. "置信度较低，建议确认"
 )

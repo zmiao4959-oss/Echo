@@ -67,6 +67,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 
+    private val _memoryHint = MutableStateFlow<String?>(null)
+    val memoryHint: StateFlow<String?> = _memoryHint.asStateFlow()
+
     private var currentSession: Session? = null
     private var currentChatId: String? = null
 
@@ -107,6 +110,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         _isLoading.value = true
         _statusMessage.value = null
+        _memoryHint.value = null
 
         viewModelScope.launch {
             val context = AgentContext(
@@ -133,6 +137,14 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     is AgentStreamEvent.Status -> {
                         _statusMessage.value = event.message
+                    }
+                    is AgentStreamEvent.MemoryRef -> {
+                        if (event.sources.isNotEmpty()) {
+                            val byType = event.sources.groupBy { it.label }.mapValues { it.value.size }
+                            _memoryHint.value = "参考了 " + byType.entries.joinToString(" · ") {
+                                "${it.value} 条${it.key}"
+                            }
+                        }
                     }
                     is AgentStreamEvent.ToolCallStart -> {
                         toolCalls.add(event.toolName)

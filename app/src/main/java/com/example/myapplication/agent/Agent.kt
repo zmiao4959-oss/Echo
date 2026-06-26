@@ -213,6 +213,10 @@ $toolsDesc
 
         val memoryCtx = MemoryContextBuilder.build(context.userMessage)
 
+        if (memoryCtx.sources.isNotEmpty()) {
+            emit(AgentStreamEvent.MemoryRef(memoryCtx.sources))
+        }
+
         appendUserMessage(session, context.userMessage, memoryCtx)
 
         val systemPrompt = buildSystemPrompt(memoryCtx) +
@@ -315,4 +319,7 @@ sealed class AgentStreamEvent {
 
     /** 完成 */
     data class Done(val finalResponse: String) : AgentStreamEvent()
+
+    /** 本轮使用的记忆来源（供 UI 透明展示） */
+    data class MemoryRef(val sources: List<MemoryContextBuilder.MemorySource>) : AgentStreamEvent()
 }

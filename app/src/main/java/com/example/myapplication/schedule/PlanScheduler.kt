@@ -285,35 +285,128 @@ object PlanScheduler {
         }
     }
 
-    /** 根据时间 + 最近记录生成动态问候 */
+    /** 根据时间 + 最近记录 + 计划/日记状态生成动态问候（Phase E: 多变体） */
     private suspend fun buildDynamicGreeting(plan: EchoPlan): String {
         val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         try {
             val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
             val recordRepo = LifeRecordRepository()
             val diaryRepo = DiaryRepository()
+            val planRepo = PlanRepository()
             val todayRecords = recordRepo.getByDate(today)
             val hasDiary = diaryRepo.hasDiary(today)
+            val recordCount = todayRecords.size
+
+            // Check for upcoming plans today
+            val allPlans = planRepo.getAll()
+            val pendingPlans = allPlans.filter { it.enabled && it.type == "task_reminder" && it.triggerAt > System.currentTimeMillis() }
+            val hasPendingPlan = pendingPlans.isNotEmpty()
+
+            // Deterministic variant seed: same day + same plan = same variant
+            val seed = (today + plan.id).hashCode()
 
             return when {
+                // Morning (6-11)
                 hour in 6..11 -> {
-                    if (todayRecords.isNotEmpty()) "早上好。今天已经有 ${todayRecords.size} 条记录了，状态不错。今天想以什么状态开始？"
-                    else "早上好。新的一天开始了，有什么计划吗？"
+                    if (recordCount > 0 && hasPendingPlan) {
+                        pickMorningWithRecordsAndPlans(recordCount, seed)
+                    } else if (recordCount > 0) {
+                        pickMorningWithRecords(recordCount, seed)
+                    } else {
+                        pickMorningNoRecords(seed)
+                    }
                 }
+                // Evening (18-23)
                 hour in 18..23 -> {
-                    if (todayRecords.isNotEmpty()) "今天记录了 ${todayRecords.size} 个片段。还有什么想留下的吗？"
-                    else "今天过得怎么样？有什么想记录下来的吗？"
+                    if (recordCount > 0 && hasDiary) {
+                        pickEveningWithRecordsAndDiary(recordCount, seed)
+                    } else if (recordCount > 0) {
+                        pickEveningWithRecords(recordCount, seed)
+                    } else {
+                        pickEveningNoRecords(seed)
+                    }
                 }
-                else -> plan.message.ifEmpty { "今天有什么想留下来的吗？" }
+                else -> pickOtherTime(seed)
             }
         } catch (_: Exception) {
             return plan.message.ifEmpty { "今天有什么想留下来的吗？" }
         }
     }
 
+    // -- Morning variants (3 each) --
+
+    private fun pickMorningWithRecordsAndPlans(count: Int, seed: Int): String {
+        return listOf(
+            "早上好。今天已经有 ${count} 条记录了，还有计划等着你。",
+            "早。${count} 条记录，看来状态不错。今天也有计划要完成。",
+            "早上好。已经记了 ${count} 条，今天还有待办事项，慢慢来。"
+        )[Math.abs(seed) % 3]
+    }
+
+    private fun pickMorningWithRecords(count: Int, seed: Int): String {
+        return listOf(
+            "早上好。今天已经有 ${count} 条记录了，状态不错。",
+            "早。看到你今天已经记了 ${count} 条，挺有意思的。",
+            "今天的 ${count} 条记录看起来很丰富。有什么想补充的吗？"
+        )[Math.abs(seed) % 3]
+    }
+
+    private fun pickMorningNoRecords(seed: Int): String {
+        return listOf(
+            "早上好。新的一天开始了，有什么计划吗？",
+            "早。今天会有什么想记录的呢？",
+            "新的一天。先喝杯水，慢慢来。"
+        )[Math.abs(seed) % 3]
+    }
+
+    // -- Evening variants (2 each) --
+
+    private fun pickEveningWithRecordsAndDiary(count: Int, seed: Int): String {
+        return listOf(
+            "今天记录了 ${count} 个片段，日记也写好了。好好休息。",
+            "日记和 ${count} 条记录都在了，今天挺充实的。晚安。"
+        )[Math.abs(seed) % 2]
+    }
+
+    private fun pickEveningWithRecords(count: Int, seed: Int): String {
+        return listOf(
+            "今天记录了 ${count} 个片段。还有什么想留下的吗？",
+            "${count} 条记录。如果有想补充的，现在还来得及。"
+        )[Math.abs(seed) % 2]
+    }
+
+    private fun pickEveningNoRecords(seed: Int): String {
+        return listOf(
+            "今天过得怎么样？有什么想记录下来的吗？",
+            "一天快结束了，有什么想留下的吗？"
+        )[Math.abs(seed) % 2]
+    }
+
+    // -- Other times (2) --
+
+    private fun pickOtherTime(seed: Int): String {
+        return listOf(
+            "今天有什么想留下来的吗？",
+            "有什么想记录的吗？随时都可以。"
+        )[Math.abs(seed) % 2]
+    }
+
     private fun triggerMemoryTrigger(context: Context, plan: EchoPlan, @Suppress("UNUSED_PARAMETER") suppressVoice: Boolean = false) {
         scope.launch {
             try {
+                // Weekly review: use WeeklyReviewBuilder
+                if (plan.title == "周回顾" || plan.tags.contains("每周")) {
+                    val review = com.example.myapplication.memory.WeeklyReviewBuilder.build()
+                    val notificationText = review.summary.take(200)
+                    showNotification(
+                        context, plan,
+                        "Echo 周回顾 ${review.dateRange}",
+                        notificationText
+                    )
+                    return@launch
+                }
+
+                // Regular memory trigger: show a random memory card
                 val memoryRepo = MemoryRepository()
                 val cards = memoryRepo.getAllCards()
                 if (cards.isEmpty()) {

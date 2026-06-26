@@ -120,6 +120,19 @@ class ChatActivity : ThemedActivity() {
             }
         }
 
+        // 观察记忆引用提示
+        val memoryHintView = findViewById<TextView>(R.id.memory_hint)
+        lifecycleScope.launch {
+            viewModel.memoryHint.collectLatest { hint ->
+                if (hint != null) {
+                    memoryHintView.text = hint
+                    memoryHintView.visibility = View.VISIBLE
+                } else {
+                    memoryHintView.visibility = View.GONE
+                }
+            }
+        }
+
         // 发送按钮
         btnSend.setOnClickListener { sendMessage() }
 
