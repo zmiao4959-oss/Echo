@@ -14,6 +14,8 @@ import com.example.myapplication.tools.WebTools
 import com.example.myapplication.tools.WeatherTools
 import com.example.myapplication.schedule.PlanScheduler
 import com.example.myapplication.schedule.ScheduleEngine
+import com.example.myapplication.data.store.AuditLogStore
+import com.example.myapplication.policy.MemoryGovernanceService
 import com.example.myapplication.ui.CardTextureManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +56,17 @@ class MyApplication : Application() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             ScheduleEngine.rescheduleAll(this@MyApplication)
             PlanScheduler.rescheduleAll(this@MyApplication)
+        }
+
+        // 初始化审计日志持久化
+        MemoryGovernanceService.onAuditPersist = { entry ->
+            CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+                AuditLogStore.append(listOf(entry))
+            }
+        }
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            val persisted = AuditLogStore.readAll()
+            MemoryGovernanceService.loadFromExternal(persisted)
         }
     }
 

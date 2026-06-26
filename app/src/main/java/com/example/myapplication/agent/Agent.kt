@@ -46,12 +46,14 @@ class Agent(
         val todayStr = sdf.format(Date(now))
         val sdf2 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault())
         val timeStr = sdf2.format(Date(now))
+        val weatherCity = MyApplication.instance.appConfig.weatherCity
+        val weatherLine = if (weatherCity.isNotBlank()) "\n- 用户天气城市: $weatherCity" else ""
         val runtime = """
 ## Runtime Info
 - 今天是 $todayStr
 - Current time: $timeStr
 - Current Unix ms: $now
-- Platform: Android
+- Platform: Android$weatherLine
 
 ## Available Tools
 $toolsDesc

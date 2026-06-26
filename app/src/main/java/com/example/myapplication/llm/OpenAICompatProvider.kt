@@ -163,16 +163,46 @@ class OpenAICompatProvider(
 
                     send(LLMStreamChunk(deltaContent = deltaContent, finishReason = finishReason))
 
-                    if (finishReason == "stop") break
+                    if (finishReason == "stop" || finishReason == "tool_calls") {
+                        // Flush accumulated tool calls before breaking
+                        if (accumulatedToolCalls.isNotEmpty()) {
+                            val finalToolCalls = accumulatedToolCalls.values.map { raw ->
+                                val func = raw["function"] as? Map<*, *> ?: emptyMap<String, Any>()
+                                LLMMessage.ToolCall(
+                                    id = raw["id"] as? String ?: "",
+                                    function = LLMMessage.FunctionCall(
+                                        name = func["name"] as? String ?: "",
+                                        arguments = func["arguments"] as? String ?: ""
+                                    )
+                                )
+                            }
+                            send(LLMStreamChunk(deltaToolCalls = finalToolCalls, finishReason = finishReason))
+                        }
+                        break
+                    }
                 } catch (e: Exception) {
-                    // JSON 解析失败：记录并跳过
                     Log.w("LLMStream", "Parse error for SSE line: ${e.message}", e)
                     continue
                 }
             }
         } finally {
-            reader.close()
-            response.close()
+            try { reader.close() } catch (_: Exception) {}
+            try { response.close() } catch (_: Exception) {}
+        }
+
+        // Flush any remaining accumulated tool calls (stream ended without [DONE] or finish_reason)
+        if (accumulatedToolCalls.isNotEmpty()) {
+            val finalToolCalls = accumulatedToolCalls.values.map { raw ->
+                val func = raw["function"] as? Map<*, *> ?: emptyMap<String, Any>()
+                LLMMessage.ToolCall(
+                    id = raw["id"] as? String ?: "",
+                    function = LLMMessage.FunctionCall(
+                        name = func["name"] as? String ?: "",
+                        arguments = func["arguments"] as? String ?: ""
+                    )
+                )
+            }
+            send(LLMStreamChunk(deltaToolCalls = finalToolCalls, finishReason = "tool_calls"))
         }
 
         Log.d("LLMStream", "Stream finished: read=$linesRead dataLines=$dataLines contentChunks=$contentChunks")

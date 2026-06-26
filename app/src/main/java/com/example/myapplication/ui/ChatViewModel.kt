@@ -70,8 +70,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val _memoryHint = MutableStateFlow<String?>(null)
     val memoryHint: StateFlow<String?> = _memoryHint.asStateFlow()
 
+    private val _memorySources = MutableStateFlow<List<com.example.myapplication.memory.MemoryContextBuilder.MemorySource>>(emptyList())
+    val memorySources: StateFlow<List<com.example.myapplication.memory.MemoryContextBuilder.MemorySource>> = _memorySources.asStateFlow()
+
     private var currentSession: Session? = null
     private var currentChatId: String? = null
+    private var isStreaming = false
+    private var streamingAiMsgId: String? = null
 
     /** 加载或创建会话 */
     fun loadSession(chatId: String) {
@@ -86,7 +91,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 .map { msg ->
                     ChatMessage(role = msg.role, content = msg.content)
                 }
-            _messages.value = msgs
+            // Don't overwrite if streaming is active (prevents race condition)
+            if (!isStreaming) {
+                _messages.value = msgs
+            }
         }
     }
 
@@ -105,12 +113,16 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val userMsg = ChatMessage(role = "user", content = text)
         _messages.value = _messages.value + userMsg
 
-        val aiMsg = ChatMessage(role = "assistant", content = "", isStreaming = true)
+        isStreaming = true
+        val stableAiId = java.util.UUID.randomUUID().toString()
+        streamingAiMsgId = stableAiId
+        val aiMsg = ChatMessage(id = stableAiId, role = "assistant", content = "", isStreaming = true)
         _messages.value = _messages.value + aiMsg
 
         _isLoading.value = true
         _statusMessage.value = null
         _memoryHint.value = null
+        _memorySources.value = emptyList()
 
         viewModelScope.launch {
             val context = AgentContext(
@@ -140,6 +152,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     is AgentStreamEvent.MemoryRef -> {
                         if (event.sources.isNotEmpty()) {
+                            _memorySources.value = event.sources
                             val byType = event.sources.groupBy { it.label }.mapValues { it.value.size }
                             _memoryHint.value = "参考了 " + byType.entries.joinToString(" · ") {
                                 "${it.value} 条${it.key}"
@@ -176,10 +189,16 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         )
                     }
                     is AgentStreamEvent.Done -> {
-                        // 出错且无有效内容时保留错误消息，避免被空白覆盖
-                        if (!hasError || currentContent.isNotEmpty()) {
+                        // Use finalResponse for non-streaming rounds, currentContent for streaming
+                        val finalContent = if (event.finalResponse.isNotEmpty() &&
+                            (currentContent.isEmpty() || currentContent.length < event.finalResponse.length)) {
+                            event.finalResponse
+                        } else {
+                            currentContent
+                        }
+                        if (!hasError || finalContent.isNotEmpty()) {
                             updateLastAiMessage(
-                                ChatMessage(role = "assistant", content = currentContent,
+                                ChatMessage(role = "assistant", content = finalContent,
                                     isStreaming = false, toolCalls = toolCalls.toList(),
                                     toolResults = toolResults.toList())
                             )
@@ -195,14 +214,18 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
             _isLoading.value = false
             _statusMessage.value = null
+            isStreaming = false
+            streamingAiMsgId = null
         }
     }
 
     private fun updateLastAiMessage(msg: ChatMessage) {
         val msgs = _messages.value.toMutableList()
-        val lastIdx = msgs.indexOfLast { it.role == "assistant" }
-        if (lastIdx >= 0) {
-            msgs[lastIdx] = msg
+        val targetId = streamingAiMsgId ?: return
+        val idx = msgs.indexOfFirst { it.id == targetId }
+        if (idx >= 0) {
+            // Preserve stable ID so subsequent updates can find this message
+            msgs[idx] = msg.copy(id = targetId)
             _messages.value = msgs
         }
     }

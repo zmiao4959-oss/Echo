@@ -11,9 +11,12 @@ import android.text.InputType
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -22,7 +25,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
@@ -125,12 +131,15 @@ class ChatActivity : ThemedActivity() {
         lifecycleScope.launch {
             viewModel.memoryHint.collectLatest { hint ->
                 if (hint != null) {
-                    memoryHintView.text = hint
+                    memoryHintView.text = hint + "  ▸"
                     memoryHintView.visibility = View.VISIBLE
                 } else {
                     memoryHintView.visibility = View.GONE
                 }
             }
+        }
+        memoryHintView.setOnClickListener {
+            showMemoryRefDetail()
         }
 
         // 发送按钮
@@ -149,6 +158,23 @@ class ChatActivity : ThemedActivity() {
         }
 
         initSpeechRecognizer()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val newChatId = intent.getStringExtra("chat_id")
+        if (newChatId != null && newChatId != currentChatId) {
+            currentChatId = newChatId
+            viewModel.loadSession(newChatId)
+            updateTitle()
+            inputMessage.text.clear()
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        // Exit directly, don't navigate through conversation history
+        finish()
     }
 
     private fun updateTitle() {
@@ -353,6 +379,155 @@ class ChatActivity : ThemedActivity() {
         speechRecognizer?.destroy()
         viewModel.audioPlayer.stop()
     }
+
+    private fun showMemoryRefDetail() {
+        val sources = viewModel.memorySources.value
+        if (sources.isEmpty()) return
+
+        val scrollView = ScrollView(this)
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16.dpToPx(), 8.dpToPx(), 16.dpToPx(), 8.dpToPx())
+        }
+
+        val repo = com.example.myapplication.data.repository.MemoryRepository()
+
+        for ((index, s) in sources.withIndex()) {
+            val icon = when (s.type) {
+                "profile" -> "👤"; "memory_card" -> "💬"; "memory_md" -> "📄"
+                "life_record" -> "📝"; "diary" -> "📔"; else -> "📌"
+            }
+
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(0, 6.dpToPx(), 0, 6.dpToPx())
+            }
+
+            // Header: icon + label + explain
+            val headerText = buildString {
+                append("$icon ${s.label}")
+                if (s.explain.isNotBlank()) append("  ·  ${s.explain}")
+            }
+            val header = TextView(this).apply {
+                text = headerText; textSize = 13f
+                setTextColor(0xFF333333.toInt())
+            }
+            row.addView(header)
+
+            // Snippet
+            val snippet = TextView(this).apply {
+                text = s.snippet.take(50)
+                textSize = 12f; setTextColor(0xFF888888.toInt())
+                setPadding(0, 2.dpToPx(), 0, 4.dpToPx())
+            }
+            row.addView(snippet)
+
+            // Action buttons
+            val actions = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+            }
+
+            val disableSupported = s.type in listOf("profile", "memory_card", "memory_md")
+            val disableBtn = Button(this).apply {
+                text = if (disableSupported) "不再使用" else "暂不支持禁用"
+                textSize = 11f
+                isEnabled = disableSupported
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 36.dpToPx()
+                ).apply { marginEnd = 8.dpToPx() }
+            }
+            disableBtn.setOnClickListener {
+                val btn = disableBtn
+                lifecycleScope.launch {
+                    val success = disableSource(s, repo)
+                    withContext(Dispatchers.Main) {
+                        if (success) {
+                            header.setTextColor(0xFFAAAAAA.toInt())
+                            btn.isEnabled = false
+                            btn.text = "已禁用"
+                            Toast.makeText(this@ChatActivity, "已禁用: ${s.label}", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@ChatActivity, "暂不支持禁用此类型", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+            actions.addView(disableBtn)
+            row.addView(actions)
+
+            // Divider
+            if (index < sources.size - 1) {
+                val divider = View(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, 1.dpToPx()
+                    ).apply { topMargin = 4.dpToPx() }
+                    setBackgroundColor(0xFFE0E0E0.toInt())
+                }
+                row.addView(divider)
+            }
+
+            container.addView(row)
+        }
+
+        scrollView.addView(container)
+
+        AlertDialog.Builder(this)
+            .setTitle("本轮参考的记忆")
+            .setView(scrollView)
+            .setNegativeButton("关闭", null)
+            .show()
+    }
+
+    /** Disable a memory source. Returns true if successful. */
+    private suspend fun disableSource(
+        source: com.example.myapplication.memory.MemoryContextBuilder.MemorySource,
+        repo: com.example.myapplication.data.repository.MemoryRepository
+    ): Boolean = withContext(Dispatchers.IO) {
+        try {
+            when (source.type) {
+                "profile" -> {
+                    val profiles = repo.getAllProfiles()
+                    val match = profiles.find { it.id == source.sourceId }
+                    if (match != null) {
+                        val result = com.example.myapplication.policy.MemoryGovernanceService.disableProfile(match)
+                        repo.upsertProfile(result.updated!!)
+                        true
+                    } else false
+                }
+                "memory_card" -> {
+                    val cards = repo.getAllCards()
+                    val match = cards.find { it.id == source.sourceId }
+                    if (match != null) {
+                        val result = com.example.myapplication.policy.MemoryGovernanceService.disableCard(match)
+                        repo.updateCard(result.updated!!)
+                        true
+                    } else false
+                }
+                "memory_md" -> {
+                    val md = com.example.myapplication.memory.FileStore.readWorkspaceFile("MEMORY.md")
+                    val snippet = source.snippet
+                    // Find the line in MEMORY.md that matches this snippet
+                    val lines = md.split("\n")
+                    val targetLine = lines.find { it.trim().contains(snippet) }
+                    if (targetLine != null) {
+                        val updated = com.example.myapplication.memory.MemoryMdParser.moveFact(
+                            md, targetLine,
+                            com.example.myapplication.memory.MemoryMdParser.SECTION_CONFIRMED,
+                            com.example.myapplication.memory.MemoryMdParser.SECTION_DISABLED
+                        )
+                        if (updated != md) {
+                            com.example.myapplication.memory.FileStore.writeWorkspaceFile("MEMORY.md", updated)
+                            true
+                        } else false
+                    } else false
+                }
+                "life_record", "diary" -> false
+                else -> false
+            }
+        } catch (_: Exception) { false }
+    }
+
+    private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 
     companion object {
         private const val REQUEST_RECORD_AUDIO = 2001

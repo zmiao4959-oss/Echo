@@ -44,7 +44,14 @@ object WeatherTools {
         tags = listOf("weather", "web"),
         timeoutSec = 15
     ) { args ->
-        val city = (args["city"] as? String)?.trim()?.ifEmpty { null }
+        var city = (args["city"] as? String)?.trim()?.ifEmpty { null }
+        // Fallback to user-configured city from settings
+        if (city == null) {
+            val configuredCity = com.example.myapplication.MyApplication.instance.appConfig.weatherCity
+            if (configuredCity.isNotBlank()) {
+                city = configuredCity
+            }
+        }
         try {
             val encodedCity = if (city != null) URLEncoder.encode(city, "UTF-8") else ""
             val url = if (encodedCity.isNotEmpty()) {

@@ -19,6 +19,7 @@ import com.example.myapplication.data.repository.PlanRepository
 import com.example.myapplication.llm.LLMMessage
 import com.example.myapplication.llm.ProviderFactory
 import com.example.myapplication.ui.MainActivity
+import com.example.myapplication.ui.WeeklyReviewActivity
 import com.google.gson.JsonParser
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
@@ -222,30 +223,26 @@ object PlanScheduler {
                 repo.update(plan.copy(enabled = false, updatedAt = System.currentTimeMillis()))
             }
 
-            // 主动陪伴设置检查（task_reminder 不受影响）
+            // 主动陪伴设置检查（委托给 CompanionPolicy）
             val config = MyApplication.instance.appConfig
-            val isCompanionType = plan.type in listOf("companion_checkin", "memory_trigger")
-            if (isCompanionType && !config.companionEnabled) {
-                Log.d(TAG, "Companion disabled, skipping ${plan.type} plan: ${plan.title}")
+            val triggerCtx = com.example.myapplication.policy.CompanionPolicy.TriggerContext(
+                planType = plan.type,
+                companionEnabled = config.companionEnabled,
+                hourOfDay = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY),
+                quietStart = config.companionQuietStart,
+                quietEnd = config.companionQuietEnd,
+                companionAllowVoice = config.companionAllowVoice
+            )
+            val decision = com.example.myapplication.policy.CompanionPolicy.shouldTrigger(triggerCtx)
+            if (!decision.shouldTrigger) {
+                Log.d(TAG, "Skipping ${plan.type} plan: ${plan.title}, reason: ${decision.reason}")
                 return@launch
-            }
-            val suppressVoice = isCompanionType && !config.companionAllowVoice
-            if (isCompanionType) {
-                val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-                val quietStart = config.companionQuietStart
-                val quietEnd = config.companionQuietEnd
-                val inQuiet = if (quietStart < quietEnd) hour in quietStart until quietEnd
-                              else hour >= quietStart || hour < quietEnd
-                if (inQuiet) {
-                    Log.d(TAG, "In quiet hours ($quietStart-$quietEnd), skipping companion plan: ${plan.title}")
-                    return@launch
-                }
             }
 
             when (plan.type) {
                 "task_reminder" -> triggerTaskReminder(context, plan)
-                "companion_checkin" -> triggerCompanionCheckin(context, plan, suppressVoice)
-                "memory_trigger" -> triggerMemoryTrigger(context, plan, suppressVoice)
+                "companion_checkin" -> triggerCompanionCheckin(context, plan, decision.suppressVoice)
+                "memory_trigger" -> triggerMemoryTrigger(context, plan, decision.suppressVoice)
                 "auto_diary" -> triggerAutoDiary(context, plan)
             }
         }
@@ -285,110 +282,31 @@ object PlanScheduler {
         }
     }
 
-    /** 根据时间 + 最近记录 + 计划/日记状态生成动态问候（Phase E: 多变体） */
+    /** 根据时间 + 最近记录 + 计划/日记状态生成动态问候（委托给 CompanionPolicy） */
     private suspend fun buildDynamicGreeting(plan: EchoPlan): String {
-        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         try {
             val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+            val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
             val recordRepo = LifeRecordRepository()
             val diaryRepo = DiaryRepository()
             val planRepo = PlanRepository()
             val todayRecords = recordRepo.getByDate(today)
             val hasDiary = diaryRepo.hasDiary(today)
-            val recordCount = todayRecords.size
-
-            // Check for upcoming plans today
             val allPlans = planRepo.getAll()
-            val pendingPlans = allPlans.filter { it.enabled && it.type == "task_reminder" && it.triggerAt > System.currentTimeMillis() }
-            val hasPendingPlan = pendingPlans.isNotEmpty()
+            val hasPendingPlan = allPlans.any { it.enabled && it.type == "task_reminder" && it.triggerAt > System.currentTimeMillis() }
 
-            // Deterministic variant seed: same day + same plan = same variant
-            val seed = (today + plan.id).hashCode()
-
-            return when {
-                // Morning (6-11)
-                hour in 6..11 -> {
-                    if (recordCount > 0 && hasPendingPlan) {
-                        pickMorningWithRecordsAndPlans(recordCount, seed)
-                    } else if (recordCount > 0) {
-                        pickMorningWithRecords(recordCount, seed)
-                    } else {
-                        pickMorningNoRecords(seed)
-                    }
-                }
-                // Evening (18-23)
-                hour in 18..23 -> {
-                    if (recordCount > 0 && hasDiary) {
-                        pickEveningWithRecordsAndDiary(recordCount, seed)
-                    } else if (recordCount > 0) {
-                        pickEveningWithRecords(recordCount, seed)
-                    } else {
-                        pickEveningNoRecords(seed)
-                    }
-                }
-                else -> pickOtherTime(seed)
-            }
+            val ctx = com.example.myapplication.policy.CompanionPolicy.GreetingContext(
+                hourOfDay = hour,
+                recordCount = todayRecords.size,
+                hasDiary = hasDiary,
+                hasPendingPlan = hasPendingPlan,
+                planId = plan.id,
+                todayDate = today
+            )
+            return com.example.myapplication.policy.CompanionPolicy.buildGreeting(ctx).greeting
         } catch (_: Exception) {
             return plan.message.ifEmpty { "今天有什么想留下来的吗？" }
         }
-    }
-
-    // -- Morning variants (3 each) --
-
-    private fun pickMorningWithRecordsAndPlans(count: Int, seed: Int): String {
-        return listOf(
-            "早上好。今天已经有 ${count} 条记录了，还有计划等着你。",
-            "早。${count} 条记录，看来状态不错。今天也有计划要完成。",
-            "早上好。已经记了 ${count} 条，今天还有待办事项，慢慢来。"
-        )[Math.abs(seed) % 3]
-    }
-
-    private fun pickMorningWithRecords(count: Int, seed: Int): String {
-        return listOf(
-            "早上好。今天已经有 ${count} 条记录了，状态不错。",
-            "早。看到你今天已经记了 ${count} 条，挺有意思的。",
-            "今天的 ${count} 条记录看起来很丰富。有什么想补充的吗？"
-        )[Math.abs(seed) % 3]
-    }
-
-    private fun pickMorningNoRecords(seed: Int): String {
-        return listOf(
-            "早上好。新的一天开始了，有什么计划吗？",
-            "早。今天会有什么想记录的呢？",
-            "新的一天。先喝杯水，慢慢来。"
-        )[Math.abs(seed) % 3]
-    }
-
-    // -- Evening variants (2 each) --
-
-    private fun pickEveningWithRecordsAndDiary(count: Int, seed: Int): String {
-        return listOf(
-            "今天记录了 ${count} 个片段，日记也写好了。好好休息。",
-            "日记和 ${count} 条记录都在了，今天挺充实的。晚安。"
-        )[Math.abs(seed) % 2]
-    }
-
-    private fun pickEveningWithRecords(count: Int, seed: Int): String {
-        return listOf(
-            "今天记录了 ${count} 个片段。还有什么想留下的吗？",
-            "${count} 条记录。如果有想补充的，现在还来得及。"
-        )[Math.abs(seed) % 2]
-    }
-
-    private fun pickEveningNoRecords(seed: Int): String {
-        return listOf(
-            "今天过得怎么样？有什么想记录下来的吗？",
-            "一天快结束了，有什么想留下的吗？"
-        )[Math.abs(seed) % 2]
-    }
-
-    // -- Other times (2) --
-
-    private fun pickOtherTime(seed: Int): String {
-        return listOf(
-            "今天有什么想留下来的吗？",
-            "有什么想记录的吗？随时都可以。"
-        )[Math.abs(seed) % 2]
     }
 
     private fun triggerMemoryTrigger(context: Context, plan: EchoPlan, @Suppress("UNUSED_PARAMETER") suppressVoice: Boolean = false) {
@@ -398,10 +316,11 @@ object PlanScheduler {
                 if (plan.title == "周回顾" || plan.tags.contains("每周")) {
                     val review = com.example.myapplication.memory.WeeklyReviewBuilder.build()
                     val notificationText = review.summary.take(200)
-                    showNotification(
+                    showNotificationTarget(
                         context, plan,
                         "Echo 周回顾 ${review.dateRange}",
-                        notificationText
+                        notificationText,
+                        WeeklyReviewActivity::class.java
                     )
                     return@launch
                 }
@@ -512,9 +431,13 @@ $fragments
     // ── 通知 ──
 
     private fun showNotification(context: Context, plan: EchoPlan, title: String, body: String) {
+        showNotificationTarget(context, plan, title, body, MainActivity::class.java)
+    }
+
+    private fun showNotificationTarget(context: Context, plan: EchoPlan, title: String, body: String, targetActivity: Class<*>) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
 
-        val tapIntent = Intent(context, MainActivity::class.java).apply {
+        val tapIntent = Intent(context, targetActivity).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val tapPending = PendingIntent.getActivity(

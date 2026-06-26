@@ -25,6 +25,7 @@ UI (Fragment/Activity/ViewModel)
     → Repository → FileStore/JsonAtomicWriter → JSON 文件持久化
   → MemoryRepository → UserProfileMemory / MemoryCard / LifeRecord / DailyDiary
   → PlanScheduler / ScheduleEngine → AlarmManager 定时触发
+  → policy/* (纯 Kotlin 策略层，JVM 可测) → 打分/过滤/聚合/去重/格式化
   → diagnostics/ServiceHealth → 失败记录与诊断
 ```
 
@@ -123,6 +124,14 @@ UI (Fragment/Activity/ViewModel)
 | 记忆章节解析 | `memory/MemoryMdParser.kt` |
 | 记忆注入入口 | `memory/MemoryContextBuilder.kt` |
 | 周回顾构建 | `memory/WeeklyReviewBuilder.kt` |
+| **策略层** | `policy/` — 纯 Kotlin，JVM 可测 |
+| 检索策略 | `policy/MemoryRetrievalPolicy.kt` — 打分/排序/过滤/截断 |
+| 周聚合策略 | `policy/WeeklyAggregationPolicy.kt` — 规则聚合/关键词/总结 |
+| 陪伴策略 | `policy/CompanionPolicy.kt` — 触发决策/静默/问候变体 |
+| 记忆提示格式化 | `policy/MemoryHintFormatter.kt` — 提示生成/隐私过滤 |
+| 待确认去重 | `policy/PendingMemoryPolicy.kt` — 去重/校验/相似检测 |
+| 记忆治理 | `policy/MemoryGovernanceService.kt` — 统一 action + 审计日志 |
+| 周回顾详情 | `ui/WeeklyReviewActivity.kt` — 周回顾详情页 |
 | 记忆仓库 | `data/repository/MemoryRepository.kt` |
 | LLM 对接 | `llm/OpenAICompatProvider.kt` |
 | LLM 工厂 | `llm/ProviderFactory.kt` |
@@ -134,7 +143,7 @@ UI (Fragment/Activity/ViewModel)
 | 时间解析 | `domain/TimeParser.kt` |
 | 诊断记录 | `diagnostics/ServiceHealth.kt` |
 | 原子 JSON | `data/store/JsonAtomicWriter.kt` |
-| 测试示例 | `app/src/test/` 下有 7 个测试文件（59 个用例） |
+| 测试示例 | `app/src/test/` 下有 14 个测试文件（**~165 个用例**，含 7 个纯 JVM policy 测试） |
 | 验收文档 | `dev-handover/manual-qa.md` |
 
 ---
@@ -165,6 +174,15 @@ UI (Fragment/Activity/ViewModel)
 
 12. **所有 OkHttpClient 必须从 `HttpClient.instance` 派生** — 不要新建 `OkHttpClient.Builder()`，用 `.newBuilder()` 定制超时。
 
+13. **流式对话卡死的三个根因（不要回退）**：
+    - `OpenAICompatProvider.chatStream()` — `finishReason == "tool_calls"` 时必须 break 并 flush 累计的 tool_calls。很多兼容 API 不发 `[DONE]`，连接断开后 tool_calls 被丢弃 → Agent 认为无工具调用 → 回复空白。
+    - `ChatViewModel.updateLastAiMessage()` — 替换消息时必须 `msg.copy(id = targetId)` 保留稳定 ID。否则第一次更新后 ID 变了，后续 TextDelta 找不到消息，全部静默丢弃。
+    - `finally` 块中 reader/response 的 close 异常会导致 `callbackFlow.close()` 被跳过，Flow 永远不结束。
+
+14. **ChatActivity 必须 `singleTask`** — `singleTop` 只在 Activity 处于栈顶时复用。ConversationListActivity 压在 ChatActivity 上面时，`singleTop` 失效，系统仍创建新实例 → 返回键逐个退出嵌套对话。
+
+15. **天气工具必须回退配置城市** — `WeatherTools` 不读 `AppConfig.weatherCity`，AI 不传 city 时走 wttr.in IP 定位（服务器 IP，非用户位置）。工具内部 city 为空时必须用配置城市做 fallback，且系统提示中注入 weatherCity。
+
 ---
 
 ## 七、已完成优化（Phase A-D 摘要）
@@ -175,6 +193,9 @@ UI (Fragment/Activity/ViewModel)
 - **Phase D**: MemoryManageActivity 记忆管理；置信度/待确认机制；ConversationListActivity 独立对话列表；主动陪伴 MVP（动态问候 + 智能回忆 + 静默控制）
 - **D-Fix2**: 记忆权限闭环收口 — MemoryMdParser 章节解析 + MemoryContextBuilder 统一注入入口；MEMORY.md 三区标记（✅/⏳/🚫）；MemorySearch 章节感知；禁用 MEMORY.md 事实后真正不可检索（~18 个新测试）
 - **Phase E**: 体验质量升级 — E1 多源检索（画像+卡片+MD+记录+日记，统一打分）；E2 周回顾（规则聚合+LLM可选总结）；E3 陪伴文案（18 个变体，自然轻量）；E4 记忆引用透明化（Chat UI 轻提示）；E5 记忆确认 UX（来源+原因+编辑+丢弃去重）
+- **Phase E-Fix**: 策略层拆分 — policy/ 包独立于 Android 框架，纯 Kotlin + JVM 可测；5 个策略文件 + 5 个测试文件；142 测试基线；Android 层改为委托策略层
+- **Phase F**: 可解释体验 — F1 记忆引用详情弹窗；F2 周回顾详情页；F3 统一治理服务 + 审计日志；F4 检索解释增强；~165 测试基线
+- **Phase F-Fix**: 三个关键 bug 修复 — ① 流式对话卡死（OpenAICompatProvider 工具调用时 finishReason 不处理 + updateLastAiMessage 丢失稳定 ID）；② 返回键直接退出对话（singleTask）；③ 天气定位偏移（WeatherTools 回退到配置城市 + 系统提示注入）
 
 ## 八、未来方向建议
 
@@ -183,3 +204,15 @@ UI (Fragment/Activity/ViewModel)
 - **对话列表搜索优化** — 当前是前缀匹配，可加模糊搜索
 - **自定义纹理批量管理** — 目前逐个操作，可加多选删除
 - **主动陪伴个性化** — 当前问候基于记录数量，可基于用户画像生成更个性化内容
+
+---
+
+## 九、已知风险与限制
+
+| 风险项 | 说明 | 影响 |
+|--------|------|------|
+| 规则检索非语义检索 | `MemorySearch` 和 `MemoryRetrievalPolicy` 基于 bigram + 关键词匹配，不是语义向量检索。同义词、近义词无法召回 | 检索召回率有限，相关但不含关键词的内容可能遗漏 |
+| 周回顾 LLM 质量依赖模型 | `WeeklyReviewBuilder.buildWithLLM()` 的总结质量取决于配置的 LLM 模型能力。未配置 LLM 时回退规则版 | 规则版总结较模板化，个性化不足 |
+| 记忆提示只做轻量透明化 | `MemoryHintFormatter` 展示来源类型和计数，不展示完整来源详情 | 用户知道"参考了 N 条记忆"，但看不到具体引用了什么 |
+| 多源检索全量扫描 | `MemoryContextBuilder` 对 LifeRecord / Diary 按最近 30 天全量加载后过滤，数据量大时可能有性能影响 | 历史数据积累后检索延迟增加，后续可考虑分页或索引 |
+| 丢弃去重基于包含匹配 | `PendingMemoryPolicy.isSimilar()` 用 `value.contains()` 简单匹配，可能误判 | 极少数情况下不同内容可能被误判为相似，或被相似内容绕过 |
