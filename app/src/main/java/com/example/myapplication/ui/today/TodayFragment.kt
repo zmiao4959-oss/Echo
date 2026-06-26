@@ -165,8 +165,16 @@ class TodayFragment : Fragment() {
         btnEnterChat.setOnClickListener { enterChat() }
     }
 
-    private fun enterChat() {
-        val chatId = "android:${System.currentTimeMillis()}"
+    private fun enterChat(newConversation: Boolean = false) {
+        val prefs = requireContext().getSharedPreferences("clawspeaker_config", android.content.Context.MODE_PRIVATE)
+        val lastId = prefs.getString("last_chat_id", null)
+        val chatId = if (newConversation || lastId == null) {
+            "android:${System.currentTimeMillis()}"
+        } else {
+            lastId
+        }
+        // 记住本次 chatId，下次进来继续
+        prefs.edit().putString("last_chat_id", chatId).apply()
         val intent = Intent(requireContext(), ChatActivity::class.java)
         intent.putExtra("chat_id", chatId)
         startActivity(intent)

@@ -4,6 +4,10 @@ import com.example.myapplication.data.model.MemoryCard
 import com.example.myapplication.data.repository.DiaryRepository
 import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.data.repository.MemoryRepository
+import com.example.myapplication.memory.FileStore
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 /**
@@ -90,6 +94,58 @@ object EchoMemoryTools {
 
                 sb.appendLine("\n你可以用这些结果来自然回应用户，不要逐条复述。")
                 sb.toString()
+            }
+        ))
+
+        // ── remember_user_fact ──
+        ToolRegistry.register(ToolDefinition(
+            name = "remember_user_fact",
+            description = "记住关于用户的重要个人信息（姓名、年龄、城市、职业、喜好、习惯、重要关系等）。当用户告诉你关于自己的事、背景、偏好、或任何你以后对话中应该记住的信息时调用此工具。不要用 create_life_record 或 create_memory_card 来记个人信息——那些是记录生活事件和高光时刻的。",
+            schema = mapOf(
+                "type" to "function",
+                "function" to mapOf(
+                    "name" to "remember_user_fact",
+                    "description" to "将关于用户的重要个人信息持久化到长期记忆 MEMORY.md",
+                    "parameters" to mapOf(
+                        "type" to "object",
+                        "properties" to mapOf(
+                            "fact" to mapOf("type" to "string", "description" to "要记住的事实，简洁一句话。如'用户叫小明，在北京工作'、'用户喜欢喝咖啡，不喜欢奶茶'"),
+                            "category" to mapOf("type" to "string", "description" to "分类，如 basic_info / preferences / habits / relationships / work / other")
+                        ),
+                        "required" to listOf("fact")
+                    )
+                )
+            ),
+            requireApproval = false,
+            riskLevel = "low",
+            tags = listOf("echo", "memory"),
+            executor = { args ->
+                val fact = args["fact"] as? String
+                    ?: return@ToolDefinition jsonError("缺少 fact")
+                val category = args["category"] as? String ?: "other"
+
+                val now = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+
+                val entry = "- [$now] [$category] $fact\n"
+
+                try {
+                    val current = FileStore.readWorkspaceFile("MEMORY.md")
+                    val updated = if (current.contains("## Echo 记住的关于你的事")) {
+                        // 已有该段落，追加到其后
+                        val marker = "## Echo 记住的关于你的事"
+                        val idx = current.indexOf(marker)
+                        val afterHeader = current.indexOf("\n", idx)
+                        val insertAt = if (afterHeader >= 0) afterHeader + 1 else current.length
+                        current.substring(0, insertAt) + entry + current.substring(insertAt)
+                    } else {
+                        // 没有该段落，在文件末尾追加
+                        current.trimEnd() + "\n\n## Echo 记住的关于你的事\n$entry"
+                    }
+                    FileStore.writeWorkspaceFile("MEMORY.md", updated)
+                    jsonOk("已记住: $fact", null)
+                } catch (e: Exception) {
+                    jsonError("保存失败: ${e.message}")
+                }
             }
         ))
 

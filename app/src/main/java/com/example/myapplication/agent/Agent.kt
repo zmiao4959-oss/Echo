@@ -17,9 +17,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Agent 核心引擎 — 移植自 clawspeaker agent.py。
@@ -45,11 +45,16 @@ class Agent(
         val toolsDesc = ToolRegistry.getDescriptions()
 
         // 4. 运行时信息
-        val todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy年M月d日"))
+        val now = System.currentTimeMillis()
+        val sdf = SimpleDateFormat("yyyy年M月d日", Locale.CHINESE)
+        val todayStr = sdf.format(Date(now))
+        val sdf2 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault())
+        val timeStr = sdf2.format(Date(now))
         val runtime = """
 ## Runtime Info
 - 今天是 $todayStr
-- Current time: ${LocalDateTime.now()}
+- Current time: $timeStr
+- Current Unix ms: $now
 - Platform: Android
 
 ## Available Tools

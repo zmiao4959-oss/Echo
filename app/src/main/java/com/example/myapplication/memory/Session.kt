@@ -20,6 +20,17 @@ data class Session(
         lastActive = System.currentTimeMillis()
     }
 
+    /** 对话标题（存储在 metadata["title"]） */
+    var title: String
+        get() = metadata["title"] ?: "对话"
+        set(value) { metadata["title"] = value }
+
+    /** 第一条用户消息前 30 字作为标题 */
+    fun autoTitle(): String {
+        val firstUser = messages.firstOrNull { it.role == "user" }
+        return firstUser?.content?.take(30)?.replace("\n", " ") ?: "新对话"
+    }
+
     /** 简单估算 token 数（4 字符 ≈ 1 token） */
     fun estimateTokens(): Int {
         return messages.sumOf { it.content.length / 4 }
@@ -61,6 +72,24 @@ data class Session(
     }
 
     companion object {
+        private fun deserializeToolCalls(raw: Any?): List<LLMMessage.ToolCall>? {
+            if (raw == null) return null
+            val list = raw as? List<*> ?: return null
+            if (list.isEmpty()) return null
+            return list.mapNotNull { item ->
+                val m = item as? Map<*, *> ?: return@mapNotNull null
+                val func = m["function"] as? Map<*, *> ?: return@mapNotNull null
+                LLMMessage.ToolCall(
+                    id = m["id"] as? String ?: "",
+                    type = m["type"] as? String ?: "function",
+                    function = LLMMessage.FunctionCall(
+                        name = func["name"] as? String ?: "",
+                        arguments = func["arguments"] as? String ?: ""
+                    )
+                )
+            }.ifEmpty { null }
+        }
+
         /** 从 JSON 文件恢复 Session */
         fun fromJsonFile(file: File): Session? {
             return try {
@@ -71,11 +100,12 @@ data class Session(
                     sessionId = data.sessionId,
                     chatId = data.chatId,
                     messages = data.messages.map { md ->
+                        val tcList = deserializeToolCalls(md["tool_calls"])
                         LLMMessage(
                             role = md["role"] as? String ?: "",
                             content = md["content"] as? String ?: "",
                             toolCallId = (md["tool_call_id"] as? String)?.ifEmpty { null },
-                            toolCalls = null, // 简化：不反序列化 tool_calls（历史消息主要用于展示）
+                            toolCalls = tcList,
                             name = (md["name"] as? String)?.ifEmpty { null }
                         )
                     }.toMutableList(),

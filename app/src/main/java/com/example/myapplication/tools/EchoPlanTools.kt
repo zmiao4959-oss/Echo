@@ -33,7 +33,9 @@ object EchoPlanTools {
                             ),
                             "title" to mapOf("type" to "string", "description" to "规划标题"),
                             "message" to mapOf("type" to "string", "description" to "提醒消息内容"),
+                            "triggerTime" to mapOf("type" to "string", "description" to "触发时间，ISO 格式（最推荐！）。例如当前是 2026-06-26T14:30，明晚九点就是 2026-06-27T21:00"),
                             "triggerAt" to mapOf("type" to "integer", "description" to "触发时间（Unix 毫秒时间戳）"),
+                            "minutesFromNow" to mapOf("type" to "integer", "description" to "多少分钟后触发。如 30 表示 30 分钟后，1440 表示明天此时"),
                             "repeatRule" to mapOf("type" to "string", "description" to "重复规则，如 daily/weekly/不填"),
                             "autoSpeak" to mapOf("type" to "boolean", "description" to "是否自动语音播报"),
                             "importance" to mapOf("type" to "integer", "description" to "重要程度 1-5"),
@@ -43,7 +45,7 @@ object EchoPlanTools {
                                 "description" to "标签"
                             )
                         ),
-                        "required" to listOf("type", "title", "message", "triggerAt")
+                        "required" to listOf("type", "title", "message")
                     )
                 )
             ),
@@ -54,14 +56,26 @@ object EchoPlanTools {
                 val type = args["type"] as? String ?: return@ToolDefinition jsonError("缺少 type")
                 val title = args["title"] as? String ?: return@ToolDefinition jsonError("缺少 title")
                 val message = args["message"] as? String ?: title
-                val triggerAt = parseTimestamp(args["triggerAt"])
+
+                val nowMs = System.currentTimeMillis()
+
+                // ① 最优先：ISO 时间字符串（LLM 最擅长，精度最高）
+                val triggerAt: Long = parseIsoTime(args["triggerTime"])
+                    // ② 备选：相对分钟数
+                    ?: (args["minutesFromNow"] as? Number)?.toLong()?.let { mins -> nowMs + mins * 60_000 }
+                    // ③ 兜底：Unix 时间戳
+                    ?: parseTimestamp(args["triggerAt"])
+                    ?: return@ToolDefinition jsonError("请提供 triggerTime（推荐 ISO 格式如 2026-06-27T21:00）、minutesFromNow 或 triggerAt。当前时间戳: $nowMs")
+
+                if (triggerAt <= nowMs) {
+                    return@ToolDefinition jsonError("触发时间已过期。triggerTime/minutesFromNow/triggerAt 必须在当前时间之后。当前: $nowMs，你传的: $triggerAt")
+                }
                 val repeatRule = args["repeatRule"] as? String
                 val autoSpeak = args["autoSpeak"] as? Boolean
                     ?: (type == "task_reminder")
                 val importance = (args["importance"] as? Double)?.toInt() ?: 1
                 val tags = parseStringList(args["tags"])
 
-                val now = System.currentTimeMillis()
                 val plan = EchoPlan(
                     id = UUID.randomUUID().toString(),
                     type = type,
@@ -72,8 +86,8 @@ object EchoPlanTools {
                     autoSpeak = autoSpeak,
                     importance = importance.coerceIn(1, 5),
                     tags = tags,
-                    createdAt = now,
-                    updatedAt = now
+                    createdAt = nowMs,
+                    updatedAt = nowMs
                 )
                 planRepo.add(plan)
                 PlanScheduler.schedule(MyApplication.instance, plan)
@@ -117,7 +131,7 @@ object EchoPlanTools {
                 val updated = existing.copy(
                     title = (args["title"] as? String) ?: existing.title,
                     message = (args["message"] as? String) ?: existing.message,
-                    triggerAt = parseTimestamp(args["triggerAt"], existing.triggerAt),
+                    triggerAt = parseTimestamp(args["triggerAt"]) ?: existing.triggerAt,
                     repeatRule = (args["repeatRule"] as? String)?.ifEmpty { null } ?: existing.repeatRule,
                     enabled = (args["enabled"] as? Boolean) ?: existing.enabled,
                     autoSpeak = (args["autoSpeak"] as? Boolean) ?: existing.autoSpeak,
@@ -161,10 +175,22 @@ object EchoPlanTools {
         ))
     }
 
-    private fun parseTimestamp(value: Any?, fallback: Long = System.currentTimeMillis() + 3600_000): Long {
+    /** 解析 ISO 时间字符串如 "2026-06-27T21:00" → epoch ms */
+    private fun parseIsoTime(value: Any?): Long? {
+        val str = value as? String ?: return null
+        return try {
+            val s = str.trim().replace(" ", "T").replace("T", " ")
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+            sdf.parse(s)?.time
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun parseTimestamp(value: Any?, fallback: Long? = null): Long? {
         return when (value) {
             is Number -> value.toLong()
-            is String -> value.toLongOrNull() ?: fallback
+            is String -> value.toLongOrNull()
             else -> fallback
         }
     }

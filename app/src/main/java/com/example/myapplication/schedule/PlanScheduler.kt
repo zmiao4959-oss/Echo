@@ -46,6 +46,13 @@ object PlanScheduler {
     fun schedule(context: Context, plan: EchoPlan) {
         if (!plan.enabled) return
 
+        // 拒绝过去的时间（LLM 可能算错）
+        val now = System.currentTimeMillis()
+        if (plan.triggerAt <= now) {
+            Log.w(TAG, "Plan '${plan.title}' triggerAt is in the past (${plan.triggerAt} <= $now), not scheduling")
+            return
+        }
+
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
         createNotificationChannel(context)

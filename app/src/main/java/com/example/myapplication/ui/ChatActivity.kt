@@ -16,6 +16,7 @@ import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,6 +24,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ChatActivity : ThemedActivity() {
 
@@ -32,9 +37,17 @@ class ChatActivity : ThemedActivity() {
     private lateinit var inputMessage: EditText
     private lateinit var btnSend: ImageButton
     private lateinit var btnVoice: ImageButton
+    private lateinit var tvTitle: TextView
     private lateinit var statusText: TextView
     private lateinit var progressLoading: ProgressBar
 
+    private var currentChatId: String = ""
+    private var sessionManager = (com.example.myapplication.MyApplication.instance as com.example.myapplication.MyApplication)
+        .let { com.example.myapplication.memory.SessionManager(
+            java.io.File(it.filesDir, "sessions"),
+            { it.appConfig.maxContextTokens },
+            { it.appConfig.compactionKeepMessages }
+        ) }
     private var speechRecognizer: SpeechRecognizer? = null
     private var isListening = false
 
@@ -45,15 +58,12 @@ class ChatActivity : ThemedActivity() {
         val app = application as com.example.myapplication.MyApplication
         BackgroundManager.apply(this, app.appConfig.backgroundKey)
 
-        viewModel = (application as com.example.myapplication.MyApplication)
-            .let { app ->
-                androidx.lifecycle.ViewModelProvider(
-                    this,
-                    androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory(app)
-                )[ChatViewModel::class.java]
-            }
+        viewModel = androidx.lifecycle.ViewModelProvider(
+            this,
+            androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory(app)
+        )[ChatViewModel::class.java]
 
-        val chatId = intent.getStringExtra("chat_id") ?: viewModel.newChatId()
+        currentChatId = intent.getStringExtra("chat_id") ?: viewModel.newChatId()
 
         recycler = findViewById(R.id.recycler_messages)
         inputMessage = findViewById(R.id.input_message)
@@ -69,7 +79,17 @@ class ChatActivity : ThemedActivity() {
         recycler.adapter = adapter
 
         // 加载会话
-        viewModel.loadSession(chatId)
+        viewModel.loadSession(currentChatId)
+
+        // 标题栏
+        tvTitle = findViewById(R.id.tv_chat_title)
+        tvTitle.setOnClickListener { showConversationList() }
+
+        // 新对话按钮
+        findViewById<View>(R.id.btn_new_chat).setOnClickListener { startNewChat() }
+
+        // 加载标题
+        updateTitle()
 
         // 观察消息列表
         lifecycleScope.launch {
@@ -116,6 +136,113 @@ class ChatActivity : ThemedActivity() {
         }
 
         initSpeechRecognizer()
+    }
+
+    private fun updateTitle() {
+        lifecycleScope.launch {
+            val session = sessionManager.resolveSession(currentChatId)
+            val title = session?.title?.ifEmpty { session.autoTitle() } ?: "Echo 对话"
+            tvTitle.text = "$title  ▼"
+        }
+    }
+
+    private fun showConversationList() {
+        lifecycleScope.launch {
+            val sessions = sessionManager.getAllSessions()
+            if (sessions.isEmpty()) {
+                Toast.makeText(this@ChatActivity, "暂无历史对话", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            val sdf = java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault())
+            val items = sessions.map { s ->
+                val title = s.title.ifEmpty { s.autoTitle() }
+                val time = sdf.format(java.util.Date(s.lastActive))
+                val count = s.messages.count { it.role == "user" || it.role == "assistant" }
+                val current = if (s.chatId == currentChatId) " ●" else ""
+                "$title  |  $time  |  ${count}条$current"
+            }.toTypedArray()
+
+            AlertDialog.Builder(this@ChatActivity)
+                .setTitle("对话列表（点击管理）")
+                .setItems(items) { _, which ->
+                    showManageDialog(sessions[which])
+                }
+                .setNegativeButton("关闭", null)
+                .show()
+        }
+    }
+
+    private fun showManageDialog(session: com.example.myapplication.memory.Session) {
+        val title = session.title.ifEmpty { session.autoTitle() }
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setItems(arrayOf("切换到该对话", "重命名", "删除")) { _, which ->
+                when (which) {
+                    0 -> switchToConversation(session.chatId)
+                    1 -> showRenameDialog(session)
+                    2 -> showDeleteDialog(session)
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun switchToConversation(chatId: String) {
+        currentChatId = chatId
+        getSharedPreferences("clawspeaker_config", MODE_PRIVATE)
+            .edit().putString("last_chat_id", chatId).apply()
+        viewModel.loadSession(chatId)
+        updateTitle()
+        Toast.makeText(this, "已切换对话", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showRenameDialog(session: com.example.myapplication.memory.Session) {
+        val input = EditText(this).apply {
+            setText(session.title.ifEmpty { session.autoTitle() })
+            setSingleLine(true)
+            setSelection(text.length)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("重命名对话")
+            .setView(input)
+            .setPositiveButton("确定") { _, _ ->
+                val newName = input.text.toString().trim().ifEmpty { return@setPositiveButton }
+                session.title = newName
+                lifecycleScope.launch {
+                    sessionManager.save(session)
+                    updateTitle()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showDeleteDialog(session: com.example.myapplication.memory.Session) {
+        val title = session.title.ifEmpty { session.autoTitle() }
+        AlertDialog.Builder(this)
+            .setTitle("删除「$title」")
+            .setMessage("确定删除该对话吗？此操作不可撤销。")
+            .setPositiveButton("删除") { _, _ ->
+                lifecycleScope.launch {
+                    sessionManager.delete(session.sessionId)
+                    if (session.chatId == currentChatId) {
+                        // 删的是当前对话，创建新会话
+                        startNewChat()
+                    }
+                    updateTitle()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun startNewChat() {
+        currentChatId = "android:${System.currentTimeMillis()}"
+        getSharedPreferences("clawspeaker_config", MODE_PRIVATE)
+            .edit().putString("last_chat_id", currentChatId).apply()
+        viewModel.loadSession(currentChatId)
+        Toast.makeText(this, "已开启新对话", Toast.LENGTH_SHORT).show()
     }
 
     private fun initSpeechRecognizer() {
@@ -224,6 +351,11 @@ class ChatActivity : ThemedActivity() {
         if (text.isEmpty()) return
         inputMessage.text.clear()
         viewModel.sendMessage(text)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateTitle()
     }
 
     override fun onDestroy() {
