@@ -82,6 +82,16 @@ class AppConfig(context: Context) {
         get() = prefs.getString(KEY_WEATHER_CITY, "") ?: ""
         set(value) = prefs.edit().putString(KEY_WEATHER_CITY, value).apply()
 
+    // ── 卡片透明度 ──
+    var cardOpacity: Int
+        get() = prefs.getInt(KEY_CARD_OPACITY, 30)
+        set(value) = prefs.edit().putInt(KEY_CARD_OPACITY, value).apply()
+
+    // ── 卡片圆角半径（dp） ──
+    var cardCornerRadiusDp: Float
+        get() = prefs.getFloat(KEY_CARD_CORNER_RADIUS, 20f)
+        set(value) = prefs.edit().putFloat(KEY_CARD_CORNER_RADIUS, value).apply()
+
     // ── 卡片纹理（按类别） ──
     fun getCardTextureKey(category: String): String =
         prefs.getString("card_texture_$category", "none") ?: "none"
@@ -128,5 +138,7 @@ class AppConfig(context: Context) {
         private const val KEY_FONT = "font_key"
         private const val KEY_WEATHER_CITY = "weather_city"
         private const val KEY_BACKGROUND = "background_key"
+        private const val KEY_CARD_OPACITY = "card_opacity"
+        private const val KEY_CARD_CORNER_RADIUS = "card_corner_radius"
     }
 }

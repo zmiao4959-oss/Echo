@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -54,7 +55,27 @@ class ProfileActivity : ThemedActivity() {
         findViewById<View>(R.id.entry_theme).setOnClickListener { showThemePickerDialog() }
         findViewById<View>(R.id.entry_page_texture).setOnClickListener { showPageCategoryPicker() }
         findViewById<View>(R.id.entry_card_texture).setOnClickListener { showCardCategoryPicker() }
+        findViewById<View>(R.id.entry_card_shape).setOnClickListener { showShapePickerDialog() }
+        // 显示当前形状名
+        val tvShapeCurrent = findViewById<TextView>(R.id.tv_card_shape_current)
+        tvShapeCurrent.text = shapeLabel(config.cardCornerRadiusDp)
+
         findViewById<View>(R.id.entry_font).setOnClickListener { showFontPickerDialog() }
+
+        // 卡片透明度 SeekBar
+        val seekBarOpacity = findViewById<SeekBar>(R.id.seekbar_card_opacity)
+        val tvOpacityValue = findViewById<TextView>(R.id.tv_card_opacity_value)
+        seekBarOpacity.progress = config.cardOpacity
+        tvOpacityValue.text = "${config.cardOpacity}%"
+        seekBarOpacity.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                config.cardOpacity = progress
+                tvOpacityValue.text = "${progress}%"
+                if (fromUser) ThemeManager.pendingChange = true
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
 
         findViewById<View>(R.id.entry_settings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -413,6 +434,43 @@ class ProfileActivity : ThemedActivity() {
                 }
             }
             .setNegativeButton("取消") { _, _ -> showCardTexturePicker(category) }
+            .show()
+    }
+
+    // ── 卡片形状选择 ──
+
+    /** 预设形状：name → dp 半径 */
+    private val cardShapes = linkedMapOf(
+        "直角" to 0f,
+        "微圆角" to 8f,
+        "标准圆角" to 20f,
+        "大圆角" to 32f,
+        "全圆" to 100f
+    )
+
+    private fun shapeLabel(dp: Float): String {
+        return cardShapes.entries.find { it.value == dp }?.key ?: "${dp.toInt()}dp"
+    }
+
+    private fun showShapePickerDialog() {
+        val config = (application as MyApplication).appConfig
+        val names = cardShapes.keys.toTypedArray()
+        val currentDp = config.cardCornerRadiusDp
+        val currentIndex = cardShapes.values.indexOf(currentDp).coerceAtLeast(0)
+
+        AlertDialog.Builder(this)
+            .setTitle("选择卡片形状")
+            .setSingleChoiceItems(names, currentIndex) { dialog, which ->
+                val newDp = cardShapes.values.elementAt(which)
+                if (newDp != currentDp) {
+                    config.cardCornerRadiusDp = newDp
+                    ThemeManager.pendingChange = true
+                    dialog.dismiss()
+                    finish()
+                    startActivity(Intent(this@ProfileActivity, ProfileActivity::class.java))
+                }
+            }
+            .setNegativeButton("取消", null)
             .show()
     }
 

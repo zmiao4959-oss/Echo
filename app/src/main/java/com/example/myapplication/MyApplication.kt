@@ -14,6 +14,7 @@ import com.example.myapplication.tools.WebTools
 import com.example.myapplication.tools.WeatherTools
 import com.example.myapplication.schedule.PlanScheduler
 import com.example.myapplication.schedule.ScheduleEngine
+import com.example.myapplication.ui.CardTextureManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,6 +32,9 @@ class MyApplication : Application() {
 
         // 初始化 Echo 数据目录（Phase 1）
         EchoFileStore.init(this)
+
+        // 初始化卡片纹理管理器（加载自定义纹理列表）
+        CardTextureManager.init(this)
 
         // 初始化工作区文件（SOUL.md, MEMORY.md 等）
         MemoryInitializer.initWorkspace(this)

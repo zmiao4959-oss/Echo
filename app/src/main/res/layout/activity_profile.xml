@@ -375,6 +375,98 @@
                 <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="?attr/echoBorder" android:layout_marginStart="56dp" />
 
                 <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="卡片透明度"
+                            android:textSize="15sp"
+                            android:textColor="?attr/echoTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_card_opacity_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="30%"
+                            android:textSize="14sp"
+                            android:textColor="?attr/echoPrimary" />
+                    </LinearLayout>
+
+                    <SeekBar
+                        android:id="@+id/seekbar_card_opacity"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"
+                        android:progress="30"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="?attr/echoBorder" android:layout_marginStart="56dp" />
+
+                <LinearLayout
+                    android:id="@+id/entry_card_shape"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:gravity="center"
+                        android:text="⬜"
+                        android:textSize="16sp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="卡片形状"
+                            android:textSize="15sp"
+                            android:textColor="?attr/echoTextPrimary" />
+
+                        <TextView
+                            android:id="@+id/tv_card_shape_current"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="标准圆角"
+                            android:textSize="12sp"
+                            android:textColor="?attr/echoHint" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textSize="20sp"
+                        android:textColor="?attr/echoHint" />
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="?attr/echoBorder" android:layout_marginStart="56dp" />
+
+                <LinearLayout
                     android:id="@+id/entry_font"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
