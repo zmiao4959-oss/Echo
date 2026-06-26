@@ -147,30 +147,7 @@ class ChatActivity : ThemedActivity() {
     }
 
     private fun showConversationList() {
-        lifecycleScope.launch {
-            val sessions = sessionManager.getAllSessions()
-            if (sessions.isEmpty()) {
-                Toast.makeText(this@ChatActivity, "暂无历史对话", Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-
-            val sdf = java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault())
-            val items = sessions.map { s ->
-                val title = s.title.ifEmpty { s.autoTitle() }
-                val time = sdf.format(java.util.Date(s.lastActive))
-                val count = s.messages.count { it.role == "user" || it.role == "assistant" }
-                val current = if (s.chatId == currentChatId) " ●" else ""
-                "$title  |  $time  |  ${count}条$current"
-            }.toTypedArray()
-
-            AlertDialog.Builder(this@ChatActivity)
-                .setTitle("对话列表（点击管理）")
-                .setItems(items) { _, which ->
-                    showManageDialog(sessions[which])
-                }
-                .setNegativeButton("关闭", null)
-                .show()
-        }
+        startActivity(android.content.Intent(this, ConversationListActivity::class.java))
     }
 
     private fun showManageDialog(session: com.example.myapplication.memory.Session) {

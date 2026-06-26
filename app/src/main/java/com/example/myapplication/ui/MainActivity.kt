@@ -14,7 +14,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
-import com.example.myapplication.schedule.ScheduleEngine
 import com.example.myapplication.ui.diary.DiaryFragment
 import com.example.myapplication.ui.memory.MemoryFragment
 import com.example.myapplication.ui.plan.PlanFragment
@@ -23,7 +22,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
@@ -35,7 +33,7 @@ class MainActivity : ThemedActivity() {
     private lateinit var weatherIcon: TextView
     private lateinit var weatherInfo: TextView
 
-    private val weatherClient = OkHttpClient.Builder()
+    private val weatherClient = com.example.myapplication.net.HttpClient.instance.newBuilder()
         .connectTimeout(5, TimeUnit.SECONDS)
         .readTimeout(5, TimeUnit.SECONDS)
         .build()
@@ -83,10 +81,7 @@ class MainActivity : ThemedActivity() {
             bottomNav.selectedItemId = R.id.nav_today
         }
 
-        // 恢复定时闹钟
-        lifecycleScope.launch {
-            ScheduleEngine.rescheduleAll(this@MainActivity)
-        }
+        // 定时闹钟已在 MyApplication.onCreate() 中统一恢复，此处不再重复
 
         // 请求通知权限 (Android 13+)
         requestNotificationPermissionIfNeeded()
@@ -269,8 +264,8 @@ class MainActivity : ThemedActivity() {
                     weatherInfo.text = infoText
                     weatherBar.visibility = View.VISIBLE
                 }
-            } catch (_: Exception) {
-                // 网络失败静默
+            } catch (e: Exception) {
+                com.example.myapplication.diagnostics.ServiceHealth.record("Weather", e.message ?: "unknown")
             }
         }
     }

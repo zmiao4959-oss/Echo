@@ -25,10 +25,14 @@ data class Session(
         get() = metadata["title"] ?: "对话"
         set(value) { metadata["title"] = value }
 
-    /** 第一条用户消息前 30 字作为标题 */
+    /** 第一条用户消息前 30 字作为标题，过滤记忆搜索前缀 */
     fun autoTitle(): String {
-        val firstUser = messages.firstOrNull { it.role == "user" }
-        return firstUser?.content?.take(30)?.replace("\n", " ") ?: "新对话"
+        val firstUser = messages.firstOrNull { it.role == "user" } ?: return "新对话"
+        val clean = firstUser.content
+            .replace(Regex("\\[Memory Search Results].*?\n\n", RegexOption.DOT_MATCHES_ALL), "")
+            .replace("\n", " ")
+            .trim()
+        return clean.take(30).ifEmpty { "新对话" }
     }
 
     /** 简单估算 token 数（4 字符 ≈ 1 token） */

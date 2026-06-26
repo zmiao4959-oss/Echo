@@ -87,6 +87,23 @@ class AppConfig(context: Context) {
         get() = prefs.getInt(KEY_CARD_OPACITY, 30)
         set(value) = prefs.edit().putInt(KEY_CARD_OPACITY, value).apply()
 
+    // ── 主动陪伴 ──
+    var companionEnabled: Boolean
+        get() = prefs.getBoolean(KEY_COMPANION_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_COMPANION_ENABLED, value).apply()
+
+    var companionQuietStart: Int  // 静默开始小时（0-23）
+        get() = prefs.getInt(KEY_COMPANION_QUIET_START, 23)
+        set(value) = prefs.edit().putInt(KEY_COMPANION_QUIET_START, value).apply()
+
+    var companionQuietEnd: Int  // 静默结束小时（0-23）
+        get() = prefs.getInt(KEY_COMPANION_QUIET_END, 7)
+        set(value) = prefs.edit().putInt(KEY_COMPANION_QUIET_END, value).apply()
+
+    var companionAllowVoice: Boolean
+        get() = prefs.getBoolean(KEY_COMPANION_ALLOW_VOICE, false)
+        set(value) = prefs.edit().putBoolean(KEY_COMPANION_ALLOW_VOICE, value).apply()
+
     // ── 卡片圆角半径（dp） ──
     var cardCornerRadiusDp: Float
         get() = prefs.getFloat(KEY_CARD_CORNER_RADIUS, 20f)
@@ -140,5 +157,9 @@ class AppConfig(context: Context) {
         private const val KEY_BACKGROUND = "background_key"
         private const val KEY_CARD_OPACITY = "card_opacity"
         private const val KEY_CARD_CORNER_RADIUS = "card_corner_radius"
+        private const val KEY_COMPANION_ENABLED = "companion_enabled"
+        private const val KEY_COMPANION_QUIET_START = "companion_quiet_start"
+        private const val KEY_COMPANION_QUIET_END = "companion_quiet_end"
+        private const val KEY_COMPANION_ALLOW_VOICE = "companion_allow_voice"
     }
 }

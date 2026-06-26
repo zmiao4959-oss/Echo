@@ -233,6 +233,90 @@
 
         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
+        <!-- 主动陪伴设置 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="主动陪伴"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="开启主动陪伴"
+                android:textSize="14sp"
+                android:textColor="#333"/>
+            <Switch
+                android:id="@+id/switch_companion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="允许语音播报"
+                android:textSize="14sp"
+                android:textColor="#333"/>
+            <Switch
+                android:id="@+id/switch_companion_voice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="静默时段（此期间不通知）"
+            android:textSize="13sp"
+            android:textColor="#666"
+            android:layout_marginBottom="4dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <EditText
+                android:id="@+id/companion_quiet_start"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="开始 (0-23)"
+                android:singleLine="true"
+                android:inputType="number"
+                android:layout_marginEnd="8dp" />
+
+            <EditText
+                android:id="@+id/companion_quiet_end"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="结束 (0-23)"
+                android:singleLine="true"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
+
         <!-- 保存按钮 -->
         <Button
             android:id="@+id/btn_save"
@@ -261,6 +345,57 @@
             android:text="导出所有数据"
             android:textColor="?attr/echoPrimary"
             android:backgroundTint="?attr/echoSurfaceVariant" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
+
+        <!-- 诊断面板 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="诊断"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/diag_llm_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#888"
+            android:layout_marginBottom="2dp" />
+
+        <TextView
+            android:id="@+id/diag_tts_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#888"
+            android:layout_marginBottom="2dp" />
+
+        <TextView
+            android:id="@+id/diag_weather_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#888"
+            android:layout_marginBottom="2dp" />
+
+        <TextView
+            android:id="@+id/diag_permissions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#888"
+            android:layout_marginBottom="2dp" />
+
+        <TextView
+            android:id="@+id/diag_recent_errors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#888" />
 
     </LinearLayout>
 </ScrollView>

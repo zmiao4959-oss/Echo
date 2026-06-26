@@ -10,7 +10,7 @@ import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.data.repository.DiaryRepository
 import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.llm.LLMMessage
-import com.example.myapplication.llm.OpenAICompatProvider
+import com.example.myapplication.llm.ProviderFactory
 import com.example.myapplication.ui.ThemeColors
 import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
@@ -276,11 +276,7 @@ $fragmentsText
 {"title":"日记标题","summary":"一句话摘要","diaryText":"完整日记正文","mood":"情绪短语","tags":["标签1","标签2"]}
             """.trimIndent()
 
-            val provider = OpenAICompatProvider(
-                apiKey = config.llmApiKey,
-                baseUrl = config.llmBaseUrl,
-                model = config.llmModel
-            )
+            val provider = ProviderFactory.createLLMProvider()
 
             val response = provider.chat(
                 messages = listOf(

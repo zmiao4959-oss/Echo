@@ -2,7 +2,6 @@ package com.example.myapplication.tools
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
@@ -14,9 +13,9 @@ object WeatherTools {
 
     private const val BASE_URL = "https://wttr.in"
 
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
+    private val client = com.example.myapplication.net.HttpClient.instance.newBuilder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(5, TimeUnit.SECONDS)
         .build()
 
     fun registerAll() {

@@ -17,7 +17,7 @@ import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.data.repository.MemoryRepository
 import com.example.myapplication.data.repository.PlanRepository
 import com.example.myapplication.llm.LLMMessage
-import com.example.myapplication.llm.OpenAICompatProvider
+import com.example.myapplication.llm.ProviderFactory
 import com.example.myapplication.ui.MainActivity
 import com.google.gson.JsonParser
 import java.util.UUID
@@ -25,8 +25,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Echo 规划调度器 — 将 EchoPlan 注册到系统 AlarmManager。
@@ -221,10 +222,30 @@ object PlanScheduler {
                 repo.update(plan.copy(enabled = false, updatedAt = System.currentTimeMillis()))
             }
 
+            // 主动陪伴设置检查（task_reminder 不受影响）
+            val config = MyApplication.instance.appConfig
+            val isCompanionType = plan.type in listOf("companion_checkin", "memory_trigger")
+            if (isCompanionType && !config.companionEnabled) {
+                Log.d(TAG, "Companion disabled, skipping ${plan.type} plan: ${plan.title}")
+                return@launch
+            }
+            val suppressVoice = isCompanionType && !config.companionAllowVoice
+            if (isCompanionType) {
+                val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+                val quietStart = config.companionQuietStart
+                val quietEnd = config.companionQuietEnd
+                val inQuiet = if (quietStart < quietEnd) hour in quietStart until quietEnd
+                              else hour >= quietStart || hour < quietEnd
+                if (inQuiet) {
+                    Log.d(TAG, "In quiet hours ($quietStart-$quietEnd), skipping companion plan: ${plan.title}")
+                    return@launch
+                }
+            }
+
             when (plan.type) {
                 "task_reminder" -> triggerTaskReminder(context, plan)
-                "companion_checkin" -> triggerCompanionCheckin(context, plan)
-                "memory_trigger" -> triggerMemoryTrigger(context, plan)
+                "companion_checkin" -> triggerCompanionCheckin(context, plan, suppressVoice)
+                "memory_trigger" -> triggerMemoryTrigger(context, plan, suppressVoice)
                 "auto_diary" -> triggerAutoDiary(context, plan)
             }
         }
@@ -248,16 +269,13 @@ object PlanScheduler {
         }
     }
 
-    private fun triggerCompanionCheckin(context: Context, plan: EchoPlan) {
-        showNotification(
-            context, plan,
-            "Echo 想问你",
-            plan.message.ifEmpty { "今天有什么想留下来的吗？" }
-        )
-        if (plan.autoSpeak) {
+    private suspend fun triggerCompanionCheckin(context: Context, plan: EchoPlan, suppressVoice: Boolean = false) {
+        val greeting = buildDynamicGreeting(plan)
+        showNotification(context, plan, "Echo 想问你", greeting)
+        if (plan.autoSpeak && !suppressVoice) {
             val intent = Intent(context, ReminderService::class.java).apply {
                 putExtra("plan_title", plan.title)
-                putExtra("plan_message", plan.message.ifEmpty { "今天有什么想留下来的吗？" })
+                putExtra("plan_message", greeting)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
@@ -267,7 +285,33 @@ object PlanScheduler {
         }
     }
 
-    private fun triggerMemoryTrigger(context: Context, plan: EchoPlan) {
+    /** 根据时间 + 最近记录生成动态问候 */
+    private suspend fun buildDynamicGreeting(plan: EchoPlan): String {
+        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        try {
+            val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+            val recordRepo = LifeRecordRepository()
+            val diaryRepo = DiaryRepository()
+            val todayRecords = recordRepo.getByDate(today)
+            val hasDiary = diaryRepo.hasDiary(today)
+
+            return when {
+                hour in 6..11 -> {
+                    if (todayRecords.isNotEmpty()) "早上好。今天已经有 ${todayRecords.size} 条记录了，状态不错。今天想以什么状态开始？"
+                    else "早上好。新的一天开始了，有什么计划吗？"
+                }
+                hour in 18..23 -> {
+                    if (todayRecords.isNotEmpty()) "今天记录了 ${todayRecords.size} 个片段。还有什么想留下的吗？"
+                    else "今天过得怎么样？有什么想记录下来的吗？"
+                }
+                else -> plan.message.ifEmpty { "今天有什么想留下来的吗？" }
+            }
+        } catch (_: Exception) {
+            return plan.message.ifEmpty { "今天有什么想留下来的吗？" }
+        }
+    }
+
+    private fun triggerMemoryTrigger(context: Context, plan: EchoPlan, @Suppress("UNUSED_PARAMETER") suppressVoice: Boolean = false) {
         scope.launch {
             try {
                 val memoryRepo = MemoryRepository()
@@ -276,7 +320,15 @@ object PlanScheduler {
                     showNotification(context, plan, "Echo 回忆", "还没有记忆卡片，多记录生活吧")
                     return@launch
                 }
-                val card = cards.random()
+                // 优先选置顶 + 重要性高的，其次选最近没出现过的
+                val sorted = cards.sortedWith(compareByDescending<com.example.myapplication.data.model.MemoryCard> { it.pinned }
+                    .thenByDescending { it.createdAt })
+                val prefs = context.getSharedPreferences("clawspeaker_config", android.content.Context.MODE_PRIVATE)
+                val recentIds = prefs.getStringSet("recent_memory_trigger_ids", emptySet()) ?: emptySet()
+                val card = sorted.firstOrNull { it.id !in recentIds } ?: sorted.first()
+                // 记录最近触发的 ID（保留最近 20 个）
+                val updated = (recentIds.toList() + card.id).takeLast(20).toSet()
+                prefs.edit().putStringSet("recent_memory_trigger_ids", updated).apply()
                 showNotification(
                     context, plan,
                     "Echo 找到一段过去的你",
@@ -292,7 +344,7 @@ object PlanScheduler {
     private fun triggerAutoDiary(context: Context, plan: EchoPlan) {
         scope.launch {
             try {
-                val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                 val diaryRepo = DiaryRepository()
                 val recordRepo = LifeRecordRepository()
 
@@ -317,11 +369,7 @@ object PlanScheduler {
 $fragments
                 """.trimIndent()
 
-                val provider = OpenAICompatProvider(
-                    apiKey = config.llmApiKey,
-                    baseUrl = config.llmBaseUrl,
-                    model = config.llmModel
-                )
+                val provider = ProviderFactory.createLLMProvider()
                 val response = provider.chat(
                     listOf(
                         LLMMessage("system", "你是温柔克制的日记写作者。只输出 JSON。"),

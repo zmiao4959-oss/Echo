@@ -13,7 +13,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.util.concurrent.TimeUnit
 
 /**
  * OpenAI 兼容 API Provider（OkHttp 实现，支持流式 SSE）。
@@ -21,17 +20,14 @@ import java.util.concurrent.TimeUnit
 class OpenAICompatProvider(
     private val apiKey: String,
     private val baseUrl: String,
-    private val model: String
+    private val model: String,
+    httpClient: OkHttpClient = com.example.myapplication.net.HttpClient.instance
 ) : LLMProvider {
 
     private val gson = Gson()
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(120, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .build()
+    private val client = httpClient
 
     override suspend fun chat(
         messages: List<LLMMessage>,
@@ -46,6 +42,7 @@ class OpenAICompatProvider(
         val responseBody = response.body?.string() ?: throw Exception("Empty response body")
 
         if (!response.isSuccessful) {
+            com.example.myapplication.diagnostics.ServiceHealth.record("LLM", "HTTP ${response.code}")
             throw Exception("API error ${response.code}: $responseBody")
         }
 

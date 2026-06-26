@@ -175,25 +175,11 @@ object EchoPlanTools {
         ))
     }
 
-    /** 解析 ISO 时间字符串如 "2026-06-27T21:00" → epoch ms */
-    private fun parseIsoTime(value: Any?): Long? {
-        val str = value as? String ?: return null
-        return try {
-            val s = str.trim().replace(" ", "T").replace("T", " ")
-            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
-            sdf.parse(s)?.time
-        } catch (_: Exception) {
-            null
-        }
-    }
+    private fun parseIsoTime(value: Any?): Long? =
+        com.example.myapplication.domain.TimeParser.parseIsoTime(value)
 
-    private fun parseTimestamp(value: Any?, fallback: Long? = null): Long? {
-        return when (value) {
-            is Number -> value.toLong()
-            is String -> value.toLongOrNull()
-            else -> fallback
-        }
-    }
+    private fun parseTimestamp(value: Any?, fallback: Long? = null): Long? =
+        com.example.myapplication.domain.TimeParser.parseTimestamp(value, fallback)
 
     private fun parseStringList(value: Any?): List<String> {
         if (value == null) return emptyList()

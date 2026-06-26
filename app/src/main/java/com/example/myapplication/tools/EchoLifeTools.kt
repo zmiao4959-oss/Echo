@@ -2,8 +2,9 @@ package com.example.myapplication.tools
 
 import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.data.repository.LifeRecordRepository
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 /**
@@ -72,7 +73,7 @@ object EchoLifeTools {
         ))
     }
 
-    private fun today(): String = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+    private fun today(): String = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
     private fun parseStringList(value: Any?): List<String> {
         if (value == null) return emptyList()

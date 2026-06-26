@@ -15,8 +15,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 class TodayViewModel(application: Application) : AndroidViewModel(application) {
@@ -124,6 +125,6 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
-        fun today(): String = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        fun today(): String = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
     }
 }

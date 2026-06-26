@@ -13,5 +13,6 @@ data class UserProfileMemory(
     val sourceIds: List<String>,
     val createdAt: Long,
     val updatedAt: Long,
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val status: String = "confirmed"  // "confirmed" | "pending"
 )

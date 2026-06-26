@@ -55,12 +55,27 @@ class SessionManager(
         return loadLatestSessionForChat(chatId)?.also { cacheSession(it) }
     }
 
-    /** 保存会话到磁盘 */
+    /** 保存会话到磁盘（原子写入：tmp → rename，rename 失败时 copyTo + delete 兜底） */
     suspend fun save(session: Session) {
         withContext(Dispatchers.IO) {
             cacheSession(session)
             val file = sessionFile(session.sessionId)
-            file.writeText(session.toJson(), Charsets.UTF_8)
+            file.parentFile?.mkdirs()
+            val tmpFile = File(file.absolutePath + ".tmp")
+            try {
+                tmpFile.writeText(session.toJson(), Charsets.UTF_8)
+                if (tmpFile.renameTo(file)) {
+                    // 原子 rename 成功（同文件系统最快路径）
+                    return@withContext
+                }
+                // rename 失败 → copyTo + delete 兜底
+                Log.w("SessionManager", "renameTo failed for ${file.name}, falling back to copy+delete")
+                tmpFile.copyTo(file, overwrite = true)
+                tmpFile.delete()
+            } catch (e: Exception) {
+                Log.e("SessionManager", "Failed to save session ${session.sessionId}", e)
+                tmpFile.delete()
+            }
         }
     }
 
@@ -78,6 +93,8 @@ class SessionManager(
                         cache[session.sessionId] = session
                         chatToSession[session.chatId] = session.sessionId
                     }
+                } else {
+                    backupCorrupted(file)
                 }
             }
             sessions.sortedByDescending { it.lastActive }
@@ -144,12 +161,25 @@ class SessionManager(
         chatToSession[session.chatId] = session.sessionId
     }
 
+    /** 坏文件重命名为 .bak 避免重复读取损坏数据 */
+    private fun backupCorrupted(file: File) {
+        try {
+            val bak = File(file.absolutePath + ".bak.${System.currentTimeMillis()}")
+            file.renameTo(bak)
+            Log.w("SessionManager", "Corrupted session file backed up: ${file.name}")
+        } catch (_: Exception) {}
+    }
+
     private fun loadLatestSessionForChat(chatId: String): Session? {
         var best: Session? = null
         var bestLA = -1L
         val files: List<File> = saveDir.listFiles()?.filter { it.extension == "json" } ?: emptyList()
         for (file in files) {
-            val session = Session.fromJsonFile(file) ?: continue
+            val session = Session.fromJsonFile(file)
+            if (session == null) {
+                backupCorrupted(file)
+                continue
+            }
             if (session.chatId == chatId && session.lastActive > bestLA) {
                 best = session
                 bestLA = session.lastActive

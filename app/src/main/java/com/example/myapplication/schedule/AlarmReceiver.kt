@@ -16,15 +16,16 @@ import androidx.core.app.NotificationCompat
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.llm.LLMMessage
-import com.example.myapplication.llm.OpenAICompatProvider
+import com.example.myapplication.llm.ProviderFactory
 import com.example.myapplication.memory.FileStore
 import com.example.myapplication.tts.TTSClient
 import com.example.myapplication.tts.TTSConfig
 import com.example.myapplication.ui.MainActivity
 import kotlinx.coroutines.*
 import java.io.File
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * 闹钟接收器 — 仅拉起前台提醒服务，避免在广播生命周期内执行联网和播放。
@@ -84,8 +85,8 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         // 3. 异步调 LLM（带超时），成功后更新通知
-        val now = LocalDateTime.now()
-        val timeStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val now = Date()
+        val timeStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(now)
         val staticPrompt = FileStore.buildStaticSystemPrompt()
         val systemPrompt = """
 $staticPrompt
@@ -97,11 +98,7 @@ $staticPrompt
 
         val llmResult = withTimeoutOrNull(7_000L) {
             try {
-                val provider = OpenAICompatProvider(
-                    apiKey = appConfig.llmApiKey,
-                    baseUrl = appConfig.llmBaseUrl,
-                    model = appConfig.llmModel
-                )
+                val provider = ProviderFactory.createLLMProvider()
                 provider.chat(
                     messages = listOf(
                         LLMMessage(role = "system", content = systemPrompt),

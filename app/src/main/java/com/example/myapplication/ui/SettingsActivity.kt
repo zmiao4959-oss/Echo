@@ -3,6 +3,7 @@ package com.example.myapplication.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.Manifest
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Switch
@@ -81,6 +82,20 @@ class SettingsActivity : ThemedActivity() {
         maxToolRounds.setText(config.maxToolRounds.toString())
         maxContextTokens.setText(config.maxContextTokens.toString())
 
+        // 主动陪伴设置
+        val switchCompanion = findViewById<Switch>(R.id.switch_companion)
+        switchCompanion.isChecked = config.companionEnabled
+        switchCompanion.setOnCheckedChangeListener { _, isChecked -> config.companionEnabled = isChecked }
+
+        val switchCompanionVoice = findViewById<Switch>(R.id.switch_companion_voice)
+        switchCompanionVoice.isChecked = config.companionAllowVoice
+        switchCompanionVoice.setOnCheckedChangeListener { _, isChecked -> config.companionAllowVoice = isChecked }
+
+        val quietStart = findViewById<EditText>(R.id.companion_quiet_start)
+        quietStart.setText(config.companionQuietStart.toString())
+        val quietEnd = findViewById<EditText>(R.id.companion_quiet_end)
+        quietEnd.setText(config.companionQuietEnd.toString())
+
         // 天气城市
         val weatherCity = findViewById<EditText>(R.id.weather_city)
         weatherCity.setText(config.weatherCity)
@@ -122,6 +137,8 @@ class SettingsActivity : ThemedActivity() {
             config.ttsUrl = normalizeUrl(ttsUrl.text.toString().trim())
             config.maxToolRounds = maxToolRounds.text.toString().toIntOrNull() ?: 10
             config.maxContextTokens = maxContextTokens.text.toString().toIntOrNull() ?: 32000
+            config.companionQuietStart = quietStart.text.toString().toIntOrNull() ?: 23
+            config.companionQuietEnd = quietEnd.text.toString().toIntOrNull() ?: 7
 
             Toast.makeText(this, getString(R.string.toast_config_saved), Toast.LENGTH_SHORT).show()
             finish()
@@ -143,6 +160,40 @@ class SettingsActivity : ThemedActivity() {
                 }
             }
         }
+
+        // 诊断面板
+        refreshDiagnostics()
+    }
+
+    private fun refreshDiagnostics() {
+        val app = application as MyApplication
+        val config = app.appConfig
+
+        findViewById<TextView>(R.id.diag_llm_status).text =
+            if (config.isLLMConfigured) "LLM: 已配置 (${config.llmModel} @ ${config.llmBaseUrl.ifBlank { "未设置" }})"
+            else "LLM: 未配置 (请填写 API 地址和 Key)"
+
+        findViewById<TextView>(R.id.diag_tts_status).text =
+            if (config.isTTSConfigured) "TTS: 已配置 (${config.ttsResourceId}) — 对话语音${if (config.ttsEnabled) "开启" else "关闭"}"
+            else "TTS: 未配置"
+
+        findViewById<TextView>(R.id.diag_weather_status).text =
+            if (config.weatherCity.isNotBlank()) "天气: 城市=${config.weatherCity}  ${com.example.myapplication.diagnostics.ServiceHealth.summary("Weather")}"
+            else "天气: 城市未设置，自动定位中  ${com.example.myapplication.diagnostics.ServiceHealth.summary("Weather")}"
+
+        val notifPerm = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) "已授权" else "未授权"
+        } else "无需授权"
+        val alarmPerm = com.example.myapplication.schedule.ScheduleEngine.canScheduleExact(this).let { if (it) "已授权" else "未授权" }
+        findViewById<TextView>(R.id.diag_permissions).text = "通知权限: $notifPerm  |  精确闹钟: $alarmPerm"
+
+        val errorLines = mutableListOf<String>()
+        for (svc in com.example.myapplication.diagnostics.ServiceHealth.allServices()) {
+            errorLines.add(com.example.myapplication.diagnostics.ServiceHealth.summary(svc))
+        }
+        findViewById<TextView>(R.id.diag_recent_errors).text =
+            if (errorLines.isEmpty()) "最近错误: 无"
+            else "最近错误:\n${errorLines.joinToString("\n")}"
     }
 
     private fun refreshBackgroundSelection() {

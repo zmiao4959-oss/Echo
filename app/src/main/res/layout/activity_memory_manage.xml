@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/echoBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Echo 记住的事"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoTextPrimary"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="这里记录了你告诉 Echo 的所有信息。你可以编辑、删除或禁用任何一条记忆。"
+            android:textSize="13sp"
+            android:textColor="?attr/echoHint"
+            android:layout_marginBottom="20dp" />
+
+        <!-- 用户画像 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="用户画像"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/container_profiles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/tv_empty_profiles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="暂无"
+            android:textSize="13sp"
+            android:textColor="?attr/echoHint"
+            android:layout_marginBottom="16dp" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="12dp"/>
+
+        <!-- 待确认 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="待确认"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoAccent"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/container_pending"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/tv_empty_pending"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="没有待确认的记忆"
+            android:textSize="13sp"
+            android:textColor="?attr/echoHint"
+            android:layout_marginBottom="16dp" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="12dp"/>
+
+        <!-- 记忆卡片 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="记忆卡片"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/container_cards"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/tv_empty_cards"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="暂无"
+            android:textSize="13sp"
+            android:textColor="?attr/echoHint"
+            android:layout_marginBottom="16dp" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="12dp"/>
+
+        <!-- 长期记忆 (MEMORY.md) -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="长期记忆片段"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/container_memory_facts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/tv_empty_facts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="暂无"
+            android:textSize="13sp"
+            android:textColor="?attr/echoHint" />
+
+    </LinearLayout>
+</ScrollView>

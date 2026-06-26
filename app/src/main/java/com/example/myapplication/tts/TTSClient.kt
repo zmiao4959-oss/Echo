@@ -21,10 +21,8 @@ class TTSClient(private val config: TTSConfig) {
     private val gson = Gson()
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
+    private val client = com.example.myapplication.net.HttpClient.instance.newBuilder()
         .readTimeout(config.timeoutSec.toLong(), TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
     private val successCodes = setOf(0, 20000000)

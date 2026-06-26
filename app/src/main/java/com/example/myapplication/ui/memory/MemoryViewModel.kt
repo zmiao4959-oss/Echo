@@ -14,6 +14,9 @@ import com.example.myapplication.data.repository.MemoryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 class MemoryViewModel(application: Application) : AndroidViewModel(application) {
@@ -91,13 +94,13 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
 
     fun loadOnThisDay() {
         viewModelScope.launch {
-            val today = java.time.LocalDate.now()
-            val monthDay = today.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd"))
+            val today = Calendar.getInstance()
+            val monthDay = SimpleDateFormat("MM-dd", Locale.US).format(today.time)
 
             // 查找历史上同月同日的日记（排除今年）
             val allDiaries = diaryRepo.getAll()
             val onThisDayDiaries = allDiaries.filter { d ->
-                d.date.length >= 10 && d.date.substring(5) == monthDay && d.date.substring(0, 4) != today.year.toString()
+                d.date.length >= 10 && d.date.substring(5) == monthDay && d.date.substring(0, 4) != today.get(Calendar.YEAR).toString()
             }.sortedByDescending { it.date }
 
             _onThisDayItem.value = if (onThisDayDiaries.isNotEmpty()) {
@@ -112,7 +115,7 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
                 // 也查一下 LifeRecord
                 val allRecords = recordRepo.getAll()
                 val onThisDayRecords = allRecords.filter { r ->
-                    r.date.length >= 10 && r.date.substring(5) == monthDay && r.date.substring(0, 4) != today.year.toString()
+                    r.date.length >= 10 && r.date.substring(5) == monthDay && r.date.substring(0, 4) != today.get(Calendar.YEAR).toString()
                 }.sortedByDescending { it.date }
 
                 if (onThisDayRecords.isNotEmpty()) {

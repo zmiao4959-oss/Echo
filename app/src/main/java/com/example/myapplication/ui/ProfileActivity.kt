@@ -89,6 +89,10 @@ class ProfileActivity : ThemedActivity() {
             startActivity(Intent(this, ScheduleListActivity::class.java))
         }
 
+        findViewById<View>(R.id.entry_memory_manage).setOnClickListener {
+            startActivity(Intent(this, com.example.myapplication.ui.memory.MemoryManageActivity::class.java))
+        }
+
         findViewById<View>(R.id.entry_export).setOnClickListener {
             Toast.makeText(this, "正在导出…", Toast.LENGTH_SHORT).show()
             CoroutineScope(Dispatchers.IO).launch {

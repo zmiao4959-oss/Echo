@@ -14,5 +14,7 @@ data class MemoryCard(
     val mood: String? = null,
     val sourceType: String,        // life_record, diary, chat
     val sourceId: String,
-    val pinned: Boolean = false
+    val pinned: Boolean = false,
+    val confidence: Float = 1.0f,  // 0.0 - 1.0
+    val status: String = "confirmed"  // "confirmed" | "pending"
 )

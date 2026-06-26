@@ -8,9 +8,7 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import java.text.SimpleDateFormat
-import java.time.DayOfWeek
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -128,29 +126,32 @@ object ScheduleEngine {
 
     /** 计算下一次触发时间（Unix 毫秒） */
     internal fun calculateNextTrigger(hour: Int, minute: Int, daysOfWeek: Set<Int>): Long {
-        val now = LocalDateTime.now()
-        val zoneId = ZoneId.systemDefault()
+        val now = Calendar.getInstance()
 
-        fun LocalDateTime.toOurDay(): Int = when (this.dayOfWeek) {
-            DayOfWeek.SUNDAY -> 1
-            DayOfWeek.MONDAY -> 2
-            DayOfWeek.TUESDAY -> 3
-            DayOfWeek.WEDNESDAY -> 4
-            DayOfWeek.THURSDAY -> 5
-            DayOfWeek.FRIDAY -> 6
-            DayOfWeek.SATURDAY -> 7
-        }
+        // 辅助：Calendar.DAY_OF_WEEK → 我们约定的 1=Sun..7=Sat
+        fun Calendar.ourDay(): Int = get(Calendar.DAY_OF_WEEK)
 
-        val base = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
+        val base = now.clone() as Calendar
+        base.set(Calendar.HOUR_OF_DAY, hour)
+        base.set(Calendar.MINUTE, minute)
+        base.set(Calendar.SECOND, 0)
+        base.set(Calendar.MILLISECOND, 0)
 
         for (i in 0 until 14) {
-            val checkTime = base.plusDays(i.toLong())
-            if (checkTime.toOurDay() in daysOfWeek && checkTime.isAfter(now)) {
-                return checkTime.atZone(zoneId).toInstant().toEpochMilli()
+            val check = base.clone() as Calendar
+            check.add(Calendar.DAY_OF_YEAR, i)
+            if (check.ourDay() in daysOfWeek && check.after(now)) {
+                return check.timeInMillis
             }
         }
 
-        return now.plusDays(1).withHour(hour).withMinute(minute).withSecond(0).withNano(0)
-            .atZone(zoneId).toInstant().toEpochMilli()
+        // 兜底：明天同一时间
+        val fallback = now.clone() as Calendar
+        fallback.add(Calendar.DAY_OF_YEAR, 1)
+        fallback.set(Calendar.HOUR_OF_DAY, hour)
+        fallback.set(Calendar.MINUTE, minute)
+        fallback.set(Calendar.SECOND, 0)
+        fallback.set(Calendar.MILLISECOND, 0)
+        return fallback.timeInMillis
     }
 }

@@ -134,11 +134,13 @@ class MemoryRepository {
         }
 
         val cards = JsonAtomicWriter.readItems<MemoryCard>(cardsFile).filter {
-            it.quote.contains(query, ignoreCase = true) ||
-            it.note.contains(query, ignoreCase = true)
+            it.status == "confirmed" && (
+                it.quote.contains(query, ignoreCase = true) ||
+                it.note.contains(query, ignoreCase = true))
         }
 
         val profiles = JsonAtomicWriter.readItems<UserProfileMemory>(profileFile).filter {
+            it.enabled && it.status == "confirmed" &&
             it.value.contains(query, ignoreCase = true)
         }
 

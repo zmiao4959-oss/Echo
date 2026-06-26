@@ -204,6 +204,56 @@
                         android:textSize="20sp"
                         android:textColor="?attr/echoHint" />
                 </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="?attr/echoBorder" android:layout_marginStart="56dp" />
+
+                <LinearLayout
+                    android:id="@+id/entry_memory_manage"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:gravity="center"
+                        android:text="🧠"
+                        android:textSize="16sp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Echo 记住的事"
+                            android:textSize="15sp"
+                            android:textColor="?attr/echoTextPrimary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="查看、编辑和管理 Echo 记住的关于你的信息"
+                            android:textSize="12sp"
+                            android:textColor="?attr/echoHint" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textSize="20sp"
+                        android:textColor="?attr/echoHint" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

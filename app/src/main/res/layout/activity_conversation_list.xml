@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/echoBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="对话列表"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoTextPrimary" />
+
+        <Button
+            android:id="@+id/btn_new_chat"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="+ 新对话"
+            android:textSize="13sp"
+            android:textColor="?attr/echoOnPrimary"
+            android:backgroundTint="?attr/echoPrimary"
+            android:layout_marginEnd="8dp" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/search_conversations"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:hint="搜索对话标题或内容..."
+        android:singleLine="true"
+        android:paddingHorizontal="12dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="4dp"
+        android:textSize="14sp"
+        android:background="@drawable/bg_input" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_conversations"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/tv_empty_conversations"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="暂无对话"
+        android:textSize="14sp"
+        android:textColor="?attr/echoHint"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone" />
+</LinearLayout>
