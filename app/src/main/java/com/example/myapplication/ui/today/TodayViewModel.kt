@@ -41,7 +41,7 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
     fun loadToday() {
         _todayDate.value = today()
         viewModelScope.launch {
-            _records.value = recordRepo.getByDate(today())
+            _records.value = recordRepo.getByDate(today()).sortedByDescending { it.createdAt }
         }
         loadLatestSession()
     }
@@ -58,7 +58,7 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
         )
         viewModelScope.launch {
             recordRepo.add(record)
-            _records.value = recordRepo.getByDate(today())
+            _records.value = recordRepo.getByDate(today()).sortedByDescending { it.createdAt }
         }
     }
 

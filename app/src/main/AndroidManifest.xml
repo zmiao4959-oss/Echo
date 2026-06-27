@@ -63,6 +63,9 @@
             android:name=".ui.WeeklyReviewActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.GrowthTimelineActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.ConversationListActivity"
             android:exported="false" />
 

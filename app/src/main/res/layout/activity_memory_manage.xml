@@ -25,7 +25,36 @@
             android:text="这里记录了你告诉 Echo 的所有信息。你可以编辑、删除或禁用任何一条记忆。"
             android:textSize="13sp"
             android:textColor="?attr/echoHint"
-            android:layout_marginBottom="20dp" />
+            android:layout_marginBottom="12dp" />
+
+        <!-- Search bar -->
+        <EditText
+            android:id="@+id/search_memory"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="搜索记忆..."
+            android:textSize="14sp"
+            android:textColor="?attr/echoTextPrimary"
+            android:textColorHint="?attr/echoHint"
+            android:background="@drawable/search_bg"
+            android:paddingHorizontal="12dp"
+            android:singleLine="true"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Filter chips -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:id="@+id/chip_group_memory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical" />
+        </HorizontalScrollView>
 
         <!-- 用户画像 -->
         <TextView
@@ -130,7 +159,36 @@
             android:layout_height="wrap_content"
             android:text="暂无"
             android:textSize="13sp"
+            android:textColor="?attr/echoHint"
+            android:layout_marginBottom="16dp" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="12dp"/>
+
+        <!-- 最近操作记录 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="最近操作记录"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/container_audit_log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/tv_empty_audit_log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="暂无操作记录"
+            android:textSize="13sp"
             android:textColor="?attr/echoHint" />
+
+        <View android:layout_width="match_parent" android:layout_height="32dp" />
 
     </LinearLayout>
 </ScrollView>

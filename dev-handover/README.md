@@ -132,6 +132,8 @@ UI (Fragment/Activity/ViewModel)
 | 待确认去重 | `policy/PendingMemoryPolicy.kt` — 去重/校验/相似检测 |
 | 记忆治理 | `policy/MemoryGovernanceService.kt` — 统一 action + 审计日志 |
 | 周回顾详情 | `ui/WeeklyReviewActivity.kt` — 周回顾详情页 |
+| 成长轨迹页 | `ui/GrowthTimelineActivity.kt` + `GrowthTimelineAdapter.kt` + `GrowthTimelineViewModel.kt` + `TimelineItem.kt` — 统一时间线 |
+| 记忆沉淀策略 | `policy/MemoryConsolidationPolicy.kt` — 规则版主题/实体/情绪提取 + 候选画像生成 |
 | 记忆仓库 | `data/repository/MemoryRepository.kt` |
 | LLM 对接 | `llm/OpenAICompatProvider.kt` |
 | LLM 工厂 | `llm/ProviderFactory.kt` |
@@ -143,7 +145,7 @@ UI (Fragment/Activity/ViewModel)
 | 时间解析 | `domain/TimeParser.kt` |
 | 诊断记录 | `diagnostics/ServiceHealth.kt` |
 | 原子 JSON | `data/store/JsonAtomicWriter.kt` |
-| 测试示例 | `app/src/test/` 下有 14 个测试文件（**~165 个用例**，含 7 个纯 JVM policy 测试） |
+| 测试示例 | `app/src/test/` 下有 18 个测试文件（**208 个用例**，含 7 个纯 JVM policy 测试） |
 | 验收文档 | `dev-handover/manual-qa.md` |
 
 ---
@@ -196,6 +198,7 @@ UI (Fragment/Activity/ViewModel)
 - **Phase E-Fix**: 策略层拆分 — policy/ 包独立于 Android 框架，纯 Kotlin + JVM 可测；5 个策略文件 + 5 个测试文件；142 测试基线；Android 层改为委托策略层
 - **Phase F**: 可解释体验 — F1 记忆引用详情弹窗；F2 周回顾详情页；F3 统一治理服务 + 审计日志；F4 检索解释增强；~165 测试基线
 - **Phase F-Fix**: 三个关键 bug 修复 — ① 流式对话卡死（OpenAICompatProvider 工具调用时 finishReason 不处理 + updateLastAiMessage 丢失稳定 ID）；② 返回键直接退出对话（singleTask）；③ 天气定位偏移（WeatherTools 回退到配置城市 + 系统提示注入）
+- **Phase G**: 长期成长体验 — G1 成长轨迹页（TimelineItem 密封类 + GrowthTimelineActivity + Adapter + ViewModel，类型筛选 chip，disabled/pending 排除，空状态温和）；G2 记忆沉淀策略（MemoryConsolidationPolicy — 规则版主题提取 >=3 次 + 实体检测 + 情绪趋势 + 候选画像生成，置信度上限 0.6，全 pending，去重已丢弃）；G3 周回顾产品化（关键词 chip 展示 + 高光/低谷片段 + Echo 克制总结 + 保存为日记草稿/记忆卡片，空 review 不编造）；G4 记忆治理中心升级（状态/来源筛选 chip + 搜索 EditText + AuditLogStore 最近操作记录 + 禁用记忆恢复 + "为什么"详情弹窗）；G5 数据导出增强（新增 memory_audit_log.json/weekly_review.json/growth_timeline.json + README.txt + API key 排除扫描 + 失败诊断）；G6 测试（新增 ~43 测试，208 测试基线，18 测试文件）
 
 ## 八、未来方向建议
 
@@ -216,3 +219,6 @@ UI (Fragment/Activity/ViewModel)
 | 记忆提示只做轻量透明化 | `MemoryHintFormatter` 展示来源类型和计数，不展示完整来源详情 | 用户知道"参考了 N 条记忆"，但看不到具体引用了什么 |
 | 多源检索全量扫描 | `MemoryContextBuilder` 对 LifeRecord / Diary 按最近 30 天全量加载后过滤，数据量大时可能有性能影响 | 历史数据积累后检索延迟增加，后续可考虑分页或索引 |
 | 丢弃去重基于包含匹配 | `PendingMemoryPolicy.isSimilar()` 用 `value.contains()` 简单匹配，可能误判 | 极少数情况下不同内容可能被误判为相似，或被相似内容绕过 |
+| 记忆沉淀实体提取脆弱 | `MemoryConsolidationPolicy.extractFrequentEntities()` 基于正则模式匹配（`在XX`/`和XX`），可能漏掉非标准表达或误匹配 | confidence 上限 0.6 + 用户可丢弃，影响可控 |
+| 成长轨迹全量加载 | `GrowthTimelineViewModel` 一次性加载所有 repo 数据后排序，数据量大时可能慢 | 当前限制 200 条，后续可加分页或增量查询 |
+| 周回顾重复保存 | 用户多次点击保存可能产生重复 diary/card | `hasDiary(date)` 检查当日是否已有日记，但不阻止不同日期的重复 |
