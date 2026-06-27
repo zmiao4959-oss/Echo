@@ -3,10 +3,8 @@ package com.example.myapplication.ui.today
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.MediaRecorder
 import android.os.Bundle
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,7 +23,6 @@ import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.PageTextureManager
-import com.example.myapplication.ui.ThemeColors
 import com.example.myapplication.ui.ChatActivity
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.flow.collectLatest
@@ -55,8 +52,12 @@ class TodayFragment : Fragment() {
     private lateinit var tvStatusSummary: TextView
 
     private var recordAdapter: TodayRecordAdapter? = null
-    private var speechRecognizer: SpeechRecognizer? = null
-    private var isListening = false
+
+    // 语音录音（MediaRecorder，不依赖任何第三方语音服务）
+    private var mediaRecorder: MediaRecorder? = null
+    private var isRecording = false
+    private var currentAudioFile: java.io.File? = null
+    private var pendingAudioPath: String? = null  // 录音完成但尚未提交的音频路径
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -79,7 +80,6 @@ class TodayFragment : Fragment() {
         setupInput()
         setupChatCard()
         observeViewModel()
-        initSpeechRecognizer()
         applyCardTextures()
         applyPageTexture()
     }
@@ -111,7 +111,6 @@ class TodayFragment : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        speechRecognizer?.destroy()
     }
 
     // ── View Binding ──
@@ -148,14 +147,27 @@ class TodayFragment : Fragment() {
     private fun setupInput() {
         requireView().findViewById<View>(R.id.btn_record).setOnClickListener {
             val text = etQuickInput.text.toString().trim()
-            if (text.isNotEmpty()) {
+            val audio = pendingAudioPath
+
+            if (text.isEmpty() && audio == null) return@setOnClickListener
+
+            if (audio != null) {
+                // 有录音：优先保存为语音便签，文字作为备注
+                val content = if (text.isNotEmpty()) "[语音] $text" else "[语音]"
+                viewModel.addRecord(content, "voice", audio)
+                pendingAudioPath = null
+                etQuickInput.text.clear()
+                etQuickInput.hint = "记录今天的生活片段…"
+                btnVoice.clearColorFilter()
+                Toast.makeText(requireContext(), "语音便签已保存", Toast.LENGTH_SHORT).show()
+            } else {
                 viewModel.addRecord(text, "text")
                 etQuickInput.text.clear()
                 Toast.makeText(requireContext(), "已记录", Toast.LENGTH_SHORT).show()
             }
         }
 
-        btnVoice.setOnClickListener { toggleVoiceInput() }
+        btnVoice.setOnClickListener { toggleVoiceRecord() }
     }
 
     // ── 对话卡片 ──
@@ -261,80 +273,80 @@ class TodayFragment : Fragment() {
         }
     }
 
-    // ── 语音输入 ──
+    // ── 语音便签（MediaRecorder 录音，无需任何第三方服务）──
 
-    private fun initSpeechRecognizer() {
-        if (!SpeechRecognizer.isRecognitionAvailable(requireContext())) {
-            btnVoice.visibility = View.GONE
-            return
+    private fun toggleVoiceRecord() {
+        if (isRecording) {
+            stopRecording()
+        } else {
+            startRecording()
         }
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext())
-        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                isListening = true
-                btnVoice.setColorFilter(ThemeColors.destructive(requireContext()))
-            }
-
-            override fun onBeginningOfSpeech() {}
-            override fun onRmsChanged(rmsdB: Float) {}
-            override fun onBufferReceived(buffer: ByteArray?) {}
-
-            override fun onEndOfSpeech() {
-                isListening = false
-                btnVoice.clearColorFilter()
-            }
-
-            override fun onError(error: Int) {
-                isListening = false
-                btnVoice.clearColorFilter()
-                if (error != SpeechRecognizer.ERROR_NO_MATCH) {
-                    val msg = when (error) {
-                        SpeechRecognizer.ERROR_NETWORK -> "网络不可用"
-                        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "未检测到语音"
-                        else -> "语音识别失败 ($error)"
-                    }
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            override fun onResults(results: Bundle?) {
-                isListening = false
-                btnVoice.clearColorFilter()
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (!matches.isNullOrEmpty()) {
-                    val current = etQuickInput.text.toString()
-                    etQuickInput.setText(if (current.isNotEmpty()) "$current${matches[0]}" else matches[0])
-                    etQuickInput.setSelection(etQuickInput.text.length)
-                }
-            }
-
-            override fun onPartialResults(partialResults: Bundle?) {}
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-        })
     }
 
-    private fun toggleVoiceInput() {
-        if (isListening) {
-            speechRecognizer?.stopListening()
-            return
-        }
-
+    private fun startRecording() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_RECORD_AUDIO)
             return
         }
-        startVoiceInput()
+
+        try {
+            val audioDir = java.io.File(requireContext().filesDir, "echo/records/audio")
+            audioDir.mkdirs()
+            currentAudioFile = java.io.File(audioDir, "voice_${System.currentTimeMillis()}.m4a")
+
+            mediaRecorder = MediaRecorder().apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setAudioSamplingRate(44100)
+                setAudioEncodingBitRate(96000)
+                setOutputFile(currentAudioFile!!.absolutePath)
+                prepare()
+                start()
+            }
+
+            isRecording = true
+            btnVoice.setColorFilter(0xFFFF4444.toInt())
+            Toast.makeText(requireContext(), "🎙 正在录音…", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "录音启动失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
-    private fun startVoiceInput() {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-CN")
-            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+    private fun stopRecording() {
+        try {
+            mediaRecorder?.apply {
+                stop()
+                release()
+            }
+            mediaRecorder = null
+            isRecording = false
+
+            val audioFile = currentAudioFile
+            if (audioFile != null && audioFile.exists() && audioFile.length() > 0) {
+                // 录音完成，暂存路径，等待用户点击"记录"提交
+                pendingAudioPath = audioFile.absolutePath
+                btnVoice.setColorFilter(0xFF4CAF50.toInt())  // 绿色 = 录音待提交
+                etQuickInput.hint = "语音已录制 · 点「记录」提交（可补充文字）"
+                Toast.makeText(requireContext(), "语音已录制 (${formatFileSize(audioFile.length())})，点记录提交", Toast.LENGTH_SHORT).show()
+            } else {
+                // 录音为空，丢弃
+                Toast.makeText(requireContext(), "录音为空，未保存", Toast.LENGTH_SHORT).show()
+                btnVoice.clearColorFilter()
+                pendingAudioPath = null
+            }
+            currentAudioFile = null
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "录音保存失败", Toast.LENGTH_SHORT).show()
         }
-        speechRecognizer?.startListening(intent)
+    }
+
+    private fun formatFileSize(bytes: Long): String = when {
+        bytes < 1024 -> "${bytes}B"
+        bytes < 1024 * 1024 -> "${bytes / 1024}KB"
+        else -> "${"%.1f".format(bytes / (1024.0 * 1024.0))}MB"
     }
 
     override fun onRequestPermissionsResult(
@@ -342,7 +354,7 @@ class TodayFragment : Fragment() {
     ) {
         if (requestCode == REQUEST_RECORD_AUDIO) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startVoiceInput()
+                startRecording()
             } else {
                 Toast.makeText(requireContext(), "需要录音权限才能使用语音输入", Toast.LENGTH_SHORT).show()
             }

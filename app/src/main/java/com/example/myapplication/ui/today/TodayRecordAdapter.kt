@@ -1,7 +1,10 @@
 package com.example.myapplication.ui.today
 
+import android.media.MediaPlayer
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -10,6 +13,7 @@ import com.example.myapplication.R
 import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.ui.CardTextureManager
 import com.google.android.material.chip.Chip
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -17,6 +21,8 @@ import java.util.Locale
 class TodayRecordAdapter(
     private val onDelete: ((String) -> Unit)? = null
 ) : ListAdapter<LifeRecord, TodayRecordAdapter.ViewHolder>(DiffCallback()) {
+
+    private var mediaPlayer: MediaPlayer? = null
 
     class ViewHolder(val view: com.google.android.material.card.MaterialCardView) :
         RecyclerView.ViewHolder(view)
@@ -40,7 +46,7 @@ class TodayRecordAdapter(
         val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
         timeView.text = sdf.format(Date(record.createdAt))
 
-        // 情绪
+        // 情绪 / 来源图标
         val moodView = holder.view.findViewById<android.widget.TextView>(R.id.tv_mood)
         moodView.text = record.mood ?: sourceEmoji(record.source)
         moodView.visibility = if (record.mood != null || record.source.isNotEmpty())
@@ -49,6 +55,20 @@ class TodayRecordAdapter(
         // 内容
         val contentView = holder.view.findViewById<android.widget.TextView>(R.id.tv_content)
         contentView.text = record.content
+
+        // 语音播放按钮
+        val playBtn = holder.view.findViewById<ImageButton>(R.id.btn_play_audio)
+        val audioPath = record.audioPath
+        if (record.source == "voice" && audioPath != null && File(audioPath).exists()) {
+            playBtn.visibility = android.view.View.VISIBLE
+            playBtn.setImageResource(android.R.drawable.ic_media_play)
+            playBtn.setOnClickListener {
+                togglePlayback(audioPath, playBtn)
+            }
+        } else {
+            playBtn.visibility = android.view.View.GONE
+            playBtn.setOnClickListener(null)
+        }
 
         // 标签
         val chipGroup = holder.view.findViewById<com.google.android.material.chip.ChipGroup>(R.id.chip_tags)
@@ -73,6 +93,46 @@ class TodayRecordAdapter(
             onDelete?.invoke(record.id)
             true
         }
+    }
+
+    private fun togglePlayback(audioPath: String, playBtn: ImageButton) {
+        val ctx = playBtn.context
+
+        // 如果正在播放，停止
+        if (mediaPlayer?.isPlaying == true) {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+            playBtn.setImageResource(android.R.drawable.ic_media_play)
+            return
+        }
+
+        // 释放旧的
+        mediaPlayer?.release()
+
+        try {
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(audioPath)
+                prepare()
+                start()
+                setOnCompletionListener {
+                    playBtn.setImageResource(android.R.drawable.ic_media_play)
+                    release()
+                    this@TodayRecordAdapter.mediaPlayer = null
+                }
+            }
+            playBtn.setImageResource(android.R.drawable.ic_media_pause)
+        } catch (e: Exception) {
+            Toast.makeText(ctx, "无法播放语音", Toast.LENGTH_SHORT).show()
+            mediaPlayer?.release()
+            mediaPlayer = null
+        }
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        mediaPlayer?.release()
+        mediaPlayer = null
     }
 
     private fun sourceEmoji(source: String): String = when (source) {

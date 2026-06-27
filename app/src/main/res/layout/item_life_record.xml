@@ -55,6 +55,17 @@
             android:maxLines="6"
             android:ellipsize="end" />
 
+        <!-- 语音播放按钮（仅语音便签可见） -->
+        <ImageButton
+            android:id="@+id/btn_play_audio"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="6dp"
+            android:src="@android:drawable/ic_media_play"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="播放语音"
+            android:visibility="gone" />
+
         <!-- 标签 -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chip_tags"

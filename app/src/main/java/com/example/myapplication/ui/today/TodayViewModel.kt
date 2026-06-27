@@ -47,14 +47,15 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** 新增一条 LifeRecord */
-    fun addRecord(content: String, source: String = "text") {
+    fun addRecord(content: String, source: String = "text", audioPath: String? = null) {
         if (content.isBlank()) return
         val record = LifeRecord(
             id = UUID.randomUUID().toString(),
             createdAt = System.currentTimeMillis(),
             date = today(),
             content = content.trim(),
-            source = source
+            source = source,
+            audioPath = audioPath
         )
         viewModelScope.launch {
             recordRepo.add(record)
@@ -66,7 +67,7 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteRecord(id: String) {
         viewModelScope.launch {
             recordRepo.delete(id)
-            _records.value = recordRepo.getByDate(today())
+            _records.value = recordRepo.getByDate(today()).sortedByDescending { it.createdAt }
         }
     }
 

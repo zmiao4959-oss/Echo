@@ -14,5 +14,6 @@ data class LifeRecord(
     val tags: List<String> = emptyList(),
     val importance: Int = 1,       // 1-5
     val linkedPlanId: String? = null,
-    val rawConversationId: String? = null
+    val rawConversationId: String? = null,
+    val audioPath: String? = null  // 语音便签的音频文件路径
 )
