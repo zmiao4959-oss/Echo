@@ -3,6 +3,7 @@ package com.example.myapplication.data.repository
 import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.data.store.EchoFileStore
 import com.example.myapplication.data.store.JsonAtomicWriter
+import com.example.myapplication.search.SearchIndex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -33,6 +34,7 @@ class LifeRecordRepository {
         val items = JsonAtomicWriter.readItems<LifeRecord>(file).toMutableList()
         items.add(record)
         JsonAtomicWriter.writeItems(file, items)
+        SearchIndex.upsert("life_record", record.id, record.content, record.createdAt)
     }
 
     /** 更新一条 LifeRecord */
@@ -42,6 +44,7 @@ class LifeRecordRepository {
         if (idx >= 0) {
             items[idx] = record
             JsonAtomicWriter.writeItems(file, items)
+            SearchIndex.upsert("life_record", record.id, record.content, record.createdAt)
         }
     }
 
@@ -49,6 +52,7 @@ class LifeRecordRepository {
     suspend fun delete(id: String) = withContext(Dispatchers.IO) {
         val items = JsonAtomicWriter.readItems<LifeRecord>(file).filter { it.id != id }
         JsonAtomicWriter.writeItems(file, items)
+        SearchIndex.remove("life_record", id)
     }
 
     /** 获取某日期范围内的 LifeRecord */

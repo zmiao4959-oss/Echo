@@ -17,6 +17,9 @@ import com.example.myapplication.schedule.ScheduleEngine
 import com.example.myapplication.data.store.AuditLogStore
 import com.example.myapplication.policy.MemoryGovernanceService
 import com.example.myapplication.ui.CardTextureManager
+import com.example.myapplication.data.store.MigrationManager
+import com.example.myapplication.search.SearchIndex
+import com.example.myapplication.diagnostics.DataHealthChecker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -67,6 +70,18 @@ class MyApplication : Application() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             val persisted = AuditLogStore.readAll()
             MemoryGovernanceService.loadFromExternal(persisted)
+        }
+
+        // Phase H: Schema 迁移 + 搜索索引 + 数据健康检查
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            MigrationManager.runMigrations()
+            SearchIndex.loadFromDisk()
+            SearchIndex.rebuildIfStale()
+            // 记一次数据健康检查（结果通过 SettingsActivity 诊断页可见）
+            val report = DataHealthChecker.runAllChecks()
+            if (report.findings.any { it.severity == DataHealthChecker.Severity.ERROR }) {
+                android.util.Log.w("MyApplication", "Data health issues: ${report.summary}")
+            }
         }
     }
 

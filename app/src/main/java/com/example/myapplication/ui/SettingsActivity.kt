@@ -191,9 +191,10 @@ class SettingsActivity : ThemedActivity() {
         for (svc in com.example.myapplication.diagnostics.ServiceHealth.allServices()) {
             errorLines.add(com.example.myapplication.diagnostics.ServiceHealth.summary(svc))
         }
+        val healthSummary = com.example.myapplication.diagnostics.DataHealthChecker.quickSummary()
         findViewById<TextView>(R.id.diag_recent_errors).text =
-            if (errorLines.isEmpty()) "最近错误: 无"
-            else "最近错误:\n${errorLines.joinToString("\n")}"
+            (if (errorLines.isEmpty()) "最近错误: 无" else "最近错误:\n${errorLines.joinToString("\n")}") +
+            "\n\n数据健康: $healthSummary"
     }
 
     private fun refreshBackgroundSelection() {

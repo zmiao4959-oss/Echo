@@ -4,6 +4,7 @@ import com.example.myapplication.data.model.MemoryCard
 import com.example.myapplication.data.model.UserProfileMemory
 import com.example.myapplication.data.store.EchoFileStore
 import com.example.myapplication.data.store.JsonAtomicWriter
+import com.example.myapplication.search.SearchIndex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -32,6 +33,10 @@ class MemoryRepository {
         val items = JsonAtomicWriter.readItems<MemoryCard>(cardsFile).toMutableList()
         items.add(card)
         JsonAtomicWriter.writeItems(cardsFile, items)
+        if (card.status == "confirmed") {
+            val text = "${card.quote} ${card.note}"
+            SearchIndex.upsert("memory_card", card.id, text, card.createdAt)
+        }
     }
 
     /** 更新卡片 */
@@ -41,6 +46,12 @@ class MemoryRepository {
         if (idx >= 0) {
             items[idx] = card
             JsonAtomicWriter.writeItems(cardsFile, items)
+            if (card.status == "confirmed") {
+                val text = "${card.quote} ${card.note}"
+                SearchIndex.upsert("memory_card", card.id, text, card.createdAt)
+            } else {
+                SearchIndex.remove("memory_card", card.id)
+            }
         }
     }
 
@@ -48,6 +59,7 @@ class MemoryRepository {
     suspend fun deleteCard(id: String) = withContext(Dispatchers.IO) {
         val items = JsonAtomicWriter.readItems<MemoryCard>(cardsFile).filter { it.id != id }
         JsonAtomicWriter.writeItems(cardsFile, items)
+        SearchIndex.remove("memory_card", id)
     }
 
     /** 随机获取一张卡片 */
@@ -98,12 +110,19 @@ class MemoryRepository {
             items.add(profile)
         }
         JsonAtomicWriter.writeItems(profileFile, items)
+        if (profile.enabled && profile.status == "confirmed") {
+            val text = "${profile.key} ${profile.value}"
+            SearchIndex.upsert("profile", profile.id, text, profile.updatedAt)
+        } else {
+            SearchIndex.remove("profile", profile.id)
+        }
     }
 
     /** 删除画像 */
     suspend fun deleteProfile(id: String) = withContext(Dispatchers.IO) {
         val items = JsonAtomicWriter.readItems<UserProfileMemory>(profileFile).filter { it.id != id }
         JsonAtomicWriter.writeItems(profileFile, items)
+        SearchIndex.remove("profile", id)
     }
 
     /** 启用/禁用画像 */
@@ -113,6 +132,12 @@ class MemoryRepository {
         if (idx >= 0) {
             items[idx] = items[idx].copy(enabled = enabled)
             JsonAtomicWriter.writeItems(profileFile, items)
+            if (enabled && items[idx].status == "confirmed") {
+                val p = items[idx]
+                SearchIndex.upsert("profile", p.id, "${p.key} ${p.value}", p.updatedAt)
+            } else {
+                SearchIndex.remove("profile", id)
+            }
         }
     }
 

@@ -69,6 +69,21 @@ object JsonAtomicWriter {
     }
 
     /**
+     * 只读取文件的 schemaVersion，不反序列化 items。
+     * @return schemaVersion，文件不存在或损坏返回 0
+     */
+    fun readSchemaVersion(file: File): Int {
+        if (!file.exists()) return 0
+        return try {
+            val json = file.readText(Charsets.UTF_8)
+            val obj = gson.fromJson(json, com.google.gson.JsonObject::class.java)
+            obj?.get("schemaVersion")?.asInt ?: 0
+        } catch (e: Exception) {
+            0
+        }
+    }
+
+    /**
      * 备份已损坏的 JSON 文件。
      */
     @PublishedApi internal fun backupCorrupted(file: File) {

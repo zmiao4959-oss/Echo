@@ -66,6 +66,20 @@ class GrowthTimelineActivity : ThemedActivity() {
 
         buildFilterChips()
 
+        // Scroll listener for pagination
+        val layoutManager = recycler.layoutManager as LinearLayoutManager
+        recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (dy <= 0) return  // only trigger on scroll down
+                val visibleItemCount = layoutManager.childCount
+                val totalItemCount = layoutManager.itemCount
+                val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
+                if (visibleItemCount + firstVisiblePosition >= totalItemCount - 5) {
+                    viewModel.loadMore()
+                }
+            }
+        })
+
         lifecycleScope.launch {
             viewModel.items.collect { items ->
                 adapter.submitList(items)

@@ -3,6 +3,7 @@ package com.example.myapplication.data.repository
 import com.example.myapplication.data.model.DailyDiary
 import com.example.myapplication.data.store.EchoFileStore
 import com.example.myapplication.data.store.JsonAtomicWriter
+import com.example.myapplication.search.SearchIndex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -31,10 +32,11 @@ class DiaryRepository {
     /** 新增日记 */
     suspend fun add(diary: DailyDiary) = withContext(Dispatchers.IO) {
         val items = JsonAtomicWriter.readItems<DailyDiary>(file).toMutableList()
-        // 如果当天已有日记，先移除旧的
         items.removeAll { it.date == diary.date }
         items.add(diary)
         JsonAtomicWriter.writeItems(file, items)
+        val text = listOfNotNull(diary.title, diary.summary, diary.diaryText).joinToString(" ")
+        SearchIndex.upsert("diary", diary.id, text, diary.updatedAt)
     }
 
     /** 更新日记 */
@@ -44,6 +46,8 @@ class DiaryRepository {
         if (idx >= 0) {
             items[idx] = diary
             JsonAtomicWriter.writeItems(file, items)
+            val text = listOfNotNull(diary.title, diary.summary, diary.diaryText).joinToString(" ")
+            SearchIndex.upsert("diary", diary.id, text, diary.updatedAt)
         }
     }
 
@@ -51,6 +55,7 @@ class DiaryRepository {
     suspend fun delete(id: String) = withContext(Dispatchers.IO) {
         val items = JsonAtomicWriter.readItems<DailyDiary>(file).filter { it.id != id }
         JsonAtomicWriter.writeItems(file, items)
+        SearchIndex.remove("diary", id)
     }
 
     /** 获取某日期范围内的日记 */

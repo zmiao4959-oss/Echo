@@ -134,6 +134,9 @@ UI (Fragment/Activity/ViewModel)
 | 周回顾详情 | `ui/WeeklyReviewActivity.kt` — 周回顾详情页 |
 | 成长轨迹页 | `ui/GrowthTimelineActivity.kt` + `GrowthTimelineAdapter.kt` + `GrowthTimelineViewModel.kt` + `TimelineItem.kt` — 统一时间线 |
 | 记忆沉淀策略 | `policy/MemoryConsolidationPolicy.kt` — 规则版主题/实体/情绪提取 + 候选画像生成 |
+| 搜索索引 | `search/SearchIndex.kt` — 本地 CJK bigram 轻量关键词索引 + 增量更新 |
+| 数据健康 | `diagnostics/DataHealthChecker.kt` — 8 项检查 + 一键修复 |
+| Schema 迁移 | `data/store/SchemaVersions.kt` + `data/store/MigrationManager.kt` — 版本管理 + 自动迁移 |
 | 记忆仓库 | `data/repository/MemoryRepository.kt` |
 | LLM 对接 | `llm/OpenAICompatProvider.kt` |
 | LLM 工厂 | `llm/ProviderFactory.kt` |
@@ -145,7 +148,7 @@ UI (Fragment/Activity/ViewModel)
 | 时间解析 | `domain/TimeParser.kt` |
 | 诊断记录 | `diagnostics/ServiceHealth.kt` |
 | 原子 JSON | `data/store/JsonAtomicWriter.kt` |
-| 测试示例 | `app/src/test/` 下有 18 个测试文件（**208 个用例**，含 7 个纯 JVM policy 测试） |
+| 测试示例 | `app/src/test/` 下有 24 个测试文件（**251 个用例**，含 SearchIndex/DataHealth/Migration 专项测试） |
 | 验收文档 | `dev-handover/manual-qa.md` |
 
 ---
@@ -199,6 +202,9 @@ UI (Fragment/Activity/ViewModel)
 - **Phase F**: 可解释体验 — F1 记忆引用详情弹窗；F2 周回顾详情页；F3 统一治理服务 + 审计日志；F4 检索解释增强；~165 测试基线
 - **Phase F-Fix**: 三个关键 bug 修复 — ① 流式对话卡死（OpenAICompatProvider 工具调用时 finishReason 不处理 + updateLastAiMessage 丢失稳定 ID）；② 返回键直接退出对话（singleTask）；③ 天气定位偏移（WeatherTools 回退到配置城市 + 系统提示注入）
 - **Phase G**: 长期成长体验 — G1 成长轨迹页（TimelineItem 密封类 + GrowthTimelineActivity + Adapter + ViewModel，类型筛选 chip，disabled/pending 排除，空状态温和）；G2 记忆沉淀策略（MemoryConsolidationPolicy — 规则版主题提取 >=3 次 + 实体检测 + 情绪趋势 + 候选画像生成，置信度上限 0.6，全 pending，去重已丢弃）；G3 周回顾产品化（关键词 chip 展示 + 高光/低谷片段 + Echo 克制总结 + 保存为日记草稿/记忆卡片，空 review 不编造）；G4 记忆治理中心升级（状态/来源筛选 chip + 搜索 EditText + AuditLogStore 最近操作记录 + 禁用记忆恢复 + "为什么"详情弹窗）；G5 数据导出增强（新增 memory_audit_log.json/weekly_review.json/growth_timeline.json + README.txt + API key 排除扫描 + 失败诊断）；G6 测试（新增 ~43 测试，208 测试基线，18 测试文件）
+- **Phase G-Fix**: 语音便签 — 移除 Google SpeechRecognizer（国内不可用），改用 MediaRecorder 本地录音 + MediaPlayer 回放（m4a/AAC），录音 → 待提交 → 点「记录」提交；成长轨迹页支持播放历史语音；今日片段倒序展示（createdAt DESC）
+- **Phase H**: 性能护城河 — H1 成长轨迹分页（PAGE_SIZE=30，RecyclerView scrollListener 懒加载，筛选后分页重置）；H2 轻量索引（SearchIndex — CJK bigram 分词 + token 匹配 + 时间衰减，覆盖 5 种数据源，增量更新 + 全量重建，原子写 search_index.json）；H3 数据健康检查（DataHealthChecker — 8 项检查 info/warning/error 三级 + 一键修复安全性修复）；H4 Schema 迁移（SchemaVersions + MigrationManager — 启动时检测版本 → 备份 → 迁移 → 日志，失败回滚）；H5 基准测试（3 个 benchmark 测试 — Timeline/Search/CardFilter）；H6 文档（data-health.md + manual-qa.md 更新）
+- **Phase H-Fix**: 补齐测试与一致性兜底 — H-Fix1 SearchIndex 专项测试（15 用例：upsert/update/remove/disabled-pending/损坏恢复/多 sourceType/snippet/sort）；H-Fix2 DataHealthChecker 专项测试（15 用例：8 项检查 + safe repair + 分级）；H-Fix3 MigrationManager 专项测试（9 用例：memory_cards/user_profile/audit_log 迁移 + 备份 + 失败保留 + version 更新 + 日志）；H-Fix4 索引一致性兜底（rebuildIfStale + 诊断 stale 显示 + 测试覆盖）；251 测试基线，24 测试文件
 
 ## 八、未来方向建议
 
