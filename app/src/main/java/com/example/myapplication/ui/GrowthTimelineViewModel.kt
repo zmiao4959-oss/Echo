@@ -72,7 +72,8 @@ class GrowthTimelineViewModel(application: android.app.Application) : AndroidVie
                 content = r.content,
                 mood = r.mood,
                 tags = r.tags,
-                source = r.source
+                source = r.source,
+                audioPath = r.audioPath
             ))
         }
 

@@ -42,6 +42,17 @@
         android:maxLines="3"
         android:ellipsize="end" />
 
+    <!-- Voice play button (only for voice records) -->
+    <ImageButton
+        android:id="@+id/timeline_play_audio"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="4dp"
+        android:src="@android:drawable/ic_media_play"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="播放语音"
+        android:visibility="gone" />
+
     <!-- Bottom row: mood + time -->
     <LinearLayout
         android:layout_width="match_parent"

@@ -24,7 +24,8 @@ sealed class TimelineItem {
         val content: String,
         val mood: String?,
         val tags: List<String>,
-        val source: String
+        val source: String,
+        val audioPath: String? = null
     ) : TimelineItem() {
         override val typeLabel = "生活记录"
         override val iconEmoji = "✏️"
