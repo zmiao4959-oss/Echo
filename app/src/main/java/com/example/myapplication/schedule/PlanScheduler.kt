@@ -48,9 +48,9 @@ object PlanScheduler {
     fun schedule(context: Context, plan: EchoPlan) {
         if (!plan.enabled) return
 
-        // 拒绝过去的时间（LLM 可能算错）
+        // 拒绝过去的时间（LLM 可能算错），允许 2 秒容差
         val now = System.currentTimeMillis()
-        if (plan.triggerAt <= now) {
+        if (plan.triggerAt < now - 2_000L) {
             Log.w(TAG, "Plan '${plan.title}' triggerAt is in the past (${plan.triggerAt} <= $now), not scheduling")
             return
         }
@@ -65,18 +65,31 @@ object PlanScheduler {
         val pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, flags)
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-                // 没有精确闹钟权限 → 设为非精确
-                alarmManager.set(AlarmManager.RTC_WAKEUP, plan.triggerAt, pendingIntent)
+            // 优先用 setExactAndAllowWhileIdle（Doze 下更可靠），其次 setAlarmClock
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ScheduleEngine.canScheduleExact(context)) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    plan.triggerAt,
+                    pendingIntent
+                )
+                Log.d(TAG, "Scheduled plan '${plan.title}' via setExactAndAllowWhileIdle at ${plan.triggerAt}")
             } else {
                 alarmManager.setAlarmClock(
                     AlarmManager.AlarmClockInfo(plan.triggerAt, pendingIntent),
                     pendingIntent
                 )
+                Log.d(TAG, "Scheduled plan '${plan.title}' via setAlarmClock at ${plan.triggerAt}")
             }
-            Log.d(TAG, "Scheduled plan '${plan.title}' (${plan.type}) at ${plan.triggerAt}")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to schedule plan '${plan.title}'", e)
+            Log.e(TAG, "Failed to schedule plan '${plan.title}', trying setAlarmClock recovery", e)
+            try {
+                alarmManager.setAlarmClock(
+                    AlarmManager.AlarmClockInfo(plan.triggerAt, pendingIntent),
+                    pendingIntent
+                )
+            } catch (e2: Exception) {
+                Log.e(TAG, "All alarm methods failed for plan '${plan.title}'", e2)
+            }
         }
     }
 
@@ -241,8 +254,8 @@ object PlanScheduler {
 
             when (plan.type) {
                 "task_reminder" -> triggerTaskReminder(context, plan)
-                "companion_checkin" -> triggerCompanionCheckin(context, plan, decision.suppressVoice)
-                "memory_trigger" -> triggerMemoryTrigger(context, plan, decision.suppressVoice)
+                "companion_checkin" -> triggerCompanionCheckin(context, plan)
+                "memory_trigger" -> triggerMemoryTrigger(context, plan)
                 "auto_diary" -> triggerAutoDiary(context, plan)
             }
         }
@@ -252,33 +265,42 @@ object PlanScheduler {
 
     private fun triggerTaskReminder(context: Context, plan: EchoPlan) {
         showNotification(context, plan, "⏰ ${plan.title}", plan.message)
-        // 语音播报通过 ReminderService
-        if (plan.autoSpeak) {
-            val intent = Intent(context, ReminderService::class.java).apply {
-                putExtra("plan_title", plan.title)
-                putExtra("plan_message", plan.message)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
-        }
+        // 语音播报由 ReminderService 处理（已在 AlarmReceiver 中同步启动）
     }
 
-    private suspend fun triggerCompanionCheckin(context: Context, plan: EchoPlan, suppressVoice: Boolean = false) {
+    private suspend fun triggerCompanionCheckin(context: Context, plan: EchoPlan) {
         val greeting = buildDynamicGreeting(plan)
         showNotification(context, plan, "Echo 想问你", greeting)
-        if (plan.autoSpeak && !suppressVoice) {
-            val intent = Intent(context, ReminderService::class.java).apply {
-                putExtra("plan_title", plan.title)
-                putExtra("plan_message", greeting)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+        // 语音播报由 ReminderService 处理（已在 AlarmReceiver 中同步启动）
+    }
+
+    /**
+     * 为 ReminderService 生成 EchoPlan 的语音播报文本。
+     * 返回 null 表示不需要语音播报。
+     */
+    suspend fun buildVoiceText(context: Context, planId: String): String? {
+        val repo = PlanRepository()
+        val plan = repo.getById(planId) ?: return null
+
+        // 检查是否允许语音
+        if (!plan.autoSpeak) return null
+
+        val config = MyApplication.instance.appConfig
+        val triggerCtx = com.example.myapplication.policy.CompanionPolicy.TriggerContext(
+            planType = plan.type,
+            companionEnabled = config.companionEnabled,
+            hourOfDay = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY),
+            quietStart = config.companionQuietStart,
+            quietEnd = config.companionQuietEnd,
+            companionAllowVoice = config.companionAllowVoice
+        )
+        val decision = com.example.myapplication.policy.CompanionPolicy.shouldTrigger(triggerCtx)
+        if (!decision.shouldTrigger || decision.suppressVoice) return null
+
+        return when (plan.type) {
+            "task_reminder" -> plan.message
+            "companion_checkin" -> buildDynamicGreeting(plan)
+            else -> plan.message.ifEmpty { null }
         }
     }
 
@@ -309,7 +331,7 @@ object PlanScheduler {
         }
     }
 
-    private fun triggerMemoryTrigger(context: Context, plan: EchoPlan, @Suppress("UNUSED_PARAMETER") suppressVoice: Boolean = false) {
+    private fun triggerMemoryTrigger(context: Context, plan: EchoPlan) {
         scope.launch {
             try {
                 // Weekly review: use WeeklyReviewBuilder

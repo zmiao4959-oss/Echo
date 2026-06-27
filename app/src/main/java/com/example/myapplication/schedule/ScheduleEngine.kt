@@ -47,7 +47,8 @@ object ScheduleEngine {
         }
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val triggerTime = calculateNextTrigger(task.hour, task.minute, task.daysOfWeek)
-        if (triggerTime <= System.currentTimeMillis()) {
+        // 允许 2 秒容差，防止因调度耗时导致边界跳过
+        if (triggerTime < System.currentTimeMillis() - 2_000L) {
             Log.w(TAG, "Trigger time for ${task.timeFormatted} is in the past, not scheduling")
             return
         }
@@ -58,23 +59,32 @@ object ScheduleEngine {
         val timeStr = sdf.format(Date(triggerTime))
 
         try {
-            // 优先使用 setAlarmClock：无需 SCHEDULE_EXACT_ALARM 权限，系统最高优先级
-            alarmManager.setAlarmClock(
-                AlarmManager.AlarmClockInfo(triggerTime, pendingIntent),
-                pendingIntent
-            )
-            Log.i(TAG, "✅ Scheduled via setAlarmClock: ${task.timeFormatted} → $timeStr (id=${task.id.take(8)})")
-        } catch (e: SecurityException) {
-            Log.w(TAG, "setAlarmClock failed, trying setExactAndAllowWhileIdle...")
-            try {
+            // 优先使用 setExactAndAllowWhileIdle：Doze 模式下唤醒最可靠
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && canScheduleExact(context)) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     triggerTime,
                     pendingIntent
                 )
-                Log.i(TAG, "✅ Scheduled via setExactAndAllowWhileIdle: ${task.timeFormatted} → $timeStr")
+                Log.i(TAG, "✅ Scheduled via setExactAndAllowWhileIdle: ${task.timeFormatted} → $timeStr (id=${task.id.take(8)})")
+            } else {
+                // 没有精确闹钟权限时回退到 setAlarmClock
+                alarmManager.setAlarmClock(
+                    AlarmManager.AlarmClockInfo(triggerTime, pendingIntent),
+                    pendingIntent
+                )
+                Log.i(TAG, "✅ Scheduled via setAlarmClock (fallback): ${task.timeFormatted} → $timeStr (id=${task.id.take(8)})")
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Exact alarm failed, trying setAlarmClock recovery...")
+            try {
+                alarmManager.setAlarmClock(
+                    AlarmManager.AlarmClockInfo(triggerTime, pendingIntent),
+                    pendingIntent
+                )
+                Log.i(TAG, "✅ Scheduled via setAlarmClock (recovery): ${task.timeFormatted} → $timeStr")
             } catch (e2: SecurityException) {
-                Log.e(TAG, "❌ No permission to schedule exact alarm! User must grant in system settings.", e2)
+                Log.e(TAG, "❌ No permission to schedule alarm! User must grant in system settings.", e2)
             }
         }
     }

@@ -33,10 +33,24 @@ import java.util.Locale
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        // Phase 8: EchoPlan 闹钟 → 路由到 PlanScheduler
+        // Phase 8: EchoPlan 闹钟 → 同步启动前台服务 + 数据处理
         val planId = intent.getStringExtra("plan_id")
         if (planId != null && intent.action == "com.example.myapplication.ECHO_PLAN_ALARM") {
             Log.i(TAG, "⏰ EchoPlan alarm: ${planId.take(8)}")
+            // 必须在 onReceive 内同步启动前台服务（广播豁免窗口很短）
+            try {
+                val serviceIntent = Intent(context, ReminderService::class.java).apply {
+                    putExtra(ReminderService.EXTRA_PLAN_ID, planId)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent)
+                } else {
+                    context.startService(serviceIntent)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start reminder service for EchoPlan", e)
+            }
+            // 数据处理（通知、调度更新）异步执行
             PlanScheduler.handleTrigger(context, planId)
             return
         }
@@ -156,7 +170,7 @@ $staticPrompt
      * TTS 合成后用 MediaPlayer 播放，显式请求音频焦点并设最大音量。
      * 挂起等待播完，防止进程提前被杀。
      */
-    private suspend fun tryTtsIfConfigured(
+    internal suspend fun tryTtsIfConfigured(
         context: Context,
         appConfig: com.example.myapplication.config.AppConfig,
         text: String
@@ -217,37 +231,39 @@ $staticPrompt
             // 播放并挂起等待播完
             try {
                 kotlinx.coroutines.suspendCancellableCoroutine<Unit> { cont ->
-                    val player = MediaPlayer().apply {
-                        setAudioAttributes(audioAttributes)
-                        try {
-                            setDataSource(audioFile.absolutePath)
-                            prepare()
-                        } catch (e: Exception) {
-                            Log.e(TAG, "MediaPlayer prepare failed: ${e.message}", e)
-                            cont.resume(Unit) {}
-                            return@suspendCancellableCoroutine
-                        }
-                        setOnPreparedListener {
-                            Log.d(TAG, "MediaPlayer prepared, starting alarm playback...")
-                            start()
-                        }
-                        setOnCompletionListener {
-                            Log.d(TAG, "MediaPlayer completed normally")
-                            it.release()
-                            audioFile.delete()
-                            cont.resume(Unit) {}
-                        }
-                        setOnErrorListener { mp, what, extra ->
-                            Log.e(TAG, "MediaPlayer error: what=$what extra=$extra")
-                            mp.release()
-                            audioFile.delete()
-                            cont.resume(Unit) {}
-                            true
-                        }
+                    val player = MediaPlayer()
+                    var started = false
+                    try {
+                        player.setAudioAttributes(audioAttributes)
+                        player.setDataSource(audioFile.absolutePath)
+                        player.prepare()     // 同步 prepare，返回时已就绪
+                        player.start()       // 直接 start，无需 OnPreparedListener
+                        started = true
+                        Log.d(TAG, "MediaPlayer started, beginning alarm playback...")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "MediaPlayer prepare/start failed: ${e.message}", e)
+                        try { player.release() } catch (_: Exception) {}
+                        audioFile.delete()
+                        cont.resume(Unit) {}
+                        return@suspendCancellableCoroutine
+                    }
+
+                    player.setOnCompletionListener {
+                        Log.d(TAG, "MediaPlayer completed normally")
+                        it.release()
+                        audioFile.delete()
+                        cont.resume(Unit) {}
+                    }
+                    player.setOnErrorListener { mp, what, extra ->
+                        Log.e(TAG, "MediaPlayer error: what=$what extra=$extra")
+                        mp.release()
+                        audioFile.delete()
+                        cont.resume(Unit) {}
+                        true
                     }
 
                     cont.invokeOnCancellation {
-                        try { player.stop(); player.release() } catch (_: Exception) {}
+                        try { if (started) player.stop(); player.release() } catch (_: Exception) {}
                         audioFile.delete()
                     }
                 }
@@ -288,5 +304,6 @@ $staticPrompt
         const val TAG = "AlarmReceiver"
         const val CHANNEL_ID = "claw_reminder"
         const val NOTIFICATION_ID = 9001
+        const val FOREGROUND_NOTIFICATION_ID = 9002
     }
 }
