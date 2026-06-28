@@ -85,8 +85,11 @@ class MyApplication : Application() {
         // Phase I: 初始化检索引擎 + Embedding Provider + 加载缓存
         refreshEmbeddingProvider()
         hybridEngine.mode = appConfig.retrievalMode
-        // 从磁盘恢复 embedding 缓存（避免重启后重新向量化）
-        val cached = EmbeddingCacheStore.load()
+        // 从磁盘恢复 embedding 缓存（避免重启后重新向量化），按 model/provider 过滤
+        val cached = EmbeddingCacheStore.load(
+            currentModel = appConfig.embeddingModel,
+            currentProvider = "doubao"
+        )
         if (cached.isNotEmpty()) {
             semanticEngine.loadCache(cached)
         }
@@ -110,14 +113,16 @@ class MyApplication : Application() {
      * 否则设为 null（no-op fallback）。
      */
     fun refreshEmbeddingProvider() {
-        if (appConfig.isEmbeddingConfigured) {
+        if (appConfig.isEmbeddingConfigured && appConfig.remoteSemanticEnabled) {
             semanticEngine.embeddingProvider = DoubaoEmbeddingProvider(
                 apiKey = appConfig.embeddingApiKey,
                 baseUrl = appConfig.embeddingBaseUrl,
                 model = appConfig.embeddingModel
             )
+            semanticEngine.providerInfo = Pair(appConfig.embeddingModel, "doubao")
         } else {
             semanticEngine.embeddingProvider = null
+            semanticEngine.providerInfo = null
         }
         hybridEngine.mode = appConfig.retrievalMode
     }

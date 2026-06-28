@@ -7,6 +7,7 @@ import com.example.myapplication.data.store.EchoFileStore
 import com.example.myapplication.data.store.JsonAtomicWriter
 import com.example.myapplication.memory.FileStore
 import com.example.myapplication.memory.MemoryMdParser
+import com.example.myapplication.data.store.EmbeddingCacheStore
 import com.example.myapplication.search.SearchIndex
 import java.io.File
 
@@ -74,6 +75,7 @@ object DataHealthChecker {
         findings.addAll(checkAuditLogSize())
         findings.addAll(checkSearchIndexStale())
         findings.addAll(checkExportFiles())
+        findings.addAll(checkEmbeddingCache())
         return HealthReport(System.currentTimeMillis(), findings)
     }
 
@@ -84,6 +86,7 @@ object DataHealthChecker {
             checkId == "session_corruption" -> fixSessionCorruption()
             checkId == "memory_md_section_format" -> fixMemoryMdSections()
             checkId == "audit_log_oversized" -> fixAuditLogSize()
+            checkId.startsWith("embedding_cache") -> fixEmbeddingCache()
             checkId == "search_index_stale" -> fixSearchIndex()
             else -> null
         }
@@ -292,6 +295,17 @@ object DataHealthChecker {
         return results
     }
 
+    private fun fixEmbeddingCache(): HealthFinding {
+        return try {
+            EmbeddingCacheStore.clear()
+            HealthFinding("embedding_cache_fixed", "Embedding 缓存已清空",
+                Severity.INFO, "缓存文件已删除，将在下次检索时重建", fixable = false)
+        } catch (e: Exception) {
+            HealthFinding("embedding_cache_fixed", "清空失败",
+                Severity.ERROR, e.message ?: "", fixable = false)
+        }
+    }
+
     private fun fixSearchIndex(): HealthFinding {
         return try {
             kotlinx.coroutines.runBlocking { SearchIndex.rebuild() }
@@ -316,6 +330,41 @@ object DataHealthChecker {
             results.add(HealthFinding("export_missing_files", "导出缺少文件",
                 Severity.WARNING, "缺少: ${missing.joinToString { it.name }}", fixable = false))
         }
+        return results
+    }
+
+    // ── 9. Embedding 缓存健康检查 ──
+
+    private fun checkEmbeddingCache(): List<HealthFinding> {
+        val results = mutableListOf<HealthFinding>()
+        val size = try {
+            EmbeddingCacheStore.fileSize()
+        } catch (_: Exception) {
+            -1  // 测试环境或无权限时跳过
+        }
+
+        if (size < 0) {
+            return results
+        }
+
+        // 容量过大 (> 10MB)
+        if (size > 10 * 1024 * 1024) {
+            results.add(HealthFinding("embedding_cache_oversized", "Embedding 缓存过大",
+                Severity.WARNING, "缓存文件 ${size / 1024}KB，建议清空重建", fixable = true, fixLabel = "清空缓存"))
+        }
+
+        // 文件可读性（损坏检测）
+        try {
+            val entries = EmbeddingCacheStore.load()
+            if (entries.isEmpty() && size > 100) {
+                results.add(HealthFinding("embedding_cache_corrupt", "Embedding 缓存可能损坏",
+                    Severity.WARNING, "文件存在但无可读条目，建议清空重建", fixable = true, fixLabel = "清空缓存"))
+            }
+        } catch (e: Exception) {
+            results.add(HealthFinding("embedding_cache_corrupt", "Embedding 缓存损坏",
+                Severity.ERROR, e.message ?: "", fixable = true, fixLabel = "清空缓存"))
+        }
+
         return results
     }
 

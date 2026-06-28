@@ -7,25 +7,30 @@ import com.google.gson.reflect.TypeToken
 import java.io.File
 
 /**
- * Embedding 缓存持久化 — 将 [SemanticRetrievalEngine] 的内存缓存写入磁盘。
+ * Embedding 缓存持久化 — LRU + model 隔离 + 损坏恢复。
  *
  * 文件：echo/memories/embedding_cache.json
- * 格式：JSON 数组，每条记录含 sourceType/sourceId/textHash/embedding(List<Float>)/cachedAt
- *
- * 写入策略：每次检索后保存（[save] 原子写 tmp → rename）。
+ * 容量上限：1000 条，超限时按 lastUsedAt 淘汰。
+ * 安全：不保存原始完整文本（仅 hash + 前 100 字符摘要），不含 API Key。
+ * 隔离：model / provider 变更时旧缓存不可复用。
  */
 object EmbeddingCacheStore {
 
     private const val TAG = "EmbeddingCacheStore"
+    private const val MAX_ENTRIES = 1000
     private val gson = Gson()
 
-    /** 可序列化的缓存条目（FloatArray → List<Float>） */
+    /** 可序列化的缓存条目 */
     private data class JsonEntry(
         val sourceType: String,
         val sourceId: String,
         val textHash: String,
         val embedding: List<Float>?,
-        val cachedAt: Long
+        val cachedAt: Long,
+        val model: String = "",
+        val provider: String = "",
+        val summary: String = "",
+        val lastUsedAt: Long = 0L
     )
 
     private fun cacheFile(): File? {
@@ -40,39 +45,62 @@ object EmbeddingCacheStore {
     }
 
     /**
-     * 保存内存缓存到磁盘（原子写）。
+     * 保存缓存到磁盘（原子写 + LRU 裁剪）。
+     * @param currentModel 当前使用的 model，用于后续加载时校验
+     * @param currentProvider 当前使用的 provider 标识
      */
-    fun save(entries: List<SemanticRetrievalEngine.EmbeddingCacheEntry>) {
+    fun save(
+        entries: List<SemanticRetrievalEngine.EmbeddingCacheEntry>,
+        currentModel: String = "",
+        currentProvider: String = ""
+    ) {
         val file = cacheFile() ?: return
         try {
-            val jsonEntries = entries.map { entry ->
+            // LRU 裁剪：保留最近使用的 MAX_ENTRIES 条
+            val trimmed = entries
+                .sortedByDescending { it.lastUsedAt }
+                .take(MAX_ENTRIES)
+
+            val jsonEntries = trimmed.map { entry ->
                 JsonEntry(
                     sourceType = entry.sourceType,
                     sourceId = entry.sourceId,
                     textHash = entry.textHash,
                     embedding = entry.embedding?.toList(),
-                    cachedAt = entry.cachedAt
+                    cachedAt = entry.cachedAt,
+                    model = entry.model.ifBlank { currentModel },
+                    provider = entry.provider.ifBlank { currentProvider },
+                    summary = entry.summary,
+                    lastUsedAt = entry.lastUsedAt
                 )
             }
             val json = gson.toJson(jsonEntries)
             val tmp = File(file.absolutePath + ".tmp")
             tmp.writeText(json, Charsets.UTF_8)
             if (!tmp.renameTo(file)) {
-                // rename 失败时 copyTo 兜底
                 tmp.copyTo(file, overwrite = true)
                 tmp.delete()
             }
-            Log.d(TAG, "Cache saved: ${entries.size} entries, ${json.length} bytes")
+
+            val dropped = entries.size - trimmed.size
+            Log.d(TAG, "Cache saved: ${trimmed.size} entries${if (dropped > 0) " ($dropped evicted)" else ""}, ${json.length} bytes")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save embedding cache", e)
         }
     }
 
     /**
-     * 从磁盘加载缓存。
-     * @return 缓存条目列表，文件不存在或损坏时返回空列表。
+     * 从磁盘加载缓存。自动过滤与当前 model/provider 不匹配的条目。
+     * 文件损坏时重建。
+     *
+     * @param currentModel 当前 model，为空时不过滤
+     * @param currentProvider 当前 provider，为空时不过滤
+     * @return 有效的缓存条目列表
      */
-    fun load(): List<SemanticRetrievalEngine.EmbeddingCacheEntry> {
+    fun load(
+        currentModel: String = "",
+        currentProvider: String = ""
+    ): List<SemanticRetrievalEngine.EmbeddingCacheEntry> {
         val file = cacheFile() ?: return emptyList()
         if (!file.exists()) return emptyList()
 
@@ -83,12 +111,26 @@ object EmbeddingCacheStore {
 
             val entries = jsonEntries.mapNotNull { je ->
                 try {
+                    // model/provider 隔离：不匹配的旧缓存跳过
+                    if (currentModel.isNotBlank() && je.model.isNotBlank() && je.model != currentModel) {
+                        Log.d(TAG, "Skipping cache entry with mismatched model: ${je.sourceType}:${je.sourceId} (${je.model} != $currentModel)")
+                        return@mapNotNull null
+                    }
+                    if (currentProvider.isNotBlank() && je.provider.isNotBlank() && je.provider != currentProvider) {
+                        Log.d(TAG, "Skipping cache entry with mismatched provider: ${je.sourceType}:${je.sourceId} (${je.provider} != $currentProvider)")
+                        return@mapNotNull null
+                    }
+
                     SemanticRetrievalEngine.EmbeddingCacheEntry(
                         sourceType = je.sourceType,
                         sourceId = je.sourceId,
                         textHash = je.textHash,
                         embedding = je.embedding?.toFloatArray(),
-                        cachedAt = je.cachedAt
+                        cachedAt = je.cachedAt,
+                        model = je.model,
+                        provider = je.provider,
+                        summary = je.summary,
+                        lastUsedAt = je.lastUsedAt
                     )
                 } catch (e: Exception) {
                     Log.w(TAG, "Skipping corrupt cache entry: ${je.sourceType}:${je.sourceId}", e)
@@ -96,11 +138,36 @@ object EmbeddingCacheStore {
                 }
             }
 
-            Log.i(TAG, "Cache loaded: ${entries.size} entries")
+            Log.i(TAG, "Cache loaded: ${entries.size} entries (${jsonEntries.size - entries.size} filtered)")
             entries
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to load embedding cache, starting fresh", e)
+            Log.w(TAG, "Failed to load embedding cache, rebuilding", e)
+            // 损坏时删除旧文件
+            try { file.delete() } catch (_: Exception) {}
             emptyList()
         }
+    }
+
+    /**
+     * 清空所有缓存（文件 + 内存）。
+     */
+    fun clear() {
+        try {
+            val file = cacheFile()
+            if (file?.exists() == true) {
+                file.delete()
+                Log.i(TAG, "Embedding cache cleared")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to clear cache", e)
+        }
+    }
+
+    /**
+     * 获取缓存文件大小（字节），文件不存在返回 -1。
+     */
+    fun fileSize(): Long {
+        val file = cacheFile() ?: return -1
+        return if (file.exists()) file.length() else 0
     }
 }

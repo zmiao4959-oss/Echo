@@ -108,6 +108,15 @@ class AppConfig(context: Context) {
     val isEmbeddingConfigured: Boolean
         get() = embeddingApiKey.isNotBlank()
 
+    // ── 隐私开关 ──
+    var remoteSemanticEnabled: Boolean
+        get() = prefs.getBoolean(KEY_REMOTE_SEMANTIC, true)
+        set(value) = prefs.edit().putBoolean(KEY_REMOTE_SEMANTIC, value).apply()
+
+    var semanticSensitiveFilter: Boolean
+        get() = prefs.getBoolean(KEY_SEMANTIC_SENSITIVE_FILTER, true)
+        set(value) = prefs.edit().putBoolean(KEY_SEMANTIC_SENSITIVE_FILTER, value).apply()
+
     // ── 主动陪伴 ──
     var companionEnabled: Boolean
         get() = prefs.getBoolean(KEY_COMPANION_ENABLED, true)
@@ -182,6 +191,8 @@ class AppConfig(context: Context) {
         private const val KEY_EMBEDDING_API_KEY = "embedding_api_key"
         private const val KEY_EMBEDDING_BASE_URL = "embedding_base_url"
         private const val KEY_EMBEDDING_MODEL = "embedding_model"
+        private const val KEY_REMOTE_SEMANTIC = "remote_semantic_enabled"
+        private const val KEY_SEMANTIC_SENSITIVE_FILTER = "semantic_sensitive_filter"
         private const val KEY_COMPANION_ENABLED = "companion_enabled"
         private const val KEY_COMPANION_QUIET_START = "companion_quiet_start"
         private const val KEY_COMPANION_QUIET_END = "companion_quiet_end"

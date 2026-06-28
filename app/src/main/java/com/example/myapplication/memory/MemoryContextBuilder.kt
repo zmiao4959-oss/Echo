@@ -84,10 +84,14 @@ object MemoryContextBuilder {
             emptyList()
         }
 
-        // 持久化 embedding 缓存（避免重启后重新向量化）
+        // 持久化 embedding 缓存（LRU + model 隔离）
         if (config.retrievalMode != "rule_only") {
             try {
-                EmbeddingCacheStore.save(app.semanticEngine.exportCache())
+                EmbeddingCacheStore.save(
+                    entries = app.semanticEngine.exportCache(),
+                    currentModel = config.embeddingModel,
+                    currentProvider = "doubao"
+                )
             } catch (_: Exception) {}
         }
 

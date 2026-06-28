@@ -43,6 +43,9 @@ class SemanticRetrievalEngine : RetrievalEngine {
     /** Embedding 服务提供者。null 时自动退回 no-op。 */
     var embeddingProvider: EmbeddingProvider? = null
 
+    /** Provider 元信息（model, provider name），用于缓存隔离。由 Android 层注入。 */
+    var providerInfo: Pair<String, String>? = null
+
     /** 内存中的候选数据（由 Android 层注入，已过滤 confirmed+enabled） */
     private var candidates: List<CandidateEntry> = emptyList()
 
@@ -100,8 +103,13 @@ class SemanticRetrievalEngine : RetrievalEngine {
             provider = provider
         ) ?: return emptyList()
 
+        // 敏感内容过滤：不发送含敏感信息的文本到远程 Embedding API
+        val privacySafe = typeFiltered.filter { candidate ->
+            !SensitiveContentFilter.isSensitive(candidate.text)
+        }
+
         // 获取或计算候选 embedding，计算余弦相似度
-        val scored = typeFiltered.mapNotNull { candidate ->
+        val scored = privacySafe.mapNotNull { candidate ->
             val emb = getOrComputeEmbedding(
                 sourceType = candidate.sourceType,
                 sourceId = candidate.sourceId,
@@ -150,6 +158,8 @@ class SemanticRetrievalEngine : RetrievalEngine {
         // 命中缓存（文本未变）
         val cached = cache[key]
         if (cached != null && cached.textHash == textHash && cached.embedding != null) {
+            // 更新 lastUsedAt
+            cache[key] = cached.copy(lastUsedAt = System.currentTimeMillis())
             return cached.embedding
         }
 
@@ -167,7 +177,11 @@ class SemanticRetrievalEngine : RetrievalEngine {
                 sourceId = sourceId,
                 textHash = textHash,
                 embedding = embedding,
-                cachedAt = System.currentTimeMillis()
+                cachedAt = System.currentTimeMillis(),
+                model = providerInfo?.first ?: "",
+                provider = providerInfo?.second ?: "",
+                summary = text.take(100),
+                lastUsedAt = System.currentTimeMillis()
             )
         }
 
@@ -224,13 +238,20 @@ class SemanticRetrievalEngine : RetrievalEngine {
      * - [sourceType] + [sourceId] 唯一标识一条数据。
      * - [textHash] 用于检测文本变更（变更后需重新计算 embedding）。
      * - [embedding] 为 null 表示尚未计算。
+     * - [model] / [provider] 标识 Embedding 服务，变更后旧缓存不可复用。
+     * - [summary] 短摘要（前 100 字符），用于诊断，不存完整原文。
+     * - [lastUsedAt] 用于 LRU 清理。
      */
     data class EmbeddingCacheEntry(
         val sourceType: String,
         val sourceId: String,
         val textHash: String,
         val embedding: FloatArray? = null,
-        val cachedAt: Long = 0L
+        val cachedAt: Long = 0L,
+        val model: String = "",
+        val provider: String = "",
+        val summary: String = "",
+        val lastUsedAt: Long = 0L
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -239,6 +260,8 @@ class SemanticRetrievalEngine : RetrievalEngine {
                 sourceId == other.sourceId &&
                 textHash == other.textHash &&
                 cachedAt == other.cachedAt &&
+                model == other.model &&
+                provider == other.provider &&
                 embedding.contentEquals(other.embedding)
         }
 
@@ -247,6 +270,8 @@ class SemanticRetrievalEngine : RetrievalEngine {
             result = 31 * result + sourceId.hashCode()
             result = 31 * result + textHash.hashCode()
             result = 31 * result + cachedAt.hashCode()
+            result = 31 * result + model.hashCode()
+            result = 31 * result + provider.hashCode()
             result = 31 * result + (embedding?.contentHashCode() ?: 0)
             return result
         }

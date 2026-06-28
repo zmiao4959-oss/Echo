@@ -48,11 +48,20 @@ class HybridRetrievalEngine(
                 val ruleResults = ruleEngine.retrieve(request)
                 val semanticResults = semanticEngine.retrieve(request)
 
-                // 合并去重：规则优先
-                val merged = mergeWithDedup(ruleResults, semanticResults, request.limit)
+                // Phase J: 多因素排序融合
+                val ranked = HybridRankingPolicy.rank(
+                    ruleResults = ruleResults,
+                    semanticResults = semanticResults,
+                    query = request.query,
+                    limit = request.limit
+                )
 
-                // 统一过滤层
-                filterAllowed(merged, request.limit)
+                // 将排序原因写入 explain
+                val results = ranked.map { ranked ->
+                    ranked.retrievalResult.copy(explain = ranked.reason)
+                }
+
+                filterAllowed(results, request.limit)
             }
             MODE_SEMANTIC_EXPERIMENT -> {
                 val semanticResults = semanticEngine.retrieve(request)
