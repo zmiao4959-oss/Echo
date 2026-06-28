@@ -291,7 +291,7 @@ Echo (小爪) 数据导出
         try {
             val uri = FileProvider.getUriForFile(
                 context,
-                "${context.packageName}.fileprovider",
+                "${context.packageName}.fileProvider",
                 zipFile
             )
             val intent = Intent(Intent.ACTION_SEND).apply {

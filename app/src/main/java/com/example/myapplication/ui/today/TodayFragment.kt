@@ -20,16 +20,21 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
+import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.R
 import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.PageTextureManager
 import com.example.myapplication.ui.ChatActivity
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class TodayFragment : Fragment() {
 
@@ -37,6 +42,7 @@ class TodayFragment : Fragment() {
 
     // ── UI ──
     private lateinit var tvDate: TextView
+    private lateinit var tvWeather: TextView
     private lateinit var etQuickInput: EditText
     private lateinit var btnVoice: ImageButton
     private lateinit var tvRecordCount: TextView
@@ -48,10 +54,15 @@ class TodayFragment : Fragment() {
     private lateinit var tvDiaryPreview: TextView
     private lateinit var cardInput: MaterialCardView
     private lateinit var cardAiPreview: MaterialCardView
-    private lateinit var cardTodayStatus: MaterialCardView
-    private lateinit var tvStatusSummary: TextView
-
     private var recordAdapter: TodayRecordAdapter? = null
+    private var isRecordsExpanded = false
+    private var allRecords: List<LifeRecord> = emptyList()
+
+    // 天气
+    private val weatherClient = com.example.myapplication.net.HttpClient.instance.newBuilder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(5, TimeUnit.SECONDS)
+        .build()
 
     // 语音录音（MediaRecorder，不依赖任何第三方语音服务）
     private var mediaRecorder: MediaRecorder? = null
@@ -87,6 +98,7 @@ class TodayFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         viewModel.loadToday()
+        fetchWeather()
         applyCardTextures()
         applyPageTexture()
     }
@@ -99,9 +111,6 @@ class TodayFragment : Fragment() {
 
     private fun applyCardTextures() {
         val config = (requireActivity().application as MyApplication).appConfig
-
-        // 生活记录
-        CardTextureManager.apply(cardTodayStatus, config.getCardTextureKey(CardTextureManager.LIFE_RECORD), R.attr.echoSurfaceVariant)
 
         // 对话互动
         CardTextureManager.apply(cardInput, config.getCardTextureKey(CardTextureManager.CHAT), R.attr.echoSurface)
@@ -117,6 +126,7 @@ class TodayFragment : Fragment() {
 
     private fun bindViews(view: View) {
         tvDate = view.findViewById(R.id.tv_today_date)
+        tvWeather = view.findViewById(R.id.tv_weather)
         etQuickInput = view.findViewById(R.id.et_quick_input)
         btnVoice = view.findViewById(R.id.btn_voice)
         tvRecordCount = view.findViewById(R.id.tv_record_count)
@@ -128,14 +138,13 @@ class TodayFragment : Fragment() {
         btnEnterChat = view.findViewById(R.id.btn_enter_chat)
         tvDiaryPreview = view.findViewById(R.id.tv_diary_preview)
         cardAiPreview = view.findViewById(R.id.card_ai_preview)
-        cardTodayStatus = view.findViewById(R.id.card_today_status)
-        tvStatusSummary = view.findViewById(R.id.tv_status_summary)
     }
 
     // ── RecyclerView ──
 
     private fun setupRecycler() {
         recordAdapter = TodayRecordAdapter(
+            onClick = { record -> showRecordDetail(record) },
             onDelete = { id -> showDeleteConfirmation(id) }
         )
         recyclerRecords.layoutManager = LinearLayoutManager(requireContext())
@@ -206,28 +215,14 @@ class TodayFragment : Fragment() {
 
         lifecycleScope.launch {
             viewModel.records.collectLatest { records ->
-                recordAdapter?.submitList(records)
-                val count = records.size
-                tvRecordCount.text = if (count > 0) "$count 条记录" else ""
-                tvEmptyRecords.visibility = if (count == 0) View.VISIBLE else View.GONE
-                recyclerRecords.visibility = if (count == 0) View.GONE else View.VISIBLE
-
-                // AI preview
-                if (count > 0) {
-                    tvDiaryPreview.text = getString(R.string.today_diary_ready, count)
-                } else {
-                    tvDiaryPreview.text = getString(R.string.today_diary_empty)
-                }
-
-                // Status card
-                val status = viewModel.getTodayStatusSummary()
-                if (status != null) {
-                    tvStatusSummary.text = status
-                    cardTodayStatus.visibility = View.VISIBLE
-                } else {
-                    cardTodayStatus.visibility = View.GONE
-                }
+                allRecords = records
+                applyRecordFilter()
             }
+        }
+
+        tvRecordCount.setOnClickListener {
+            isRecordsExpanded = !isRecordsExpanded
+            applyRecordFilter()
         }
 
         lifecycleScope.launch {
@@ -245,6 +240,55 @@ class TodayFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun applyRecordFilter() {
+        val count = allRecords.size
+        val display = if (!isRecordsExpanded && count > 3) allRecords.take(3) else allRecords
+        recordAdapter?.submitList(display)
+
+        tvRecordCount.text = when {
+            count > 3 && !isRecordsExpanded -> "查看全部 >"
+            count > 3 && isRecordsExpanded -> "收起 <"
+            else -> ""
+        }
+
+        tvEmptyRecords.visibility = if (count == 0) View.VISIBLE else View.GONE
+        recyclerRecords.visibility = if (count == 0) View.GONE else View.VISIBLE
+
+        if (count > 0) {
+            tvDiaryPreview.text = getString(R.string.today_diary_ready, count)
+        } else {
+            tvDiaryPreview.text = getString(R.string.today_diary_empty)
+        }
+    }
+
+    // ── 查看记录详情 ──
+
+    private fun showRecordDetail(record: LifeRecord) {
+        val sdf = SimpleDateFormat("yyyy年M月d日 HH:mm", Locale.CHINESE)
+        val timeStr = sdf.format(Date(record.createdAt))
+
+        val sourceLabel = when (record.source) {
+            "voice" -> "🎙️ 语音"
+            "chat" -> "💬 对话"
+            "checkin" -> "👋 问候"
+            else -> "✏️ 手动记录"
+        }
+
+        val sb = StringBuilder()
+        sb.appendLine(record.content)
+        sb.appendLine()
+        sb.appendLine("$sourceLabel  ·  $timeStr")
+        record.mood?.let { sb.appendLine("心情: $it") }
+        record.tags.takeIf { it.isNotEmpty() }?.let {
+            sb.appendLine("标签: ${it.joinToString(", ")}")
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setMessage(sb.toString().trim())
+            .setPositiveButton("关闭", null)
+            .show()
     }
 
     // ── 删除确认 ──
@@ -270,6 +314,103 @@ class TodayFragment : Fragment() {
             parsed?.let { sdf.format(it) } ?: isoDate
         } catch (_: Exception) {
             isoDate
+        }
+    }
+
+    // ── 天气 ──
+
+    private fun fetchWeather() {
+        val ctx = requireContext()
+        val prefs = ctx.getSharedPreferences("clawspeaker_config", android.content.Context.MODE_PRIVATE)
+        val cacheTime = prefs.getLong("weather_cache_time", 0L)
+        val cacheAge = System.currentTimeMillis() - cacheTime
+        val app = requireActivity().application as MyApplication
+        val currentCity = app.appConfig.weatherCity
+        val cachedCity = prefs.getString("weather_cache_city", null)
+        val cacheValid = cacheAge in 0..30 * 60 * 1000L
+                && cachedCity == currentCity
+
+        if (cacheValid) {
+            val desc = prefs.getString("weather_desc_cn", null)
+            val info = prefs.getString("weather_info_v2", null)
+            if (desc != null && info != null) {
+                tvWeather.text = "$desc  $info"
+                tvWeather.visibility = View.VISIBLE
+                return
+            }
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val manualCity = currentCity
+                val url = if (manualCity.isNotBlank()) {
+                    "https://wttr.in/${java.net.URLEncoder.encode(manualCity, "UTF-8")}?format=j1"
+                } else {
+                    "https://wttr.in/?format=j1"
+                }
+
+                val request = Request.Builder().url(url).build()
+                val response = weatherClient.newCall(request).execute()
+                val body = response.body?.string()?.trim() ?: return@launch
+
+                val json = com.google.gson.JsonParser.parseString(body).asJsonObject
+                val current = json.getAsJsonArray("current_condition")
+                    ?.get(0)?.asJsonObject ?: return@launch
+
+                val tempC = current.get("temp_C")?.asString ?: ""
+                val descEn = current.getAsJsonArray("weatherDesc")
+                    ?.get(0)?.asJsonObject?.get("value")?.asString ?: ""
+                val desc = weatherToChinese(descEn)
+
+                val city = if (manualCity.isNotBlank()) {
+                    manualCity
+                } else {
+                    json.getAsJsonArray("nearest_area")
+                        ?.get(0)?.asJsonObject
+                        ?.getAsJsonArray("areaName")
+                        ?.get(0)?.asJsonObject
+                        ?.get("value")?.asString ?: ""
+                }
+
+                val infoText = buildString {
+                    append("${tempC}℃")
+                    if (city.isNotEmpty()) append("  $city")
+                }
+
+                withContext(Dispatchers.Main) {
+                    prefs.edit()
+                        .putLong("weather_cache_time", System.currentTimeMillis())
+                        .putString("weather_cache_city", currentCity)
+                        .putString("weather_desc_cn", desc)
+                        .putString("weather_info_v2", infoText)
+                        .apply()
+
+                    tvWeather.text = "$desc  $infoText"
+                    tvWeather.visibility = View.VISIBLE
+                }
+            } catch (_: Exception) {
+                // 天气获取失败，静默处理
+            }
+        }
+    }
+
+    private fun weatherToChinese(desc: String): String {
+        val d = desc.lowercase().trim()
+        return when {
+            "sunny" in d || "clear" in d -> "晴"
+            "partly cloudy" in d -> "多云"
+            "cloudy" in d || "overcast" in d -> "阴"
+            "rain" in d && "light" in d -> "小雨"
+            "rain" in d && "heavy" in d -> "大雨"
+            "rain" in d -> "雨"
+            "drizzle" in d -> "毛毛雨"
+            "thunder" in d -> "雷阵雨"
+            "snow" in d && "light" in d -> "小雪"
+            "snow" in d && "heavy" in d -> "大雪"
+            "snow" in d -> "雪"
+            "fog" in d || "mist" in d -> "雾"
+            "haze" in d -> "霾"
+            else -> desc
         }
     }
 

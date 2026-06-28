@@ -19,11 +19,16 @@
             android:gravity="center"
             android:paddingBottom="24dp">
 
-            <View
+            <ImageView
                 android:id="@+id/avatar"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
-                android:background="@drawable/bg_send_button"
+                android:src="@android:drawable/ic_menu_myplaces"
+                android:scaleType="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="更换头像"
                 android:layout_marginBottom="12dp" />
 
             <TextView

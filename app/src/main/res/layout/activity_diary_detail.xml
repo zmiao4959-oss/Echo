@@ -152,7 +152,7 @@
                 android:textColor="?attr/echoHint"
                 tools:text="基于 3 条生活记录生成" />
 
-            <!-- 重新生成按钮 -->
+            <!-- 重新生成按钮（仅今日日记可见） -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_regenerate"
                 style="@style/Widget.Material3.Button.OutlinedButton"
@@ -163,7 +163,9 @@
                 android:textSize="13sp"
                 app:cornerRadius="12dp"
                 app:strokeColor="?attr/echoPrimary"
-                android:textColor="?attr/echoPrimary" />
+                android:textColor="?attr/echoPrimary"
+                android:visibility="gone" />
+
         </LinearLayout>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -346,6 +346,15 @@
             android:textColor="?attr/echoPrimary"
             android:backgroundTint="?attr/echoSurfaceVariant" />
 
+        <Button
+            android:id="@+id/btn_backfill_colors"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="补全日记色彩"
+            android:textColor="?attr/echoPrimary"
+            android:backgroundTint="?attr/echoSurfaceVariant" />
+
         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
         <!-- 检索模式设置 -->

@@ -197,5 +197,14 @@ class AppConfig(context: Context) {
         private const val KEY_COMPANION_QUIET_START = "companion_quiet_start"
         private const val KEY_COMPANION_QUIET_END = "companion_quiet_end"
         private const val KEY_COMPANION_ALLOW_VOICE = "companion_allow_voice"
+        private const val KEY_AVATAR_PATH = "avatar_path"
     }
+
+    // ── 头像配置 ──
+    var avatarPath: String?
+        get() = prefs.getString(KEY_AVATAR_PATH, null)
+        set(value) {
+            if (value != null) prefs.edit().putString(KEY_AVATAR_PATH, value).apply()
+            else prefs.edit().remove(KEY_AVATAR_PATH).apply()
+        }
 }

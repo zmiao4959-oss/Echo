@@ -94,37 +94,6 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
         else "已记录 $count 个片段"
     }
 
-    /** 计算今日状态摘要 */
-    fun getTodayStatusSummary(): String? {
-        val records = _records.value
-        if (records.isEmpty()) return null
-
-        val count = records.size
-        val sources = records.map { it.source }.distinct()
-        val moodHints = records.mapNotNull { it.mood }.distinct()
-
-        val parts = mutableListOf<String>()
-        parts.add("今天记录了 $count 个片段")
-
-        if (moodHints.isNotEmpty()) {
-            parts.add("情绪: ${moodHints.joinToString("、")}")
-        }
-
-        val sourceLabels = sources.map {
-            when (it) {
-                "voice" -> "语音"
-                "chat" -> "对话"
-                "checkin" -> "问候"
-                else -> "文字"
-            }
-        }
-        if (sourceLabels.size > 1) {
-            parts.add("通过${sourceLabels.joinToString("、")}记录")
-        }
-
-        return parts.joinToString(" · ")
-    }
-
     companion object {
         fun today(): String = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
     }

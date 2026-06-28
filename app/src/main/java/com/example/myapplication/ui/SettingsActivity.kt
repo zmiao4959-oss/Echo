@@ -12,6 +12,8 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.config.AppConfig
@@ -224,6 +226,21 @@ class SettingsActivity : ThemedActivity() {
                     }
                 }
             }
+        }
+
+        // 补全日记色彩
+        findViewById<Button>(R.id.btn_backfill_colors).setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("补全日记色彩")
+                .setMessage("将为所有缺少色彩的历史日记，通过 AI 逐一生成对应的情绪色。需要已配置 LLM。")
+                .setPositiveButton("开始补全") { _, _ ->
+                    val vm = ViewModelProvider(this)[com.example.myapplication.ui.diary.DiaryViewModel::class.java]
+                    vm.loadDiaries()
+                    vm.backfillDiaryColors()
+                    Toast.makeText(this, "正在后台补全…", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("取消", null)
+                .show()
         }
 
         // 诊断面板

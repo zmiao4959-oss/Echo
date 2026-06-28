@@ -11,7 +11,6 @@ import com.example.myapplication.data.repository.DiaryRepository
 import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.llm.LLMMessage
 import com.example.myapplication.llm.ProviderFactory
-import com.example.myapplication.ui.ThemeColors
 import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -149,32 +148,94 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             val cal = Calendar.getInstance()
             cal.add(Calendar.DAY_OF_YEAR, -days)
             val cutoff = dateFormat.format(cal.time)
-            val allDiaries = _diaries.value.filter { it.date >= cutoff }
-            val allRecords = recordRepo.getAll().filter { it.date >= cutoff }
+            val recentDiaries = _diaries.value
+                .filter { it.date >= cutoff && it.mood.isNotBlank() }
+                .sortedByDescending { it.date }
 
-            // 汇总所有 mood
-            val moodCounts = mutableMapOf<String, Int>()
-            for (d in allDiaries) {
-                if (d.mood.isNotBlank()) {
-                    moodCounts[d.mood] = (moodCounts[d.mood] ?: 0) + 1
-                }
+            _moodStats.value = recentDiaries.map { diary ->
+                MoodStat(
+                    mood = diary.mood,
+                    color = parseHexColor(diary.color),
+                    date = diary.date
+                )
             }
-            for (r in allRecords) {
-                val mood = r.mood
-                if (!mood.isNullOrBlank()) {
-                    moodCounts[mood] = (moodCounts[mood] ?: 0) + 1
-                }
-            }
-
-            val palette = ThemeColors.moodPalette(getApplication()).toList()
-
-            _moodStats.value = moodCounts.entries
-                .sortedByDescending { it.value }
-                .take(8)
-                .mapIndexed { i, (mood, count) ->
-                    MoodStat(mood, count, palette[i % palette.size])
-                }
         }
+    }
+
+    private fun parseHexColor(hex: String?): Int {
+        if (hex == null) return 0xFF888888.toInt()
+        return try {
+            val h = hex.removePrefix("#")
+            (0xFF000000.toInt() or java.lang.Long.parseLong(h, 16).toInt())
+        } catch (_: Exception) {
+            0xFF888888.toInt()
+        }
+    }
+
+    // ── 色彩迁移（设置页手动触发） ──
+
+    /** 为缺少 color 的旧日记调用 LLM 逐一补全色彩 */
+    fun backfillDiaryColors() {
+        viewModelScope.launch {
+            val all = diaryRepo.getAll()
+            val missing = all.filter { it.color == null }
+            if (missing.isEmpty()) {
+                _statusMessage.value = "所有日记已有色彩，无需补全"
+                return@launch
+            }
+
+            _isGenerating.value = true
+            _statusMessage.value = "正在补全色彩 (0/${missing.size})…"
+
+            var done = 0
+            for (diary in missing) {
+                try {
+                    val c = generateColorForDiary(diary)
+                    if (c != null) {
+                        diaryRepo.update(diary.copy(color = c))
+                        done++
+                        _statusMessage.value = "正在补全色彩 ($done/${missing.size})…"
+                    }
+                } catch (_: Exception) { /* 跳过失败的 */ }
+            }
+
+            _diaries.value = diaryRepo.getAll()
+            _isGenerating.value = false
+            _statusMessage.value = "色彩补全完成 ($done/${missing.size})"
+        }
+    }
+
+    private suspend fun generateColorForDiary(diary: DailyDiary): String? = withContext(Dispatchers.IO) {
+        val config = app.appConfig
+        if (!config.isLLMConfigured) return@withContext null
+
+        val prompt = """
+根据以下日记内容，推断今日的情绪色，只需输出一个十六进制颜色。
+如暖黄 #F4A460、平静蓝 #6BA3BE、活力橙 #FF8C42、温柔粉 #D4838F、清新绿 #7BA07D。
+
+日记标题: ${diary.title}
+日记摘要: ${diary.summary}
+情绪: ${diary.mood}
+正文: ${diary.diaryText.take(500)}
+
+请只输出颜色值，不要其他内容，如: #F4A460
+        """.trimIndent()
+
+        val provider = ProviderFactory.createLLMProvider()
+        val response = provider.chat(
+            messages = listOf(
+                LLMMessage(role = "system", content = "你是一个色彩分析助手。只输出一个十六进制颜色值，不要其他内容。"),
+                LLMMessage(role = "user", content = prompt)
+            ),
+            temperature = 0.3f,
+            maxTokens = 32
+        )
+
+        val hex = response.content.trim().let { text ->
+            val m = Regex("#[0-9a-fA-F]{6}").find(text)
+            m?.value
+        }
+        hex
     }
 
     /** 手动生成今日日记 */
@@ -227,10 +288,17 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             _statusMessage.value = "正在重新生成…"
             try {
                 val newDiary = generateDiaryFromRecords(records)
-                newDiary.sourceRecordIds.forEach { _ ->
-                    // sourceRecordIds already set in generateDiaryFromRecords
-                }
-                diaryRepo.add(newDiary)
+                // 原地更新，保留原 id 和 date，UI 自动刷新
+                val updated = diary.copy(
+                    title = newDiary.title,
+                    summary = newDiary.summary,
+                    diaryText = newDiary.diaryText,
+                    mood = newDiary.mood,
+                    tags = newDiary.tags,
+                    sourceRecordIds = newDiary.sourceRecordIds,
+                    updatedAt = System.currentTimeMillis()
+                )
+                diaryRepo.update(updated)
                 _todayDiary.value = diaryRepo.getByDate(today())
                 _diaries.value = diaryRepo.getAll()
             } catch (e: Exception) {
@@ -268,12 +336,13 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 4. diaryText 不要像总结报告，要像一篇私人日记。
 5. 提取 3-6 个 tags。
 6. mood 用一句短语表达。
+7. color 用十六进制颜色表达今日情绪感受，如暖黄 #F4A460、平静蓝 #6BA3BE、活力橙 #FF8C42、温柔粉 #D4838F、清新绿 #7BA07D。
 
 生活片段：
 $fragmentsText
 
 请输出纯 JSON（不要 markdown 代码块标记），格式如下：
-{"title":"日记标题","summary":"一句话摘要","diaryText":"完整日记正文","mood":"情绪短语","tags":["标签1","标签2"]}
+{"title":"日记标题","summary":"一句话摘要","diaryText":"完整日记正文","mood":"情绪短语","tags":["标签1","标签2"],"color":"#RRGGBB"}
             """.trimIndent()
 
             val provider = ProviderFactory.createLLMProvider()
@@ -300,7 +369,8 @@ $fragmentsText
                 tags = json.getAsJsonArray("tags")?.map { it.asString } ?: emptyList(),
                 sourceRecordIds = records.map { it.id },
                 createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
+                updatedAt = System.currentTimeMillis(),
+                color = json.get("color")?.asString
             )
         }
 
@@ -332,6 +402,6 @@ $fragmentsText
 
 data class MoodStat(
     val mood: String,
-    val count: Int,
-    val color: Int
+    val color: Int,
+    val date: String = ""
 )

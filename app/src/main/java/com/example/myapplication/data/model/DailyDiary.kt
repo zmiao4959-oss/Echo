@@ -16,5 +16,6 @@ data class DailyDiary(
     val createdAt: Long,
     val updatedAt: Long,
     val generatedBy: String = "ai",
-    val version: Int = 1
+    val version: Int = 1,
+    val color: String? = null      // 今日色彩，如 "#FF6B6B"
 )

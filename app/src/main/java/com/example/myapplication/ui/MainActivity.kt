@@ -7,11 +7,9 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
-import android.widget.TextView
 import android.widget.Toast
 import android.content.res.ColorStateList
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.ui.diary.DiaryFragment
@@ -19,24 +17,12 @@ import com.example.myapplication.ui.memory.MemoryFragment
 import com.example.myapplication.ui.plan.PlanFragment
 import com.example.myapplication.ui.today.TodayFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.Request
-import java.util.concurrent.TimeUnit
 
 class MainActivity : ThemedActivity() {
 
     private lateinit var topBar: View
     private lateinit var bottomNav: BottomNavigationView
-    private lateinit var weatherBar: View
-    private lateinit var weatherIcon: TextView
-    private lateinit var weatherInfo: TextView
-
-    private val weatherClient = com.example.myapplication.net.HttpClient.instance.newBuilder()
-        .connectTimeout(5, TimeUnit.SECONDS)
-        .readTimeout(5, TimeUnit.SECONDS)
-        .build()
+    private lateinit var btnProfile: ImageButton
 
     // 持有 Fragment 实例，避免重复创建
     private var todayFragment: TodayFragment? = null
@@ -58,11 +44,10 @@ class MainActivity : ThemedActivity() {
         }
 
         topBar = findViewById(R.id.top_bar)
-        weatherBar = findViewById(R.id.weather_bar)
-        weatherIcon = findViewById(R.id.weather_icon)
-        weatherInfo = findViewById(R.id.weather_info)
 
-        findViewById<ImageButton>(R.id.btn_profile).setOnClickListener { openProfile(it) }
+        btnProfile = findViewById(R.id.btn_profile)
+        btnProfile.setOnClickListener { openProfile(it) }
+        applyAvatar()
 
         bottomNav = findViewById(R.id.bottom_navigation)
         applyBottomNavTint()
@@ -97,7 +82,7 @@ class MainActivity : ThemedActivity() {
         }
         val app = application as MyApplication
         BackgroundManager.apply(this, app.appConfig.backgroundKey)
-        fetchDailyWeather()
+        applyAvatar()
         applyPageTextures()
     }
 
@@ -184,108 +169,13 @@ class MainActivity : ThemedActivity() {
         bottomNav.itemTextColor = colorStateList
     }
 
+    private fun applyAvatar() {
+        val path = (application as MyApplication).appConfig.avatarPath
+        AvatarManager.applyToImageView(btnProfile, path)
+    }
+
     fun openProfile(view: View) {
         startActivity(Intent(this, ProfileActivity::class.java))
     }
 
-    // ── 天气条 ──
-
-    private fun fetchDailyWeather() {
-        val prefs = getSharedPreferences("clawspeaker_config", MODE_PRIVATE)
-        val cacheTime = prefs.getLong("weather_cache_time", 0L)
-        val cacheAge = System.currentTimeMillis() - cacheTime
-        val app = application as MyApplication
-        val currentCity = app.appConfig.weatherCity
-        val cachedCity = prefs.getString("weather_cache_city", null)
-        val cacheValid = cacheAge in 0..30 * 60 * 1000L
-                && cachedCity == currentCity  // 城市变了则失效缓存
-
-        if (cacheValid) {
-            val icon = prefs.getString("weather_icon", null) ?: return
-            val info = prefs.getString("weather_info", null) ?: return
-            weatherIcon.text = icon
-            weatherInfo.text = info
-            weatherBar.visibility = View.VISIBLE
-            return
-        }
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val manualCity = currentCity
-                val url = if (manualCity.isNotBlank()) {
-                    "https://wttr.in/${java.net.URLEncoder.encode(manualCity, "UTF-8")}?format=j1"
-                } else {
-                    "https://wttr.in/?format=j1"
-                }
-
-                // 用 JSON API 获取天气 emoji + 温度 + 城市名
-                val request = Request.Builder()
-                    .url(url)
-                    .build()
-                val response = weatherClient.newCall(request).execute()
-                val body = response.body?.string()?.trim() ?: return@launch
-
-                val json = com.google.gson.JsonParser.parseString(body).asJsonObject
-                val current = json.getAsJsonArray("current_condition")
-                    ?.get(0)?.asJsonObject ?: return@launch
-
-                val tempC = current.get("temp_C")?.asString ?: ""
-                val desc = current.getAsJsonArray("weatherDesc")
-                    ?.get(0)?.asJsonObject?.get("value")?.asString ?: ""
-
-                // 手动设置了城市则直接用它，否则从 nearest_area 提取
-                val city = if (manualCity.isNotBlank()) {
-                    manualCity
-                } else {
-                    json.getAsJsonArray("nearest_area")
-                        ?.get(0)?.asJsonObject
-                        ?.getAsJsonArray("areaName")
-                        ?.get(0)?.asJsonObject
-                        ?.get("value")?.asString ?: ""
-                }
-
-                // 映射天气描述到 emoji
-                val emoji = weatherEmoji(desc)
-
-                val infoText = buildString {
-                    append("${tempC}°C")
-                    if (city.isNotEmpty()) append("  $city")
-                }
-
-                withContext(Dispatchers.Main) {
-                    prefs.edit()
-                        .putLong("weather_cache_time", System.currentTimeMillis())
-                        .putString("weather_cache_city", currentCity)
-                        .putString("weather_icon", emoji)
-                        .putString("weather_info", infoText)
-                        .apply()
-
-                    weatherIcon.text = emoji
-                    weatherInfo.text = infoText
-                    weatherBar.visibility = View.VISIBLE
-                }
-            } catch (e: Exception) {
-                com.example.myapplication.diagnostics.ServiceHealth.record("Weather", e.message ?: "unknown")
-            }
-        }
-    }
-
-    /** 简单天气描述 → emoji 映射 */
-    private fun weatherEmoji(desc: String): String {
-        val d = desc.lowercase()
-        return when {
-            "sunny" in d || "clear" in d -> "☀️"
-            "cloud" in d && ("sunny" in d || "clear" in d) -> "⛅"
-            "cloud" in d -> "☁️"
-            "overcast" in d -> "☁️"
-            "rain" in d && "light" in d -> "🌦"
-            "rain" in d -> "🌧"
-            "drizzle" in d -> "🌦"
-            "thunder" in d -> "⛈"
-            "snow" in d -> "🌨"
-            "fog" in d || "mist" in d -> "🌫"
-            "haze" in d -> "🌫"
-            else -> "🌡"
-        }
-    }
 }

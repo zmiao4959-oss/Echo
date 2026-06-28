@@ -250,6 +250,20 @@
                         android:layout_marginTop="12dp" />
 
                     <TextView
+                        android:id="@+id/tv_mood_toggle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_marginTop="8dp"
+                        android:textSize="13sp"
+                        android:textColor="?attr/echoPrimary"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:paddingVertical="6dp"
+                        android:visibility="gone" />
+
+                    <TextView
                         android:id="@+id/tv_mood_empty"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

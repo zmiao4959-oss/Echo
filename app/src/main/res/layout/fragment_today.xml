@@ -30,6 +30,16 @@
                 tools:text="2025年6月24日 星期二" />
 
             <TextView
+                android:id="@+id/tv_weather"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="?attr/echoTextSecondary"
+                android:layout_marginTop="2dp"
+                android:visibility="gone"
+                tools:text="晴 25℃ 上海" />
+
+            <TextView
                 android:id="@+id/tv_greeting"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -40,47 +50,7 @@
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 
-        <!-- ═══ 今日状态卡 ═══ -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_today_status"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:cardBackgroundColor="?attr/echoSurfaceVariant"
-            app:strokeWidth="0dp"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:id="@+id/tv_status_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="今天的状态"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="?attr/echoPrimary" />
-
-                <TextView
-                    android:id="@+id/tv_status_summary"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:textSize="14sp"
-                    android:textColor="?attr/echoTextPrimary"
-                    android:lineSpacingExtra="4dp"
-                    tools:text="今天记录了 3 个片段，心情平静充实。" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- ═══ 快速输入卡片 ═══ -->
+<!-- ═══ 快速输入卡片 ═══ -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_input"
             android:layout_width="match_parent"
@@ -176,8 +146,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="13sp"
-                android:textColor="?attr/echoHint"
-                tools:text="3 条记录" />
+                android:textColor="?attr/echoPrimary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                tools:text="查看全部 >" />
         </LinearLayout>
 
         <!-- ═══ LifeRecord 列表 ═══ -->

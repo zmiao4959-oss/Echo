@@ -25,6 +25,21 @@ class ProfileActivity : ThemedActivity() {
     private var pendingTextureCategory: String? = null
     private var pendingIsPageTexture: Boolean = false
 
+    private val pickAvatarImage = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val avatarFile = java.io.File(filesDir, "avatar_custom.jpg")
+            val path = AvatarManager.saveCustom(avatarFile, uri, contentResolver)
+            if (path != null) {
+                (application as MyApplication).appConfig.avatarPath = path
+                refreshAvatar()
+            } else {
+                Toast.makeText(this, "头像设置失败", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private val pickTextureImage = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -43,6 +58,11 @@ class ProfileActivity : ThemedActivity() {
 
         val app = application as MyApplication
         val config = app.appConfig
+
+        // 头像
+        val avatarView = findViewById<android.widget.ImageView>(R.id.avatar)
+        refreshAvatar(avatarView, config)
+        avatarView.setOnClickListener { pickAvatarImage.launch("image/*") }
 
         // 显示当前主题名
         val tvThemeCurrent = findViewById<TextView>(R.id.tv_theme_current)
@@ -134,6 +154,12 @@ class ProfileActivity : ThemedActivity() {
                 .setNegativeButton("取消", null)
                 .show()
         }
+    }
+
+    private fun refreshAvatar(view: android.widget.ImageView? = null, cfg: com.example.myapplication.config.AppConfig? = null) {
+        val config = cfg ?: (application as MyApplication).appConfig
+        val iv = view ?: findViewById<android.widget.ImageView>(R.id.avatar)
+        AvatarManager.applyToImageView(iv, config.avatarPath)
     }
 
     private fun showThemePickerDialog() {

@@ -52,8 +52,10 @@ class DiaryFragment : Fragment() {
     private lateinit var cardMoodChart: MaterialCardView
     private lateinit var moodBarsContainer: LinearLayout
     private lateinit var tvMoodEmpty: TextView
+    private lateinit var tvMoodToggle: TextView
     private lateinit var btnMood7d: TextView
     private lateinit var btnMood30d: TextView
+    private var isMoodExpanded = false
 
     private var diaryAdapter: DiaryListAdapter? = null
 
@@ -122,6 +124,7 @@ class DiaryFragment : Fragment() {
         cardMoodChart = view.findViewById(R.id.card_mood_chart)
         moodBarsContainer = view.findViewById(R.id.mood_bars_container)
         tvMoodEmpty = view.findViewById(R.id.tv_mood_empty)
+        tvMoodToggle = view.findViewById(R.id.tv_mood_toggle)
         btnMood7d = view.findViewById(R.id.btn_mood_7d)
         btnMood30d = view.findViewById(R.id.btn_mood_30d)
     }
@@ -150,9 +153,11 @@ class DiaryFragment : Fragment() {
         btnFilter.setOnClickListener { showFilterDialog() }
 
         btnMood7d.setOnClickListener {
+            isMoodExpanded = false
             viewModel.computeMoodStats(7)
         }
         btnMood30d.setOnClickListener {
+            isMoodExpanded = false
             viewModel.computeMoodStats(30)
         }
     }
@@ -239,17 +244,29 @@ class DiaryFragment : Fragment() {
         if (stats.isEmpty()) {
             tvMoodEmpty.visibility = View.VISIBLE
             moodBarsContainer.visibility = View.GONE
+            tvMoodToggle.visibility = View.GONE
             return
         }
 
         tvMoodEmpty.visibility = View.GONE
         moodBarsContainer.visibility = View.VISIBLE
 
-        val maxCount = stats.maxOf { it.count }
-        val density = requireContext().resources.displayMetrics.density
-        val maxBarWidth = (200 * density).toInt() // max 200dp
+        // 默认显示 3 天，其余折叠
+        val displayStats = if (!isMoodExpanded && stats.size > 3) stats.take(3) else stats
+        tvMoodToggle.text = when {
+            stats.size > 3 && !isMoodExpanded -> "查看全部 >"
+            stats.size > 3 && isMoodExpanded -> "收起 <"
+            else -> ""
+        }
+        tvMoodToggle.visibility = if (stats.size > 3) View.VISIBLE else View.GONE
+        tvMoodToggle.setOnClickListener {
+            isMoodExpanded = !isMoodExpanded
+            buildMoodBars(stats)
+        }
 
-        for (stat in stats) {
+        val density = requireContext().resources.displayMetrics.density
+
+        for (stat in displayStats) {
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = android.view.Gravity.CENTER_VERTICAL
@@ -259,44 +276,43 @@ class DiaryFragment : Fragment() {
                 ).apply { topMargin = (6 * density).toInt() }
             }
 
-            // mood label
+            // 日期标签
+            val dateLabel = stat.date.takeLast(5) // "MM-DD"
+            val dateView = TextView(requireContext()).apply {
+                text = dateLabel
+                textSize = 12f
+                setTextColor(ThemeColors.hint(requireContext()))
+                layoutParams = LinearLayout.LayoutParams(
+                    (48 * density).toInt(),
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+            row.addView(dateView)
+
+            // 色彩圆点
+            val dot = View(requireContext()).apply {
+                setBackgroundColor(stat.color)
+                layoutParams = LinearLayout.LayoutParams(
+                    (10 * density).toInt(),
+                    (10 * density).toInt()
+                ).apply { marginEnd = (8 * density).toInt() }
+            }
+            row.addView(dot)
+
+            // 情绪文字
             val label = TextView(requireContext()).apply {
                 text = stat.mood
                 textSize = 13f
                 setTextColor(ThemeColors.textPrimary(requireContext()))
                 layoutParams = LinearLayout.LayoutParams(
-                    (72 * density).toInt(),
-                    LinearLayout.LayoutParams.WRAP_CONTENT
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
                 )
                 maxLines = 1
                 ellipsize = android.text.TextUtils.TruncateAt.END
             }
             row.addView(label)
-
-            // bar
-            val barWidth = ((stat.count.toFloat() / maxCount) * maxBarWidth).toInt().coerceAtLeast((4 * density).toInt())
-            val bar = View(requireContext()).apply {
-                setBackgroundColor(stat.color)
-                layoutParams = LinearLayout.LayoutParams(
-                    barWidth,
-                    (20 * density).toInt()
-                ).apply {
-                    marginStart = (8 * density).toInt()
-                }
-            }
-            row.addView(bar)
-
-            // count
-            val countText = TextView(requireContext()).apply {
-                text = "${stat.count}"
-                textSize = 12f
-                setTextColor(ThemeColors.hint(requireContext()))
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { marginStart = (8 * density).toInt() }
-            }
-            row.addView(countText)
 
             moodBarsContainer.addView(row)
         }

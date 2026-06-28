@@ -142,31 +142,25 @@ object EchoMemoryTools {
         // ── create_memory_card ──
         ToolRegistry.register(ToolDefinition(
             name = "create_memory_card",
-            description = "从生活记录、日记或对话中提取一张值得以后回看的记忆卡片。当用户表达重要转折、感悟、或说「保存这句话」「记住这个」时调用。每次最多创建 1 张，不要批量创建。",
+            description = "从对话中提取一段值得回顾的瞬间，存为记忆卡片。用户说的任何有趣、有意义、有情绪的内容都可以存——比如一个想法、一个决定、一段感受、一次小成就。每次对话中主动创建 1-3 张卡片。不要用这个工具记用户的基本信息（用 remember_user_fact），但生活中有温度的瞬间都适合。",
             schema = mapOf(
                 "type" to "function",
                 "function" to mapOf(
                     "name" to "create_memory_card",
-                    "description" to "从生活记录、日记或对话中提取一张值得以后回看的记忆卡片",
+                    "description" to "从对话中提取值得回顾的瞬间，存为记忆卡片",
                     "parameters" to mapOf(
                         "type" to "object",
                         "properties" to mapOf(
-                            "memoryDate" to mapOf("type" to "string", "description" to "记忆日期 yyyy-MM-dd"),
-                            "quote" to mapOf("type" to "string", "description" to "值得记住的一句话"),
-                            "note" to mapOf("type" to "string", "description" to "为什么值得记住（可选）"),
+                            "quote" to mapOf("type" to "string", "description" to "值得回顾的一句话，保留用户原话"),
+                            "note" to mapOf("type" to "string", "description" to "一句话说明为什么值得记"),
                             "tags" to mapOf(
                                 "type" to "array",
                                 "items" to mapOf("type" to "string"),
-                                "description" to "标签"
+                                "description" to "标签，如 工作、生活、感悟、决定"
                             ),
-                            "mood" to mapOf("type" to "string", "description" to "情绪（可选）"),
-                            "sourceType" to mapOf(
-                                "type" to "string",
-                                "description" to "来源类型: life_record / diary / chat"
-                            ),
-                            "sourceId" to mapOf("type" to "string", "description" to "来源 ID")
+                            "mood" to mapOf("type" to "string", "description" to "情绪（可选）")
                         ),
-                        "required" to listOf("memoryDate", "quote", "note", "sourceType", "sourceId")
+                        "required" to listOf("quote", "note")
                     )
                 )
             ),
@@ -174,26 +168,23 @@ object EchoMemoryTools {
             riskLevel = "low",
             tags = listOf("echo", "memory"),
             executor = { args ->
-                val memoryDate = args["memoryDate"] as? String
-                    ?: return@ToolDefinition jsonError("缺少 memoryDate")
                 val quote = args["quote"] as? String
                     ?: return@ToolDefinition jsonError("缺少 quote")
                 val note = args["note"] as? String ?: ""
                 val tags = parseStringList(args["tags"])
                 val mood = args["mood"] as? String
-                val sourceType = args["sourceType"] as? String ?: "chat"
-                val sourceId = args["sourceId"] as? String ?: ""
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
                 val card = MemoryCard(
                     id = UUID.randomUUID().toString(),
                     createdAt = System.currentTimeMillis(),
-                    memoryDate = memoryDate,
+                    memoryDate = today,
                     quote = quote,
                     note = note,
                     tags = tags,
                     mood = mood,
-                    sourceType = sourceType,
-                    sourceId = sourceId
+                    sourceType = "chat",
+                    sourceId = ""
                 )
                 memoryRepo.addCard(card)
                 jsonOk("已保存记忆卡片", card.id)

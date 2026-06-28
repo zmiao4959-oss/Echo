@@ -87,6 +87,11 @@ class DiaryDetailActivity : ThemedActivity() {
         findViewById<TextView>(R.id.tv_detail_body).text = diary.diaryText
         findViewById<TextView>(R.id.tv_source_count).text = "基于 ${diary.sourceRecordIds.size} 条生活记录生成"
 
+        // 仅今日日记可重新生成
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        findViewById<View>(R.id.btn_regenerate).visibility =
+            if (diary.date == today) View.VISIBLE else View.GONE
+
         // 标签
         val chipGroup = findViewById<com.google.android.material.chip.ChipGroup>(R.id.chip_detail_tags)
         chipGroup.removeAllViews()
