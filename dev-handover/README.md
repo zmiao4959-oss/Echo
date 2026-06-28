@@ -140,6 +140,7 @@ UI (Fragment/Activity/ViewModel)
 | 记忆仓库 | `data/repository/MemoryRepository.kt` |
 | LLM 对接 | `llm/OpenAICompatProvider.kt` |
 | LLM 工厂 | `llm/ProviderFactory.kt` |
+| Embedding 对接 | `llm/DoubaoEmbeddingProvider.kt` — 豆包 multimodal_embeddings API |
 | 共享 HTTP | `net/HttpClient.kt` |
 | 全局配置 | `config/AppConfig.kt` |
 | 工作区文件 | `memory/FileStore.kt` |
@@ -148,7 +149,12 @@ UI (Fragment/Activity/ViewModel)
 | 时间解析 | `domain/TimeParser.kt` |
 | 诊断记录 | `diagnostics/ServiceHealth.kt` |
 | 原子 JSON | `data/store/JsonAtomicWriter.kt` |
-| 测试示例 | `app/src/test/` 下有 24 个测试文件（**251 个用例**，含 SearchIndex/DataHealth/Migration 专项测试） |
+| 检索接口 | `policy/RetrievalEngine.kt` — 统一检索引擎接口 |
+| 规则引擎 | `policy/RuleBasedRetrievalEngine.kt` — 规则检索引擎（包装 MemoryRetrievalPolicy） |
+| 语义引擎 | `policy/SemanticRetrievalEngine.kt` — 语义检索引擎（实验层） |
+| 混合引擎 | `policy/HybridRetrievalEngine.kt` — 混合检索引擎（路由+去重） |
+| 测试示例 | `app/src/test/` 下有 25 个测试文件（**299 个用例**，含 SearchIndex/DataHealth/Migration/RetrievalEngine 专项测试） |
+| 检索引擎文档 | `dev-handover/retrieval.md` |
 | 验收文档 | `dev-handover/manual-qa.md` |
 
 ---
@@ -205,10 +211,14 @@ UI (Fragment/Activity/ViewModel)
 - **Phase G-Fix**: 语音便签 — 移除 Google SpeechRecognizer（国内不可用），改用 MediaRecorder 本地录音 + MediaPlayer 回放（m4a/AAC），录音 → 待提交 → 点「记录」提交；成长轨迹页支持播放历史语音；今日片段倒序展示（createdAt DESC）
 - **Phase H**: 性能护城河 — H1 成长轨迹分页（PAGE_SIZE=30，RecyclerView scrollListener 懒加载，筛选后分页重置）；H2 轻量索引（SearchIndex — CJK bigram 分词 + token 匹配 + 时间衰减，覆盖 5 种数据源，增量更新 + 全量重建，原子写 search_index.json）；H3 数据健康检查（DataHealthChecker — 8 项检查 info/warning/error 三级 + 一键修复安全性修复）；H4 Schema 迁移（SchemaVersions + MigrationManager — 启动时检测版本 → 备份 → 迁移 → 日志，失败回滚）；H5 基准测试（3 个 benchmark 测试 — Timeline/Search/CardFilter）；H6 文档（data-health.md + manual-qa.md 更新）
 - **Phase H-Fix**: 补齐测试与一致性兜底 — H-Fix1 SearchIndex 专项测试（15 用例：upsert/update/remove/disabled-pending/损坏恢复/多 sourceType/snippet/sort）；H-Fix2 DataHealthChecker 专项测试（15 用例：8 项检查 + safe repair + 分级）；H-Fix3 MigrationManager 专项测试（9 用例：memory_cards/user_profile/audit_log 迁移 + 备份 + 失败保留 + version 更新 + 日志）；H-Fix4 索引一致性兜底（rebuildIfStale + 诊断 stale 显示 + 测试覆盖）；251 测试基线，24 测试文件
+- **Phase I**: 语义检索预研与可插拔智能层 — I1 RetrievalEngine 统一接口；I2 RuleBasedRetrievalEngine；I3 SemanticRetrievalEngine（no-op fallback + EmbeddingProvider 接口 + EmbeddingCacheEntry）；I4 HybridRetrievalEngine（规则优先兜底 + 去重 + 三模式）；I5 设置页检索模式 Spinner；I6 41 JVM 测试
+- **Phase I-Fix**: 接通检索引擎 — I-Fix1 MemoryContextBuilder 接入 HybridRetrievalEngine，AppConfig.retrievalMode 控制真实模式切换；I-Fix2 豆包 DoubaoEmbeddingProvider（OkHttp → multimodal_embeddings API）+ 设置页 Embedding API 配置 + semantic 无 provider 时自动回退规则 + 非 rule_only 显示语义服务状态；I-Fix3 7 新增链路测试（回退/disabled-pending 三种模式/explain-source 保留/默认 mode）；299 测试基线，25 测试文件
+
+详见：[检索引擎架构](./retrieval.md)
 
 ## 八、未来方向建议
 
-- **语义搜索升级** — `MemorySearch` 已支持中文 bigram，下一步可做向量检索
+- **语义搜索升级** — Phase I 已铺好 `RetrievalEngine` 接口 + `SemanticRetrievalEngine` 实验层，下一步接入真实 Embedding API（见 [retrieval.md](./retrieval.md)）
 - **记忆摘要器** — 当前用规则版取前 N 行，可升级为 LLM 摘要器生成画像
 - **对话列表搜索优化** — 当前是前缀匹配，可加模糊搜索
 - **自定义纹理批量管理** — 目前逐个操作，可加多选删除
@@ -220,7 +230,7 @@ UI (Fragment/Activity/ViewModel)
 
 | 风险项 | 说明 | 影响 |
 |--------|------|------|
-| 规则检索非语义检索 | `MemorySearch` 和 `MemoryRetrievalPolicy` 基于 bigram + 关键词匹配，不是语义向量检索。同义词、近义词无法召回 | 检索召回率有限，相关但不含关键词的内容可能遗漏 |
+| 规则检索非语义检索 | 当前默认 `rule_only`，基于 bigram + 关键词匹配，不是语义向量检索。同义词、近义词无法召回。Phase I 已铺好 `SemanticRetrievalEngine` 接口，但未接入真实 Embedding API | 检索召回率有限，相关但不含关键词的内容可能遗漏。接入 Embedding API 后可通过 `hybrid` 模式改善 |
 | 周回顾 LLM 质量依赖模型 | `WeeklyReviewBuilder.buildWithLLM()` 的总结质量取决于配置的 LLM 模型能力。未配置 LLM 时回退规则版 | 规则版总结较模板化，个性化不足 |
 | 记忆提示只做轻量透明化 | `MemoryHintFormatter` 展示来源类型和计数，不展示完整来源详情 | 用户知道"参考了 N 条记忆"，但看不到具体引用了什么 |
 | 多源检索全量扫描 | `MemoryContextBuilder` 对 LifeRecord / Diary 按最近 30 天全量加载后过滤，数据量大时可能有性能影响 | 历史数据积累后检索延迟增加，后续可考虑分页或索引 |

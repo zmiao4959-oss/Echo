@@ -113,6 +113,8 @@ object DataExporter {
                 // Workspace markdown 文件
                 addFileToZip(zos, EchoFileStore.workspaceDir.resolve("echo_profile.md"), "echo_profile.md")
                 exportedEntries.add("echo_profile.md")
+                addFileToZip(zos, File(context.filesDir, "workspace").resolve("_last_prompt.md"), "_last_prompt.md")
+                exportedEntries.add("_last_prompt.md")
 
                 // 旧 workspace 文件（notes.md, memory.md）
                 val oldWorkspace = File(context.filesDir, "workspace")
@@ -210,6 +212,7 @@ Echo (小爪) 数据导出
 - weekly_review.json     本周回顾数据
 - growth_timeline.json   成长轨迹汇总数据
 - echo_profile.md        Echo 角色设定
+- _last_prompt.md        最近一次对话的完整 System Prompt（调试用）
 - notes.md / memory.md   工作区笔记和长期记忆
 
 隐私说明:

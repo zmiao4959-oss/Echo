@@ -34,25 +34,48 @@ class Agent(
 
     /** 构建 System Prompt（Echo 人格 + 用户画像摘要 + 工具 + 运行时） */
     private fun buildSystemPrompt(memoryCtx: MemoryContextBuilder.MemoryContext): String {
-        // 1. Echo 基础人格（echo_profile.md）
-        val echoProfile = readEchoProfile()
+        // 1. Echo 人格：workspace 文件（SOUL.md / IDENTITY.md / AGENTS.md）
+        // echo_profile.md 已废弃，内容由 SOUL.md + AGENTS.md 覆盖
+        // MEMORY.md 由 MemoryContextBuilder 处理（仅 ✅ 区），此处不加载
+        val personalityPrompt = try {
+            val fs = com.example.myapplication.memory.FileStore
+            listOf("SOUL.md", "IDENTITY.md", "AGENTS.md", "USER.md")
+                .map { fs.readWorkspaceFile(it) }
+                .filter { it.isNotBlank() }
+                .joinToString("\n\n")
+        } catch (_: Exception) { "" }
 
         // 2. 工具描述
         val toolsDesc = ToolRegistry.getDescriptions()
 
         // 3. 运行时信息
         val now = System.currentTimeMillis()
+        val cal = java.util.Calendar.getInstance()
         val sdf = SimpleDateFormat("yyyy年M月d日", Locale.CHINESE)
         val todayStr = sdf.format(Date(now))
         val sdf2 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault())
         val timeStr = sdf2.format(Date(now))
+        // 自然语言时间提示
+        val dayOfWeek = arrayOf("周日", "周一", "周二", "周三", "周四", "周五", "周六")
+        val weekday = dayOfWeek[cal.get(java.util.Calendar.DAY_OF_WEEK) - 1]
+        val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+        val timeOfDay = when {
+            hour in 0..5 -> "凌晨"
+            hour in 6..8 -> "早上"
+            hour in 9..11 -> "上午"
+            hour in 12..13 -> "中午"
+            hour in 14..17 -> "下午"
+            hour in 18..21 -> "晚上"
+            else -> "深夜"
+        }
+        val naturalTime = "${timeOfDay}${hour}点${cal.get(java.util.Calendar.MINUTE)}分"
         val weatherCity = MyApplication.instance.appConfig.weatherCity
         val weatherLine = if (weatherCity.isNotBlank()) "\n- 用户天气城市: $weatherCity" else ""
         val runtime = """
 ## Runtime Info
-- 今天是 $todayStr
-- Current time: $timeStr
-- Current Unix ms: $now
+- 今天是 $todayStr $weekday $naturalTime
+- 完整时间: $timeStr
+- Unix ms: $now
 - Platform: Android$weatherLine
 
 ## Available Tools
@@ -60,24 +83,12 @@ $toolsDesc
         """.trimIndent()
 
         val parts = mutableListOf<String>()
-        if (echoProfile.isNotBlank()) parts.add(echoProfile)
+        if (personalityPrompt.isNotBlank()) parts.add(personalityPrompt)
         if (memoryCtx.profileSummary.isNotBlank()) parts.add("## 用户画像\n${memoryCtx.profileSummary}")
         if (memoryCtx.relevantMemorySection.isNotBlank()) parts.add("## 相关记忆\n${memoryCtx.relevantMemorySection}")
         parts.add(runtime)
 
         return parts.joinToString("\n\n")
-    }
-
-    private fun readEchoProfile(): String {
-        return try {
-            val file = EchoFileStore.workspaceDir.resolve("echo_profile.md")
-            if (file.exists()) file.readText(Charsets.UTF_8) else ""
-        } catch (_: Exception) { "" }
-    }
-
-    /** 记忆搜索前缀（由 MemoryContextBuilder 统一提供） */
-    private fun memoryPrefix(memoryCtx: MemoryContextBuilder.MemoryContext): String {
-        return memoryCtx.memoryPrefix
     }
 
     private fun createProvider(): LLMProvider = ProviderFactory.createLLMProvider()
@@ -92,12 +103,12 @@ $toolsDesc
         }
     }
 
-    /** 添加用户消息（含记忆搜索前缀，由 MemoryContextBuilder 统一提供） */
+    /** 添加用户消息。检索结果已在 System Prompt 的 ## 相关记忆 中，此处不再重复注入。 */
     private fun appendUserMessage(session: Session, userMessage: String, memoryCtx: MemoryContextBuilder.MemoryContext) {
         if (userMessage.isBlank()) return
-        val prefix = memoryPrefix(memoryCtx)
-        val fullContent = if (prefix.isNotBlank()) "$prefix\n$userMessage" else userMessage
-        session.addMessage(LLMMessage(role = "user", content = fullContent))
+        // 记忆前缀不再注入用户消息，避免与 System Prompt 中的 ## 相关记忆 重复，
+        // 也防止历史消息被检索结果污染
+        session.addMessage(LLMMessage(role = "user", content = userMessage))
     }
 
     /** 执行单轮 LLM 调用（流式首轮，非流式后续轮） */
@@ -223,6 +234,39 @@ $toolsDesc
 
         val systemPrompt = buildSystemPrompt(memoryCtx) +
             memoryCtx.structuredProfileInjection
+
+        // Debug: 保存完整对话上下文到 workspace，可直接在 App 内「工作区文件」查看
+        try {
+            val debugFile = com.example.myapplication.memory.FileStore.workspaceDir.resolve("_last_prompt.md")
+            debugFile.writeText(buildString {
+                appendLine("# 完整对话上下文（AI 实际收到的）")
+                appendLine()
+                appendLine("## System Prompt")
+                appendLine("```")
+                appendLine(systemPrompt)
+                appendLine("```")
+                appendLine()
+                appendLine("---")
+                appendLine()
+                appendLine("## 消息历史（共 ${session.messages.size} 条）")
+                appendLine()
+                for ((i, msg) in session.messages.withIndex()) {
+                    val roleLabel = when (msg.role) {
+                        "user" -> "👤 用户"
+                        "assistant" -> "🤖 Echo"
+                        "tool" -> "🔧 工具结果 (${msg.name ?: ""})"
+                        "system" -> "⚙️ 系统"
+                        else -> msg.role
+                    }
+                    appendLine("### [$i] $roleLabel")
+                    if (msg.role == "assistant" && !msg.toolCalls.isNullOrEmpty()) {
+                        appendLine("_调用了工具: ${msg.toolCalls.joinToString { it.function.name }}_")
+                    }
+                    appendLine(msg.content)
+                    appendLine()
+                }
+            }, Charsets.UTF_8)
+        } catch (_: Exception) {}
 
         val tools = ToolRegistry.listForLLM()
         val toolList = tools.ifEmpty { null }

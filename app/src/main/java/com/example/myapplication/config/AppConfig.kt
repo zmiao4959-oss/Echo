@@ -87,6 +87,27 @@ class AppConfig(context: Context) {
         get() = prefs.getInt(KEY_CARD_OPACITY, 30)
         set(value) = prefs.edit().putInt(KEY_CARD_OPACITY, value).apply()
 
+    // ── 检索模式 ──
+    var retrievalMode: String
+        get() = prefs.getString(KEY_RETRIEVAL_MODE, "rule_only") ?: "rule_only"
+        set(value) = prefs.edit().putString(KEY_RETRIEVAL_MODE, value).apply()
+
+    // ── Embedding API 配置 ──
+    var embeddingApiKey: String
+        get() = prefs.getString(KEY_EMBEDDING_API_KEY, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_EMBEDDING_API_KEY, value).apply()
+
+    var embeddingBaseUrl: String
+        get() = prefs.getString(KEY_EMBEDDING_BASE_URL, "https://ark.cn-beijing.volces.com/api/v3") ?: "https://ark.cn-beijing.volces.com/api/v3"
+        set(value) = prefs.edit().putString(KEY_EMBEDDING_BASE_URL, value).apply()
+
+    var embeddingModel: String
+        get() = prefs.getString(KEY_EMBEDDING_MODEL, "doubao-embedding-vision-251215") ?: "doubao-embedding-vision-251215"
+        set(value) = prefs.edit().putString(KEY_EMBEDDING_MODEL, value).apply()
+
+    val isEmbeddingConfigured: Boolean
+        get() = embeddingApiKey.isNotBlank()
+
     // ── 主动陪伴 ──
     var companionEnabled: Boolean
         get() = prefs.getBoolean(KEY_COMPANION_ENABLED, true)
@@ -157,6 +178,10 @@ class AppConfig(context: Context) {
         private const val KEY_BACKGROUND = "background_key"
         private const val KEY_CARD_OPACITY = "card_opacity"
         private const val KEY_CARD_CORNER_RADIUS = "card_corner_radius"
+        private const val KEY_RETRIEVAL_MODE = "retrieval_mode"
+        private const val KEY_EMBEDDING_API_KEY = "embedding_api_key"
+        private const val KEY_EMBEDDING_BASE_URL = "embedding_base_url"
+        private const val KEY_EMBEDDING_MODEL = "embedding_model"
         private const val KEY_COMPANION_ENABLED = "companion_enabled"
         private const val KEY_COMPANION_QUIET_START = "companion_quiet_start"
         private const val KEY_COMPANION_QUIET_END = "companion_quiet_end"

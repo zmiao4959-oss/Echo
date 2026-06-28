@@ -51,4 +51,10 @@ object ServiceHealth {
         else if (count1h > 0) "$service: 最近1小时 $count1h 次失败 (24h: $count24h)"
         else "$service: 24小时内 $count24h 次失败"
     }
+
+    /** 获取最近一次失败的错误消息（已脱敏） */
+    fun lastErrorMessage(service: String): String? {
+        val list = failures[service] ?: return null
+        return synchronized(list) { list.lastOrNull()?.message }
+    }
 }

@@ -130,6 +130,23 @@
     <string name="hint_max_tool_rounds">10</string>
     <string name="hint_max_context_tokens">32000</string>
 
+    <!-- 检索模式设置 -->
+    <string name="retrieval_config">检索模式（开发者）</string>
+    <string name="retrieval_mode_rule_only">规则检索（默认）</string>
+    <string name="retrieval_mode_hybrid">混合检索（规则+语义）</string>
+    <string name="retrieval_mode_semantic_experiment">语义实验（仅语义）</string>
+    <string name="retrieval_experiment_warning">⚠️ 实验模式：可能调用远程服务、产生费用、涉及隐私。未配置 Embedding API 时语义检索返回空结果。</string>
+    <string name="retrieval_semantic_no_provider">实验模式当前无语义服务，将自动回退规则检索。请在下方配置 Embedding API。</string>
+
+    <!-- Embedding API 配置 -->
+    <string name="embedding_config">Embedding API 配置（豆包）</string>
+    <string name="embedding_api_key_label">Embedding API Key</string>
+    <string name="hint_embedding_api_key">从火山引擎获取</string>
+    <string name="embedding_base_url_label">Embedding Base URL</string>
+    <string name="hint_embedding_base_url">https://ark.cn-beijing.volces.com/api/v3</string>
+    <string name="embedding_model_label">Embedding Model</string>
+    <string name="hint_embedding_model">doubao-embedding-vision-251215</string>
+
     <!-- Toast / 状态消息 -->
     <string name="toast_config_saved">配置已保存</string>
     <string name="toast_configure_llm_first">请先在设置中配置 LLM API</string>

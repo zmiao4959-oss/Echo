@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.Manifest
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
+import android.widget.ArrayAdapter
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -96,6 +98,57 @@ class SettingsActivity : ThemedActivity() {
         val quietEnd = findViewById<EditText>(R.id.companion_quiet_end)
         quietEnd.setText(config.companionQuietEnd.toString())
 
+        // 检索模式配置
+        val spinnerRetrievalMode = findViewById<Spinner>(R.id.spinner_retrieval_mode)
+        val retrievalWarning = findViewById<TextView>(R.id.retrieval_warning)
+        val retrievalSemanticStatus = findViewById<TextView>(R.id.retrieval_semantic_status)
+        val retrievalModes = listOf("rule_only", "hybrid", "semantic_experiment")
+        val retrievalLabels = listOf(
+            getString(R.string.retrieval_mode_rule_only),
+            getString(R.string.retrieval_mode_hybrid),
+            getString(R.string.retrieval_mode_semantic_experiment)
+        )
+        val retrievalAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, retrievalLabels)
+        retrievalAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerRetrievalMode.adapter = retrievalAdapter
+
+        // 设置当前选中的检索模式
+        val currentModeIndex = retrievalModes.indexOf(config.retrievalMode).let { if (it < 0) 0 else it }
+        spinnerRetrievalMode.setSelection(currentModeIndex)
+
+        // 非 rule_only 模式显示实验警告 + 语义服务状态
+        fun updateRetrievalWarning() {
+            val selectedMode = retrievalModes[spinnerRetrievalMode.selectedItemPosition]
+            val notRuleOnly = selectedMode != "rule_only"
+            retrievalWarning.visibility = if (notRuleOnly) android.view.View.VISIBLE else android.view.View.GONE
+
+            // 语义服务状态
+            retrievalSemanticStatus.visibility = if (notRuleOnly) android.view.View.VISIBLE else android.view.View.GONE
+            if (notRuleOnly) {
+                val hasProvider = MyApplication.instance.semanticEngine.embeddingProvider != null
+                retrievalSemanticStatus.text = if (hasProvider) {
+                    "语义服务: 已配置 (${config.embeddingModel})"
+                } else {
+                    getString(R.string.retrieval_semantic_no_provider)
+                }
+            }
+        }
+        updateRetrievalWarning()
+        spinnerRetrievalMode.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                updateRetrievalWarning()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        // Embedding API 配置
+        val embeddingApiKey = findViewById<EditText>(R.id.embedding_api_key)
+        val embeddingBaseUrl = findViewById<EditText>(R.id.embedding_base_url)
+        val embeddingModel = findViewById<EditText>(R.id.embedding_model)
+        embeddingApiKey.setText(config.embeddingApiKey)
+        embeddingBaseUrl.setText(config.embeddingBaseUrl)
+        embeddingModel.setText(config.embeddingModel)
+
         // 天气城市
         val weatherCity = findViewById<EditText>(R.id.weather_city)
         weatherCity.setText(config.weatherCity)
@@ -139,6 +192,18 @@ class SettingsActivity : ThemedActivity() {
             config.maxContextTokens = maxContextTokens.text.toString().toIntOrNull() ?: 32000
             config.companionQuietStart = quietStart.text.toString().toIntOrNull() ?: 23
             config.companionQuietEnd = quietEnd.text.toString().toIntOrNull() ?: 7
+
+            // 保存检索模式
+            val selectedMode = retrievalModes[spinnerRetrievalMode.selectedItemPosition]
+            config.retrievalMode = selectedMode
+
+            // 保存 Embedding API 配置
+            config.embeddingApiKey = embeddingApiKey.text.toString().trim()
+            config.embeddingBaseUrl = normalizeUrl(embeddingBaseUrl.text.toString().trim())
+            config.embeddingModel = embeddingModel.text.toString().trim()
+
+            // 刷新检索引擎（Embedding Provider + 检索模式即时生效）
+            MyApplication.instance.refreshEmbeddingProvider()
 
             Toast.makeText(this, getString(R.string.toast_config_saved), Toast.LENGTH_SHORT).show()
             finish()
@@ -195,6 +260,29 @@ class SettingsActivity : ThemedActivity() {
         findViewById<TextView>(R.id.diag_recent_errors).text =
             (if (errorLines.isEmpty()) "最近错误: 无" else "最近错误:\n${errorLines.joinToString("\n")}") +
             "\n\n数据健康: $healthSummary"
+
+        // Embedding 诊断详情
+        val embeddingDiag = findViewById<TextView>(R.id.diag_embedding_status)
+        val modeLabel = when (config.retrievalMode) {
+            "rule_only" -> "规则检索"
+            "hybrid" -> "混合检索"
+            "semantic_experiment" -> "语义实验"
+            else -> config.retrievalMode
+        }
+        val providerOk = MyApplication.instance.semanticEngine.embeddingProvider != null
+        val embeddingSummary = com.example.myapplication.diagnostics.ServiceHealth.summary("Embedding")
+        val lastErr = com.example.myapplication.diagnostics.ServiceHealth.lastErrorMessage("Embedding")
+        embeddingDiag.text = buildString {
+            append("检索模式: $modeLabel")
+            append("\n语义服务: ${if (providerOk) "已配置 (${config.embeddingModel})" else "未配置（无 Embedding Provider）"}")
+            append("\nEmbedding API: $embeddingSummary")
+            if (lastErr != null) {
+                append("\n最近错误: $lastErr")
+            }
+            if (config.retrievalMode != "rule_only" && !providerOk) {
+                append("\n→ 当前自动回退规则检索")
+            }
+        }
     }
 
     private fun refreshBackgroundSelection() {
