@@ -7,6 +7,11 @@
     android:layout_height="match_parent"
     android:background="?attr/echoBackground">
 
+    <com.example.myapplication.ui.widget.EchoEnvironmentView
+        android:id="@+id/echo_environment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -62,6 +67,11 @@
             android:layout_weight="1"
             android:paddingBottom="64dp" />
     </LinearLayout>
+
+    <com.example.myapplication.ui.widget.EchoJourneyView
+        android:id="@+id/echo_journey"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
     <!-- 底部导航 -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

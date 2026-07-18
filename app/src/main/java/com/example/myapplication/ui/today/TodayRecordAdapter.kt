@@ -29,7 +29,7 @@ import java.util.Locale
  * 不再叠加一张只展示纹理的封面，也不需要通过隐藏手势揭示正文。
  */
 class TodayRecordAdapter(
-    private val onClick: ((LifeRecord) -> Unit)? = null,
+    private val onClick: ((LifeRecord, View) -> Unit)? = null,
     @Suppress("unused") private val onDelete: ((String) -> Unit)? = null,
     private val onLikeMicroEcho: ((String) -> Unit)? = null,
     private val onRegenerateMicroEcho: ((String) -> Unit)? = null
@@ -112,7 +112,7 @@ class TodayRecordAdapter(
             playBtn.setOnClickListener(null)
         }
 
-        holder.card.setOnClickListener { onClick?.invoke(record) }
+        holder.card.setOnClickListener { onClick?.invoke(record, holder.card) }
 
         if (animatedRecordIds.add(record.id)) {
             holder.card.alpha = 0f

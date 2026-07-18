@@ -9,7 +9,6 @@ import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -18,12 +17,19 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.model.MemoryCard
+import com.example.myapplication.data.model.EchoForeshadow
+import com.example.myapplication.data.model.ForeshadowOutcome
+import com.example.myapplication.data.model.ForeshadowState
 import com.example.myapplication.policy.PastEchoPolicy
 import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.PageTextureManager
 import com.example.myapplication.ui.diary.DiaryDetailActivity
+import com.example.myapplication.ui.widget.EchoFeedback
+import com.example.myapplication.ui.widget.EchoMemoryMapView
+import com.example.myapplication.ui.widget.EchoSheet
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -52,6 +58,7 @@ class MemoryFragment : Fragment() {
     private lateinit var tvEmptyCards: TextView
     private lateinit var recyclerProfiles: RecyclerView
     private lateinit var tvEmptyProfiles: TextView
+    private lateinit var memoryStarMap: EchoMemoryMapView
 
     private var cardAdapter: MemoryCardAdapter? = null
     private var profileAdapter: ProfileMemoryAdapter? = null
@@ -91,7 +98,7 @@ class MemoryFragment : Fragment() {
     private fun applyPageTexture() {
         val config = (requireActivity().application as MyApplication).appConfig
         val key = config.getPageTextureKey(PageTextureManager.MEMORY_PAGE)
-        PageTextureManager.apply(requireView(), key)
+        PageTextureManager.apply(requireView(), key, transparentWhenNone = true)
     }
 
     private fun applyCardTextures() {
@@ -122,6 +129,7 @@ class MemoryFragment : Fragment() {
         tvEmptyCards = view.findViewById(R.id.tv_empty_cards)
         recyclerProfiles = view.findViewById(R.id.recycler_profiles)
         tvEmptyProfiles = view.findViewById(R.id.tv_empty_profiles)
+        memoryStarMap = view.findViewById(R.id.memory_star_map)
 
         view.findViewById<View>(R.id.btn_clear_search).setOnClickListener {
             clearSearch()
@@ -129,12 +137,14 @@ class MemoryFragment : Fragment() {
         cardRandom.setOnClickListener {
             viewModel.shuffleRandomCard()
         }
+        memoryStarMap.onCardSelected = { card -> showCardDetail(card, null) }
+        memoryStarMap.onForeshadowSelected = { thread -> showForeshadowDetail(thread) }
     }
 
     private fun setupAdapters() {
         cardAdapter = MemoryCardAdapter(
-            onClick = { card -> showCardDetail(card) },
-            onLongClick = { card -> showCardOptions(card) }
+            onClick = { card, source -> showCardDetail(card, source) },
+            onLongClick = { card, source -> showCardOptions(card, source) }
         )
         recyclerCards.layoutManager = LinearLayoutManager(requireContext())
         recyclerCards.adapter = cardAdapter
@@ -199,6 +209,14 @@ class MemoryFragment : Fragment() {
                 cardAdapter?.submitList(cards)
                 tvEmptyCards.visibility = if (cards.isEmpty()) View.VISIBLE else View.GONE
                 recyclerCards.visibility = if (cards.isEmpty()) View.GONE else View.VISIBLE
+            }
+        }
+
+        lifecycleScope.launch {
+            combine(viewModel.cards, viewModel.foreshadows) { cards, foreshadows ->
+                cards to foreshadows
+            }.collectLatest { (cards, foreshadows) ->
+                memoryStarMap.setContent(cards, foreshadows)
             }
         }
 
@@ -273,11 +291,14 @@ class MemoryFragment : Fragment() {
                 append(getString(R.string.memory_past_echo_spoken, it))
             }
         }
-        AlertDialog.Builder(requireContext())
-            .setTitle(item.contextLabel)
-            .setMessage(details)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
+        EchoSheet.show(
+            requireActivity(),
+            cardOnThisDay,
+            "往日回声",
+            item.contextLabel,
+            EchoSheet.text(requireActivity(), details, 15f),
+            listOf(EchoSheet.Action("收起") { it.dismiss() })
+        )
     }
 
     private fun formatMemoryDate(value: String): String {
@@ -340,7 +361,7 @@ class MemoryFragment : Fragment() {
         resultsText.text = sb.toString().trim()
     }
 
-    private fun showCardDetail(card: MemoryCard) {
+    private fun showCardDetail(card: MemoryCard, source: View?) {
         val details = buildString {
             if (card.note.isNotBlank()) append(card.note)
             card.mood?.takeIf { it.isNotBlank() }?.let {
@@ -353,15 +374,99 @@ class MemoryFragment : Fragment() {
             }
             if (isEmpty()) append("这张卡片暂时没有补充说明。")
         }
-        AlertDialog.Builder(requireContext())
-            .setTitle("「${card.quote}」")
-            .setMessage(details)
-            .setPositiveButton("关闭", null)
-            .setNeutralButton("编辑") { _, _ -> showEditCardDialog(card) }
-            .show()
+        val body = EchoSheet.vertical(
+            requireActivity(),
+            14,
+            EchoSheet.text(requireActivity(), details, 15f),
+            EchoSheet.text(
+                requireActivity(),
+                "片段  ───  日记  ───  规划  ───  ✦ 回忆",
+                12f,
+                secondary = true
+            )
+        )
+        EchoSheet.show(
+            requireActivity(),
+            source,
+            "记忆星图 · ${formatMemoryDate(card.memoryDate)}",
+            "「${card.quote}」",
+            body,
+            listOf(
+                EchoSheet.Action("编辑") { renderEditCard(it, card) },
+                EchoSheet.Action(if (card.pinned) "取消置顶" else "置顶") {
+                    viewModel.togglePin(card.id)
+                    EchoFeedback.play(requireView(), EchoFeedback.Kind.COMPLETE)
+                    it.dismiss()
+                },
+                EchoSheet.Action("删除", destructive = true) { renderDeleteCard(it, card) }
+            )
+        )
     }
 
-    private fun showEditCardDialog(card: MemoryCard) {
+    private fun showForeshadowDetail(thread: EchoForeshadow) {
+        val dateFormat = SimpleDateFormat("yyyy年M月d日", Locale.CHINESE)
+        val stateLabel = when (thread.state) {
+            ForeshadowState.WATCHING -> "故事仍在生长"
+            ForeshadowState.CLOSED -> when (thread.outcome) {
+                ForeshadowOutcome.HAPPENED -> "已经发生"
+                ForeshadowOutcome.CHANGED -> "有了变化"
+                ForeshadowOutcome.ABANDONED -> "已经放下"
+                ForeshadowOutcome.CONTINUING -> "仍在继续"
+                null -> "已经有了结局"
+            }
+            ForeshadowState.DISMISSED -> "不再提起"
+        }
+        val evidence = thread.sourceRefs
+            .sortedBy { it.createdAt }
+            .joinToString("\n\n") { source ->
+                "${dateFormat.format(java.util.Date(source.createdAt))}\n“${source.excerpt}”"
+            }
+        val suggestion = thread.suggestedOutcome?.let { outcome ->
+            val label = when (outcome) {
+                ForeshadowOutcome.HAPPENED -> "似乎已经发生"
+                ForeshadowOutcome.CHANGED -> "似乎出现变化"
+                ForeshadowOutcome.ABANDONED -> "似乎已经放下"
+                ForeshadowOutcome.CONTINUING -> "似乎有了新进展"
+            }
+            "Echo 从最近的片段里发现：$label。它只是一条线索，结局仍由你确认。"
+        }
+        val body = EchoSheet.vertical(
+            requireActivity(),
+            14,
+            EchoSheet.text(requireActivity(), stateLabel, 13f, secondary = true),
+            EchoSheet.text(requireActivity(), evidence, 15f),
+            EchoSheet.text(
+                requireActivity(),
+                suggestion ?: "虚线会继续等待后来的片段；故事有了答案后，它会变成完整轨迹。",
+                13f,
+                secondary = true
+            )
+        )
+        val actions = if (thread.state == ForeshadowState.WATCHING) {
+            listOf(
+                EchoSheet.Action("以后再看") {
+                    viewModel.snoozeForeshadow(thread.id)
+                    it.dismiss()
+                },
+                EchoSheet.Action("不再提起", destructive = true) {
+                    viewModel.dismissForeshadow(thread.id)
+                    it.dismiss()
+                }
+            )
+        } else {
+            listOf(EchoSheet.Action("收起") { it.dismiss() })
+        }
+        EchoSheet.show(
+            requireActivity(),
+            memoryStarMap,
+            "记忆星图 · 伏笔轨迹",
+            thread.title,
+            body,
+            actions
+        )
+    }
+
+    private fun renderEditCard(session: EchoSheet.Session, card: MemoryCard) {
         val content = layoutInflater.inflate(R.layout.dialog_edit_memory_card, null)
         val quote = content.findViewById<EditText>(R.id.et_memory_quote).apply {
             setText(card.quote)
@@ -373,18 +478,17 @@ class MemoryFragment : Fragment() {
             setText(card.tags.joinToString("，"))
         }
 
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("整理这张回忆")
-            .setView(content)
-            .setPositiveButton("保存", null)
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+        session.render(
+            "编辑回忆",
+            "整理这张记忆",
+            content,
+            listOf(
+                EchoSheet.Action("返回") { it.dismiss() },
+                EchoSheet.Action("保存") {
                 val newQuote = quote.text.toString().trim()
                 if (newQuote.isEmpty()) {
-                    Toast.makeText(requireContext(), "想记住的内容不能为空", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
+                    quote.error = "想记住的内容不能为空"
+                    return@Action
                 }
                 val newTags = tags.text.toString()
                     .split(Regex("[,，、]"))
@@ -400,37 +504,29 @@ class MemoryFragment : Fragment() {
                         tags = newTags
                     )
                 )
-                dialog.dismiss()
-                Toast.makeText(requireContext(), "回忆已整理", Toast.LENGTH_SHORT).show()
-            }
-        }
-        dialog.show()
+                    EchoFeedback.play(requireView(), EchoFeedback.Kind.COMPLETE)
+                    it.dismiss()
+                }
+            )
+        )
     }
 
-    private fun showCardOptions(card: MemoryCard) {
-        val items = arrayOf(
-            "编辑",
-            if (card.pinned) "取消置顶" else "置顶",
-            "删除"
-        )
-        AlertDialog.Builder(requireContext())
-            .setTitle(card.quote.take(30) + "…")
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> showEditCardDialog(card)
-                    1 -> viewModel.togglePin(card.id)
-                    2 -> {
-                        AlertDialog.Builder(requireContext())
-                            .setTitle("删除记忆卡片")
-                            .setMessage("确定要删除这张卡片吗？")
-                            .setPositiveButton("删除") { _, _ ->
-                                viewModel.deleteCard(card.id)
-                            }
-                            .setNegativeButton("取消", null)
-                            .show()
-                    }
+    private fun renderDeleteCard(session: EchoSheet.Session, card: MemoryCard) {
+        session.render(
+            "不可撤销",
+            "让这颗星熄灭？",
+            EchoSheet.text(requireActivity(), "这张记忆卡片会从星图与回忆列表中移除。", 15f),
+            listOf(
+                EchoSheet.Action("留下") { it.dismiss() },
+                EchoSheet.Action("删除", destructive = true) {
+                    viewModel.deleteCard(card.id)
+                    it.dismiss()
                 }
-            }
-            .show()
+            )
+        )
+    }
+
+    private fun showCardOptions(card: MemoryCard, source: View?) {
+        showCardDetail(card, source)
     }
 }

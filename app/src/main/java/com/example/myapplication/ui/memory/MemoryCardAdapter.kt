@@ -1,6 +1,7 @@
 package com.example.myapplication.ui.memory
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -16,8 +17,8 @@ import java.util.Date
 import java.util.Locale
 
 class MemoryCardAdapter(
-    private val onClick: ((MemoryCard) -> Unit)? = null,
-    private val onLongClick: ((MemoryCard) -> Unit)? = null
+    private val onClick: ((MemoryCard, View) -> Unit)? = null,
+    private val onLongClick: ((MemoryCard, View) -> Unit)? = null
 ) : ListAdapter<MemoryCard, MemoryCardAdapter.ViewHolder>(DiffCallback()) {
 
     class ViewHolder(val card: MaterialCardView) : RecyclerView.ViewHolder(card)
@@ -72,10 +73,10 @@ class MemoryCardAdapter(
         }
 
         holder.card.setOnLongClickListener {
-            onLongClick?.invoke(card)
+            onLongClick?.invoke(card, holder.card)
             true
         }
-        holder.card.setOnClickListener { onClick?.invoke(card) }
+        holder.card.setOnClickListener { onClick?.invoke(card, holder.card) }
     }
 
     private fun formatDate(isoDate: String): String {

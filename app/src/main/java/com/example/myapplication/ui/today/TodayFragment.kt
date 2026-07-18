@@ -12,7 +12,6 @@ import android.media.MediaRecorder
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
@@ -21,7 +20,6 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -32,6 +30,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.data.model.LifeRecord
+import com.example.myapplication.data.model.EchoForeshadow
+import com.example.myapplication.data.model.ForeshadowOutcome
 import com.example.myapplication.R
 import com.example.myapplication.policy.TodayFormationPolicy
 import com.example.myapplication.policy.TodaySpotlightPolicy
@@ -48,6 +48,8 @@ import com.example.myapplication.ui.ThemeColors
 import com.example.myapplication.ui.widget.EchoOrbView
 import com.example.myapplication.ui.widget.EchoCaptureMotionView
 import com.example.myapplication.ui.widget.EchoWeatherView
+import com.example.myapplication.ui.widget.EchoFeedback
+import com.example.myapplication.ui.widget.EchoSheet
 import com.example.myapplication.tts.TTSParser
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
@@ -102,6 +104,7 @@ class TodayFragment : Fragment() {
     private var currentReturnWelcome: ReturnWelcomePolicy.Welcome =
         ReturnWelcomePolicy.Welcome.Hidden
     private var currentMicroEcho: MicroEchoState = MicroEchoState.Hidden
+    private var currentForeshadow: EchoForeshadow? = null
     private var spotlightExpiryJob: Job? = null
     private var lastSpotlightKey: String? = null
     private var recordAdapter: TodayRecordAdapter? = null
@@ -159,7 +162,7 @@ class TodayFragment : Fragment() {
     private fun applyPageTexture() {
         val config = (requireActivity().application as MyApplication).appConfig
         val key = config.getPageTextureKey(PageTextureManager.TODAY_PAGE)
-        PageTextureManager.apply(requireView(), key)
+        PageTextureManager.apply(requireView(), key, transparentWhenNone = true)
     }
 
     private fun applyCardTextures() {
@@ -222,8 +225,7 @@ class TodayFragment : Fragment() {
 
     private fun setupRecycler() {
         recordAdapter = TodayRecordAdapter(
-            onClick = { record -> showRecordDetail(record) },
-            onDelete = { id -> showDeleteConfirmation(id) },
+            onClick = { record, source -> showRecordDetail(record, source) },
             onLikeMicroEcho = { id -> viewModel.likeMicroEcho(id) },
             onRegenerateMicroEcho = { id ->
                 viewModel.regenerateMicroEcho(id)
@@ -263,7 +265,7 @@ class TodayFragment : Fragment() {
     }
 
     private fun playCaptureMotion() {
-        btnRecord.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        EchoFeedback.play(btnRecord, EchoFeedback.Kind.CAPTURE)
         captureMotion.post {
             val overlayLocation = IntArray(2)
             val startLocation = IntArray(2)
@@ -343,6 +345,13 @@ class TodayFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.microEcho.collectLatest { state ->
                 currentMicroEcho = state
+                renderTodaySpotlight()
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.foreshadow.collectLatest { thread ->
+                currentForeshadow = thread
                 renderTodaySpotlight()
             }
         }
@@ -474,6 +483,11 @@ class TodayFragment : Fragment() {
     }
 
     private fun openDiary(diaryId: String) {
+        (requireActivity() as? MainActivity)?.revealRelation(
+            MainActivity.STAGE_TODAY,
+            MainActivity.STAGE_DIARY,
+            btnTodayDiaryAction
+        )
         startActivity(Intent(requireContext(), DiaryDetailActivity::class.java).apply {
             putExtra("diary_id", diaryId)
         })
@@ -494,7 +508,10 @@ class TodayFragment : Fragment() {
         }
         val spotlight = TodaySpotlightPolicy.select(
             returnWelcome = currentReturnWelcome,
-            echo = echoCandidate
+            echo = echoCandidate,
+            foreshadow = currentForeshadow?.let {
+                TodaySpotlightPolicy.ForeshadowCandidate(it.id, it.followUpQuestion)
+            }
         )
 
         when (spotlight) {
@@ -506,6 +523,10 @@ class TodayFragment : Fragment() {
                 cardTodaySpotlight.visibility = View.VISIBLE
                 renderWelcomeSpotlight(spotlight)
             }
+            is TodaySpotlightPolicy.Spotlight.Foreshadow -> {
+                cardTodaySpotlight.visibility = View.VISIBLE
+                renderForeshadowSpotlight(spotlight)
+            }
             TodaySpotlightPolicy.Spotlight.Hidden -> {
                 cardTodaySpotlight.visibility = View.GONE
                 setSpotlightInputAction(enabled = false)
@@ -516,6 +537,7 @@ class TodayFragment : Fragment() {
             is TodaySpotlightPolicy.Spotlight.MicroEcho ->
                 if (spotlight.generating) "echo-generating" else "echo-ready:${spotlight.text.hashCode()}"
             is TodaySpotlightPolicy.Spotlight.ReturnWelcome -> "return-welcome"
+            is TodaySpotlightPolicy.Spotlight.Foreshadow -> "foreshadow:${spotlight.id}"
             TodaySpotlightPolicy.Spotlight.Hidden -> "hidden"
         }
         if (spotlight !is TodaySpotlightPolicy.Spotlight.Hidden &&
@@ -566,6 +588,95 @@ class TodayFragment : Fragment() {
         tvTodaySpotlightMessage.text = spotlight.message
         setSpotlightInputAction(enabled = true)
         applySpotlightTexture(CardTextureManager.LIFE_RECORD, R.attr.echoSurfaceVariant)
+    }
+
+    private fun renderForeshadowSpotlight(
+        spotlight: TodaySpotlightPolicy.Spotlight.Foreshadow
+    ) {
+        tvTodaySpotlightTitle.text = if (currentForeshadow?.suggestedOutcome != null) {
+            "故事有了新的回声"
+        } else {
+            "一条未完的故事"
+        }
+        tvTodaySpotlightMessage.setTextColor(ThemeColors.textPrimary(requireContext()))
+        tvTodaySpotlightMessage.text = spotlight.question
+        tvTodaySpotlightAction.text = "回应这条伏笔  →"
+        tvTodaySpotlightAction.visibility = View.VISIBLE
+        layoutMicroEchoFeedbackActions.visibility = View.GONE
+        cardTodaySpotlight.isClickable = true
+        cardTodaySpotlight.isFocusable = true
+        cardTodaySpotlight.setOnClickListener {
+            currentForeshadow
+                ?.takeIf { it.id == spotlight.id }
+                ?.let(::showForeshadowSheet)
+        }
+        applySpotlightTexture(CardTextureManager.MEMORY, R.attr.echoSurfaceVariant)
+    }
+
+    private fun showForeshadowSheet(thread: EchoForeshadow) {
+        val firstSource = thread.sourceRefs.firstOrNull()
+        val evidence = firstSource?.excerpt?.let { "“$it”" }.orEmpty()
+        val body = EchoSheet.vertical(
+            requireActivity(),
+            12,
+            EchoSheet.text(requireActivity(), evidence, 16f),
+            EchoSheet.text(
+                requireActivity(),
+                "Echo 只是把你过去留下的线头带回来，答案仍然由你决定。",
+                13f,
+                secondary = true
+            )
+        )
+        EchoSheet.show(
+            requireActivity(),
+            cardTodaySpotlight,
+            "Echo · 伏笔",
+            thread.followUpQuestion,
+            body,
+            listOf(
+                EchoSheet.Action("有了结果") { session ->
+                    renderForeshadowOutcomeChoices(session, thread)
+                },
+                EchoSheet.Action("还在继续") { session ->
+                    viewModel.respondToForeshadow(thread.id, ForeshadowOutcome.CONTINUING)
+                    session.dismiss()
+                },
+                EchoSheet.Action("以后再问") { session ->
+                    viewModel.snoozeForeshadow(thread.id)
+                    session.dismiss()
+                }
+            )
+        )
+    }
+
+    private fun renderForeshadowOutcomeChoices(
+        session: EchoSheet.Session,
+        thread: EchoForeshadow
+    ) {
+        session.render(
+            "故事有了新的方向",
+            thread.title,
+            EchoSheet.text(
+                requireActivity(),
+                "选择最接近现在的状态。Echo 会把这次回答作为新的生活片段，与最初那句话连在一起。",
+                14f,
+                secondary = true
+            ),
+            listOf(
+                EchoSheet.Action("已经发生") {
+                    viewModel.respondToForeshadow(thread.id, ForeshadowOutcome.HAPPENED)
+                    it.dismiss()
+                },
+                EchoSheet.Action("有些变化") {
+                    viewModel.respondToForeshadow(thread.id, ForeshadowOutcome.CHANGED)
+                    it.dismiss()
+                },
+                EchoSheet.Action("决定放下", destructive = true) {
+                    viewModel.respondToForeshadow(thread.id, ForeshadowOutcome.ABANDONED)
+                    it.dismiss()
+                }
+            )
+        )
     }
 
     private fun renderWeeklyFootprint(footprint: WeeklyFootprintPolicy.WeeklyFootprint) {
@@ -690,55 +801,56 @@ class TodayFragment : Fragment() {
 
     // ── 查看记录详情 ──
 
-    private fun showRecordDetail(record: LifeRecord) {
+    private fun showRecordDetail(record: LifeRecord, source: View?) {
         val sdf = SimpleDateFormat("yyyy年M月d日 HH:mm", Locale.CHINESE)
         val timeStr = sdf.format(Date(record.createdAt))
 
         val sourceLabel = when (record.source) {
-            "voice" -> "🎙️ 语音"
-            "chat" -> "💬 对话"
-            "checkin" -> "👋 问候"
-            else -> "✏️ 手动记录"
+            "voice" -> "语音片段"
+            "chat" -> "对话片段"
+            "checkin" -> "问候回应"
+            else -> "手动记录"
         }
-
-        val sb = StringBuilder()
-        sb.appendLine(record.content)
-        sb.appendLine()
-        sb.appendLine("$sourceLabel  ·  $timeStr")
-        record.mood?.let { sb.appendLine("心情: $it") }
-        record.tags.takeIf { it.isNotEmpty() }?.let {
-            sb.appendLine("标签: ${it.joinToString(", ")}")
-        }
-        record.microEcho?.takeIf { it.isNotBlank() }?.let {
-            sb.appendLine()
-            sb.appendLine("Echo 回声")
-            sb.appendLine(it)
-        }
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("记录详情")
-            .setMessage(sb.toString().trim())
-            .setPositiveButton("关闭", null)
-            .setNeutralButton("操作") { _, _ -> showRecordActions(record) }
-            .show()
-    }
-
-    private fun showRecordActions(record: LifeRecord) {
         val planAction = if (record.linkedPlanId == null) "转为计划" else "查看关联计划"
-        AlertDialog.Builder(requireContext())
-            .setTitle("这段记录")
-            .setItems(arrayOf("编辑记录", planAction, "删除记录")) { _, which ->
-                when (which) {
-                    0 -> showEditRecordDialog(record)
-                    1 -> openPlanForRecord(record)
-                    2 -> showDeleteConfirmation(record.id)
-                }
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .show()
+        val details = buildString {
+            append("$sourceLabel · $timeStr")
+            record.mood?.takeIf(String::isNotBlank)?.let { append("\n心情 · $it") }
+            if (record.tags.isNotEmpty()) append("\n${record.tags.joinToString("  ·  ")}")
+        }
+        val relation = if (record.linkedPlanId != null) {
+            "● 片段  ───  ○ 日记  ───  ● 规划  ───  ○ 回忆"
+        } else {
+            "● 片段  ───  ○ 日记  ───  ○ 规划  ───  ○ 回忆"
+        }
+        val bodyChildren = mutableListOf<View>(
+            EchoSheet.text(requireActivity(), details, 13f, secondary = true),
+            EchoSheet.text(requireActivity(), relation, 12f, secondary = true)
+        )
+        record.microEcho?.takeIf(String::isNotBlank)?.let { echo ->
+            bodyChildren += EchoSheet.text(requireActivity(), "Echo 回声\n$echo", 15f)
+        }
+        EchoSheet.show(
+            requireActivity(),
+            source,
+            "生活片段",
+            record.content,
+            EchoSheet.vertical(requireActivity(), 15, *bodyChildren.toTypedArray()),
+            listOf(
+                EchoSheet.Action("编辑") { renderEditRecord(it, record) },
+                EchoSheet.Action(planAction) { session ->
+                    session.dismiss { openPlanForRecord(record) }
+                },
+                EchoSheet.Action("删除", destructive = true) { renderDeleteRecord(it, record) }
+            )
+        )
     }
 
     private fun openPlanForRecord(record: LifeRecord) {
+        (requireActivity() as? MainActivity)?.revealRelation(
+            MainActivity.STAGE_TODAY,
+            MainActivity.STAGE_PLAN,
+            recyclerRecords
+        )
         startActivity(Intent(requireContext(), PlanEditActivity::class.java).apply {
             record.linkedPlanId?.let { putExtra("plan_id", it) }
             putExtra(PlanEditActivity.EXTRA_SOURCE_RECORD_ID, record.id)
@@ -749,42 +861,48 @@ class TodayFragment : Fragment() {
         })
     }
 
-    private fun showEditRecordDialog(record: LifeRecord) {
-        val input = EditText(requireContext()).apply {
-            setText(record.content)
-            minLines = 3
-            maxLines = 8
-            setSelection(text.length)
-        }
-        AlertDialog.Builder(requireContext())
-            .setTitle("编辑这段记录")
-            .setMessage("正文修改后，Echo 会根据新内容重新回应。")
-            .setView(input)
-            .setPositiveButton("保存") { _, _ ->
+    private fun renderEditRecord(session: EchoSheet.Session, record: LifeRecord) {
+        val input = EchoSheet.input(requireActivity(), record.content, "这段生活片段", minLines = 4)
+        val body = EchoSheet.vertical(
+            requireActivity(),
+            12,
+            EchoSheet.text(requireActivity(), "正文改变后，Echo 会重新理解并回应。", 13f, secondary = true),
+            input
+        )
+        session.render(
+            "编辑片段",
+            "重新整理这一刻",
+            body,
+            listOf(
+                EchoSheet.Action("取消") { it.dismiss() },
+                EchoSheet.Action("保存") {
                 val content = input.text.toString().trim()
                 if (content.isEmpty()) {
-                    Toast.makeText(requireContext(), "记录内容不能为空", Toast.LENGTH_SHORT).show()
+                    input.error = "记录内容不能为空"
+                    return@Action
                 } else {
                     viewModel.updateRecordContent(record.id, content)
-                    Toast.makeText(requireContext(), "已更新，Echo 正在重新回应", Toast.LENGTH_SHORT).show()
+                    EchoFeedback.play(requireView(), EchoFeedback.Kind.COMPLETE)
+                    it.dismiss()
                 }
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .show()
+                }
+            )
+        )
     }
 
-    // ── 删除确认 ──
-
-    private fun showDeleteConfirmation(recordId: String) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("删除记录")
-            .setMessage("确定要删除这条生活记录吗？")
-            .setPositiveButton(getString(R.string.delete_confirm)) { _, _ ->
-                viewModel.deleteRecord(recordId)
-                Toast.makeText(requireContext(), "已删除", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .show()
+    private fun renderDeleteRecord(session: EchoSheet.Session, record: LifeRecord) {
+        session.render(
+            "不可撤销",
+            "让这一刻离开 Echo？",
+            EchoSheet.text(requireActivity(), "记录、即时回声以及与它相连的视觉轨迹都会从今天移除。", 15f),
+            listOf(
+                EchoSheet.Action("留下") { it.dismiss() },
+                EchoSheet.Action("确认删除", destructive = true) {
+                    viewModel.deleteRecord(record.id)
+                    it.dismiss()
+                }
+            )
+        )
     }
 
     // ── 日期格式化 ──
@@ -868,6 +986,7 @@ class TodayFragment : Fragment() {
         tvWeather.text = "$description · $temperature"
         layoutWeather.contentDescription = "$description，$temperature"
         layoutWeather.visibility = View.VISIBLE
+        (requireActivity() as? MainActivity)?.updateEnvironment(description)
     }
 
     private fun weatherToChinese(desc: String): String {

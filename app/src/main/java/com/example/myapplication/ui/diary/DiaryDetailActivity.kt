@@ -4,12 +4,13 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import com.example.myapplication.ui.ThemedActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.ui.widget.EchoFeedback
+import com.example.myapplication.ui.widget.EchoSheet
 import com.example.myapplication.tts.AudioPlayer
 import com.example.myapplication.tts.TTSClient
 import com.example.myapplication.tts.TTSConfig
@@ -194,18 +195,24 @@ class DiaryDetailActivity : ThemedActivity() {
     }
 
     private fun showDeleteConfirmation() {
-        AlertDialog.Builder(this)
-            .setTitle("删除日记")
-            .setMessage("确定要删除这篇日记吗？")
-            .setPositiveButton("删除") { _, _ ->
+        val source = findViewById<View>(R.id.btn_delete)
+        EchoSheet.show(
+            this,
+            source,
+            "不可撤销",
+            "让这一天离开日记？",
+            EchoSheet.text(this, "原始生活片段仍会保留，但这篇整理后的日记会被移除。", 15f),
+            listOf(
+                EchoSheet.Action("留下") { it.dismiss() },
+                EchoSheet.Action("删除日记", destructive = true) { session ->
                 diaryId?.let { id ->
                     viewModel.deleteDiary(id)
-                    Toast.makeText(this, "日记已删除", Toast.LENGTH_SHORT).show()
-                    finish()
+                    EchoFeedback.play(source, EchoFeedback.Kind.DELETE)
+                    session.dismiss { finish() }
                 }
-            }
-            .setNegativeButton("取消", null)
-            .show()
+                }
+            )
+        )
     }
 
     private fun formatFullDate(isoDate: String): String {

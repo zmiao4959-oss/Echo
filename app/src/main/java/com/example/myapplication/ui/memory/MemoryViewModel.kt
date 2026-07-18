@@ -8,7 +8,10 @@ import com.example.myapplication.data.model.DailyDiary
 import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.data.model.MemoryCard
 import com.example.myapplication.data.model.UserProfileMemory
+import com.example.myapplication.data.model.EchoForeshadow
+import com.example.myapplication.data.model.ForeshadowState
 import com.example.myapplication.data.repository.DiaryRepository
+import com.example.myapplication.data.repository.ForeshadowRepository
 import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.data.repository.MemoryRepository
 import com.example.myapplication.policy.PastEchoPolicy
@@ -25,6 +28,7 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
     private val memoryRepo = MemoryRepository()
     private val diaryRepo = DiaryRepository()
     private val recordRepo = LifeRecordRepository()
+    private val foreshadowRepo = ForeshadowRepository()
 
     private val _cards = MutableStateFlow<List<MemoryCard>>(emptyList())
     val cards: StateFlow<List<MemoryCard>> = _cards.asStateFlow()
@@ -34,6 +38,9 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _profiles = MutableStateFlow<List<UserProfileMemory>>(emptyList())
     val profiles: StateFlow<List<UserProfileMemory>> = _profiles.asStateFlow()
+
+    private val _foreshadows = MutableStateFlow<List<EchoForeshadow>>(emptyList())
+    val foreshadows: StateFlow<List<EchoForeshadow>> = _foreshadows.asStateFlow()
 
     private val _searchResults = MutableStateFlow<MemorySearchUiResult?>(null)
     val searchResults: StateFlow<MemorySearchUiResult?> = _searchResults.asStateFlow()
@@ -46,6 +53,23 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
             _cards.value = memoryRepo.getAllCards().sortedByDescending { it.createdAt }
             shuffleRandomCard()
             _profiles.value = memoryRepo.getEnabledProfiles()
+            _foreshadows.value = foreshadowRepo.getAll()
+                .filter { it.state != ForeshadowState.DISMISSED }
+                .sortedByDescending { it.lastEvidenceAt }
+        }
+    }
+
+    fun snoozeForeshadow(threadId: String) {
+        viewModelScope.launch {
+            foreshadowRepo.snooze(threadId, System.currentTimeMillis())
+            loadMemories()
+        }
+    }
+
+    fun dismissForeshadow(threadId: String) {
+        viewModelScope.launch {
+            foreshadowRepo.dismiss(threadId, System.currentTimeMillis())
+            loadMemories()
         }
     }
 

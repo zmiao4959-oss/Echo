@@ -23,6 +23,9 @@ import com.example.myapplication.ui.memory.MemoryFragment
 import com.example.myapplication.ui.plan.PlanFragment
 import com.example.myapplication.ui.today.QuickRecordRoute
 import com.example.myapplication.ui.today.TodayFragment
+import com.example.myapplication.ui.widget.EchoEnvironmentView
+import com.example.myapplication.ui.widget.EchoFeedback
+import com.example.myapplication.ui.widget.EchoJourneyView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -33,6 +36,9 @@ class MainActivity : ThemedActivity() {
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var btnProfile: ImageButton
     private lateinit var btnCalendar: ImageButton
+    private lateinit var echoEnvironment: EchoEnvironmentView
+    private lateinit var echoJourney: EchoJourneyView
+    private var currentStage = STAGE_TODAY
 
     private val diaryViewModel: DiaryViewModel by lazy {
         ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory(application as MyApplication))
@@ -59,6 +65,8 @@ class MainActivity : ThemedActivity() {
         }
 
         topBar = findViewById(R.id.top_bar)
+        echoEnvironment = findViewById(R.id.echo_environment)
+        echoJourney = findViewById(R.id.echo_journey)
 
         btnCalendar = findViewById(R.id.btn_calendar)
         btnCalendar.setOnClickListener { openCalendar() }
@@ -70,6 +78,19 @@ class MainActivity : ThemedActivity() {
         bottomNav = findViewById(R.id.bottom_navigation)
         applyBottomNavTint()
         bottomNav.setOnItemSelectedListener { item ->
+            val targetStage = when (item.itemId) {
+                R.id.nav_today -> STAGE_TODAY
+                R.id.nav_diary -> STAGE_DIARY
+                R.id.nav_plan -> STAGE_PLAN
+                R.id.nav_memory -> STAGE_MEMORY
+                else -> currentStage
+            }
+            if (targetStage != currentStage) {
+                echoJourney.travel(currentStage, targetStage)
+                echoEnvironment.setStage(targetStage)
+                EchoFeedback.play(bottomNav, EchoFeedback.Kind.CONNECT)
+                currentStage = targetStage
+            }
             when (item.itemId) {
                 R.id.nav_today -> showTodayFragment()
                 R.id.nav_diary -> showDiaryFragment()
@@ -182,6 +203,7 @@ class MainActivity : ThemedActivity() {
             todayFragment = TodayFragment()
         }
         supportFragmentManager.beginTransaction()
+            .setCustomAnimations(R.anim.echo_fragment_in, R.anim.echo_fragment_out)
             .replace(R.id.fragment_container, todayFragment!!)
             .commit()
         return true
@@ -192,6 +214,7 @@ class MainActivity : ThemedActivity() {
             diaryFragment = DiaryFragment()
         }
         supportFragmentManager.beginTransaction()
+            .setCustomAnimations(R.anim.echo_fragment_in, R.anim.echo_fragment_out)
             .replace(R.id.fragment_container, diaryFragment!!)
             .commit()
         return true
@@ -208,6 +231,7 @@ class MainActivity : ThemedActivity() {
             planFragment = PlanFragment()
         }
         supportFragmentManager.beginTransaction()
+            .setCustomAnimations(R.anim.echo_fragment_in, R.anim.echo_fragment_out)
             .replace(R.id.fragment_container, planFragment!!)
             .commit()
         return true
@@ -218,6 +242,7 @@ class MainActivity : ThemedActivity() {
             memoryFragment = MemoryFragment()
         }
         supportFragmentManager.beginTransaction()
+            .setCustomAnimations(R.anim.echo_fragment_in, R.anim.echo_fragment_out)
             .replace(R.id.fragment_container, memoryFragment!!)
             .commit()
         return true
@@ -240,6 +265,19 @@ class MainActivity : ThemedActivity() {
 
     companion object {
         private const val REQUEST_CODE_NOTIFICATIONS = 1001
+        const val STAGE_TODAY = 0
+        const val STAGE_DIARY = 1
+        const val STAGE_PLAN = 2
+        const val STAGE_MEMORY = 3
+    }
+
+    fun updateEnvironment(weatherDescription: String) {
+        echoEnvironment.setWeather(weatherDescription)
+    }
+
+    fun revealRelation(fromStage: Int, toStage: Int, source: View? = null) {
+        echoJourney.travel(fromStage, toStage)
+        EchoFeedback.play(source ?: bottomNav, EchoFeedback.Kind.CONNECT)
     }
 
     // ── 顶部栏按钮 ──

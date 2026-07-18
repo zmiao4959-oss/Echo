@@ -31,6 +31,7 @@ object EchoFileStore {
     val memoryCardsFile: File get() = memoriesDir.resolve("memory_cards.json")
     val userProfileFile: File get() = memoriesDir.resolve("user_profile.json")
     val searchIndexFile: File get() = memoriesDir.resolve("search_index.json")
+    val foreshadowsFile: File get() = memoriesDir.resolve("foreshadows.json")
 
     /**
      * 初始化 Echo 目录结构。

@@ -5,10 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +15,9 @@ import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.model.EchoPlan
 import com.example.myapplication.ui.PageTextureManager
+import com.example.myapplication.ui.MainActivity
+import com.example.myapplication.ui.widget.EchoFeedback
+import com.example.myapplication.ui.widget.EchoSheet
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -85,11 +85,21 @@ class PlanFragment : Fragment() {
     private fun applyPageTexture() {
         val config = (requireActivity().application as MyApplication).appConfig
         val key = config.getPageTextureKey(PageTextureManager.PLAN_PAGE)
-        PageTextureManager.apply(requireView(), key)
+        PageTextureManager.apply(requireView(), key, transparentWhenNone = true)
     }
 
     private fun setupAdapters() {
-        val onToggle: (EchoPlan) -> Unit = { plan -> viewModel.toggleEnabled(plan.id) }
+        val onToggle: (EchoPlan) -> Unit = { plan ->
+            viewModel.toggleEnabled(plan.id)
+            EchoFeedback.play(requireView(), EchoFeedback.Kind.COMPLETE)
+            if (plan.type == "memory_trigger") {
+                (requireActivity() as? MainActivity)?.revealRelation(
+                    MainActivity.STAGE_PLAN,
+                    MainActivity.STAGE_MEMORY,
+                    recyclerMemory
+                )
+            }
+        }
         val onClick: (EchoPlan) -> Unit = { plan -> openEdit(plan.id) }
 
         reminderAdapter = PlanListAdapter(onToggle = onToggle, onClick = onClick)
@@ -116,33 +126,37 @@ class PlanFragment : Fragment() {
     }
 
     private fun showQuickPlanDialog() {
-        val input = EditText(requireContext()).apply {
-            hint = "例如：明天下午三点提醒我取快递"
-            minLines = 2
-            maxLines = 4
-            val density = resources.displayMetrics.density
-            setPadding(
-                (20 * density).toInt(),
-                (12 * density).toInt(),
-                (20 * density).toInt(),
-                (8 * density).toInt()
-            )
-        }
-        AlertDialog.Builder(requireContext())
-            .setTitle("一句话创建计划")
-            .setMessage("说清时间和要做的事，下一步仍可检查和修改。")
-            .setView(input)
-            .setPositiveButton("继续") { _, _ ->
+        val input = EchoSheet.input(
+            requireActivity(),
+            "",
+            "例如：明天下午三点提醒我取快递",
+            minLines = 3
+        )
+        val body = EchoSheet.vertical(
+            requireActivity(),
+            12,
+            EchoSheet.text(requireActivity(), "让未来先拥有一条清晰的轨迹，下一步仍可检查和修改。", 13f, secondary = true),
+            input
+        )
+        EchoSheet.show(
+            requireActivity(),
+            fabAddPlan,
+            "未来轨迹",
+            "一句话创建计划",
+            body,
+            listOf(
+                EchoSheet.Action("详细创建") { session -> session.dismiss { openEdit(null) } },
+                EchoSheet.Action("继续") { session ->
                 val draft = NaturalLanguagePlanParser.parse(input.text.toString())
                 if (draft == null) {
-                    Toast.makeText(requireContext(), "先写下计划内容", Toast.LENGTH_SHORT).show()
+                    input.error = "先写下计划内容"
                 } else {
-                    openDraft(draft)
+                    EchoFeedback.play(fabAddPlan, EchoFeedback.Kind.CONNECT)
+                    session.dismiss { openDraft(draft) }
                 }
-            }
-            .setNeutralButton("详细创建") { _, _ -> openEdit(null) }
-            .setNegativeButton(getString(R.string.cancel), null)
-            .show()
+                }
+            )
+        )
     }
 
     private fun openDraft(draft: PlanDraft) {

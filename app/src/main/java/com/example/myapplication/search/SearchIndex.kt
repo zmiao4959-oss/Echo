@@ -6,6 +6,7 @@ import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.data.model.MemoryCard
 import com.example.myapplication.data.model.UserProfileMemory
 import com.example.myapplication.data.repository.DiaryRepository
+import com.example.myapplication.data.repository.ForeshadowRepository
 import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.data.repository.MemoryRepository
 import com.example.myapplication.data.store.EchoFileStore
@@ -132,6 +133,23 @@ object SearchIndex {
                 }
             } catch (_: Exception) {}
 
+            try {
+                ForeshadowRepository().getAll()
+                    .filter { it.state != com.example.myapplication.data.model.ForeshadowState.DISMISSED }
+                    .forEach { thread ->
+                        val text = buildString {
+                            append(thread.title).append(' ')
+                            append(thread.subject).append(' ')
+                            append(thread.followUpQuestion).append(' ')
+                            thread.sourceRefs.forEach { append(it.excerpt).append(' ') }
+                        }
+                        builder.add(IndexEntry(
+                            "foreshadow", thread.id, thread.lastEvidenceAt,
+                            tokenize(text), thread.followUpQuestion.take(200)
+                        ))
+                    }
+            } catch (_: Exception) {}
+
             // MEMORY.md confirmed section
             try {
                 val md = FileStore.readWorkspaceFile("MEMORY.md")
@@ -224,7 +242,8 @@ object SearchIndex {
             try { EchoFileStore.lifeRecordsFile } catch (_: Exception) { null },
             try { EchoFileStore.dailyDiariesFile } catch (_: Exception) { null },
             try { EchoFileStore.memoryCardsFile } catch (_: Exception) { null },
-            try { EchoFileStore.userProfileFile } catch (_: Exception) { null }
+            try { EchoFileStore.userProfileFile } catch (_: Exception) { null },
+            try { EchoFileStore.foreshadowsFile } catch (_: Exception) { null }
         )
         return dataFiles.any { it.exists() && it.lastModified() > builtAt }
     }

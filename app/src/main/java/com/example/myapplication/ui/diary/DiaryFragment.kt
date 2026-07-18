@@ -93,7 +93,7 @@ class DiaryFragment : Fragment() {
     private fun applyPageTexture() {
         val config = (requireActivity().application as MyApplication).appConfig
         val key = config.getPageTextureKey(PageTextureManager.DIARY_PAGE)
-        PageTextureManager.apply(requireView(), key)
+        PageTextureManager.apply(requireView(), key, transparentWhenNone = true)
     }
 
     private fun applyCardTextures() {

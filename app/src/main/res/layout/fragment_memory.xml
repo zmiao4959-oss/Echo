@@ -149,6 +149,42 @@
             android:orientation="vertical"
             android:visibility="visible">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="8dp"
+                android:text="记忆星图"
+                android:textColor="?attr/echoTextPrimary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="8dp"
+                android:text="星点是回忆 · 弧线是伏笔 · 轻触查看故事轨迹"
+                android:textColor="?attr/echoHint"
+                android:textSize="12sp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="330dp"
+                android:layout_marginHorizontal="16dp"
+                app:cardBackgroundColor="?attr/echoSurface"
+                app:cardCornerRadius="24dp"
+                app:strokeColor="?attr/echoBorder"
+                app:strokeWidth="1dp">
+
+                <com.example.myapplication.ui.widget.EchoMemoryMapView
+                    android:id="@+id/memory_star_map"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="8dp" />
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- 今天遇见的回忆 -->
             <TextView
                 android:layout_width="wrap_content"

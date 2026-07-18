@@ -5,15 +5,22 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.MyApplication
 import com.example.myapplication.data.model.LifeRecord
+import com.example.myapplication.data.model.EchoForeshadow
+import com.example.myapplication.data.model.ForeshadowOutcome
+import com.example.myapplication.data.model.ForeshadowSourceRef
+import com.example.myapplication.data.repository.ForeshadowRepository
 import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.data.repository.DiaryRepository
 import com.example.myapplication.llm.LLMMessage
+import com.example.myapplication.domain.ForeshadowCoordinator
+import com.example.myapplication.domain.ForeshadowInterpreterFactory
 import com.example.myapplication.llm.ProviderFactory
 import com.example.myapplication.memory.Session
 import com.example.myapplication.memory.SessionManager
 import com.example.myapplication.net.HttpClient
 import com.example.myapplication.policy.MicroEchoFeedbackPolicy
 import com.example.myapplication.policy.MicroEchoGenerator
+import com.example.myapplication.policy.ForeshadowPolicy
 import com.example.myapplication.policy.WeeklyFootprintPolicy
 import com.example.myapplication.policy.TodayDiaryClosurePolicy
 import com.example.myapplication.policy.ReturnWelcomePolicy
@@ -37,6 +44,12 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as MyApplication
     private val recordRepo = LifeRecordRepository()
     private val diaryRepo = DiaryRepository()
+    private val foreshadowRepo = ForeshadowRepository()
+    private val foreshadowCoordinator = ForeshadowCoordinator(
+        foreshadowRepo,
+        ForeshadowInterpreterFactory.configuredOrNull()
+    )
+    private var foreshadowBackfillAttempted = false
 
     // ── 今日 LifeRecord 列表 ──
     private val _records = MutableStateFlow<List<LifeRecord>>(emptyList())
@@ -58,6 +71,9 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
         ReturnWelcomePolicy.Welcome.Hidden
     )
     val returnWelcome: StateFlow<ReturnWelcomePolicy.Welcome> = _returnWelcome.asStateFlow()
+
+    private val _foreshadow = MutableStateFlow<EchoForeshadow?>(null)
+    val foreshadow: StateFlow<EchoForeshadow?> = _foreshadow.asStateFlow()
 
     // ── 最近一次记录后的微回声 ──
     private val _microEcho = MutableStateFlow<MicroEchoState>(MicroEchoState.Hidden)
@@ -104,6 +120,8 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
         _todayDate.value = today()
         viewModelScope.launch {
             val loaded = refreshRecordsAndFootprint()
+            backfillForeshadowsIfNeeded()
+            refreshForeshadow()
             if (_microEcho.value !is MicroEchoState.Generating) {
                 restoreMicroEcho(loaded)
             }
@@ -128,6 +146,7 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
         microEchoJob = viewModelScope.launch {
             try {
                 recordRepo.add(record)
+                viewModelScope.launch { inspectForeshadow(record) }
                 refreshRecordsAndFootprint()
                 val context = buildEchoContext(record)
                 val echo = microEchoGenerator.generate(
@@ -232,6 +251,7 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
                     microEchoLiked = false
                 )
                 recordRepo.update(updated)
+                viewModelScope.launch { inspectForeshadow(updated) }
                 refreshRecordsAndFootprint()
 
                 val context = buildEchoContext(updated, replaceExisting = true)
@@ -270,9 +290,60 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
         if (echoRecordId == id) microEchoJob?.cancel()
 
         viewModelScope.launch {
+            foreshadowRepo.removeSource(id)
             recordRepo.delete(id)
             val loaded = refreshRecordsAndFootprint()
+            refreshForeshadow()
             if (echoRecordId == id) restoreMicroEcho(loaded)
+        }
+    }
+
+    fun respondToForeshadow(threadId: String, outcome: ForeshadowOutcome) {
+        viewModelScope.launch {
+            val thread = foreshadowRepo.getAll().firstOrNull { it.id == threadId } ?: return@launch
+            val now = System.currentTimeMillis()
+            val responseText = when (outcome) {
+                ForeshadowOutcome.HAPPENED -> "关于「${thread.title}」：这件事已经发生了。"
+                ForeshadowOutcome.CHANGED -> "关于「${thread.title}」：后来事情有了变化。"
+                ForeshadowOutcome.ABANDONED -> "关于「${thread.title}」：我决定不再继续了。"
+                ForeshadowOutcome.CONTINUING -> "关于「${thread.title}」：这件事还在继续。"
+            }
+            val record = LifeRecord(
+                id = UUID.randomUUID().toString(),
+                createdAt = now,
+                date = today(),
+                content = responseText,
+                source = "foreshadow_checkin",
+                importance = thread.importance
+            )
+            recordRepo.add(record)
+            foreshadowRepo.respond(
+                threadId = threadId,
+                outcome = outcome,
+                responseSource = ForeshadowSourceRef(
+                    type = "life_record",
+                    id = record.id,
+                    excerpt = responseText,
+                    createdAt = now
+                ),
+                nowMillis = now
+            )
+            refreshRecordsAndFootprint()
+            refreshForeshadow()
+        }
+    }
+
+    fun snoozeForeshadow(threadId: String) {
+        viewModelScope.launch {
+            foreshadowRepo.snooze(threadId, System.currentTimeMillis())
+            refreshForeshadow()
+        }
+    }
+
+    fun dismissForeshadow(threadId: String) {
+        viewModelScope.launch {
+            foreshadowRepo.dismiss(threadId, System.currentTimeMillis())
+            refreshForeshadow()
         }
     }
 
@@ -294,6 +365,37 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
             diaryRepo.getByDate(currentDate)
         )
         return todayRecords
+    }
+
+    private suspend fun inspectForeshadow(record: LifeRecord) {
+        try {
+            foreshadowCoordinator.onRecordSaved(record)
+            refreshForeshadow()
+        } catch (_: Exception) {
+            // A failed background interpretation must never block saving the user's record.
+        }
+    }
+
+    private suspend fun refreshForeshadow() {
+        _foreshadow.value = foreshadowRepo.getDue(System.currentTimeMillis()).firstOrNull()
+    }
+
+    private suspend fun backfillForeshadowsIfNeeded() {
+        if (foreshadowBackfillAttempted) return
+        val preferences = app.getSharedPreferences("echo_feature_state", Application.MODE_PRIVATE)
+        if (preferences.getBoolean("foreshadow_backfill_v1", false)) {
+            foreshadowBackfillAttempted = true
+            return
+        }
+        foreshadowBackfillAttempted = true
+        try {
+            val cutoff = System.currentTimeMillis() - 120L * ForeshadowPolicy.DAY_MILLIS
+            val recentRecords = recordRepo.getAll().filter { it.createdAt >= cutoff }
+            foreshadowCoordinator.backfill(recentRecords)
+            preferences.edit().putBoolean("foreshadow_backfill_v1", true).apply()
+        } catch (_: Exception) {
+            foreshadowBackfillAttempted = false
+        }
     }
 
     private fun restoreMicroEcho(records: List<LifeRecord>) {

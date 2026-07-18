@@ -63,6 +63,30 @@ class TodaySpotlightPolicyTest {
     }
 
     @Test
+    fun `a due foreshadow appears after fresh echo has expired`() {
+        val result = TodaySpotlightPolicy.select(
+            returnWelcome = welcome,
+            echo = TodaySpotlightPolicy.EchoCandidate(
+                text = "旧回声",
+                recordCreatedAtMillis = 1_000L
+            ),
+            foreshadow = TodaySpotlightPolicy.ForeshadowCandidate(
+                id = "thread-1",
+                question = "你后来重新开始跑步了吗？"
+            ),
+            nowMillis = 1_000L + TodaySpotlightPolicy.ECHO_FRESHNESS_MILLIS
+        )
+
+        assertEquals(
+            TodaySpotlightPolicy.Spotlight.Foreshadow(
+                id = "thread-1",
+                question = "你后来重新开始跑步了吗？"
+            ),
+            result
+        )
+    }
+
+    @Test
     fun `future or timestamp-free echoes do not take over the page`() {
         val withoutTimestamp = TodaySpotlightPolicy.select(
             returnWelcome = ReturnWelcomePolicy.Welcome.Hidden,

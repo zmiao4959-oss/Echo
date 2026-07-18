@@ -2,6 +2,12 @@ package com.example.myapplication.tools
 
 import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.data.repository.LifeRecordRepository
+import com.example.myapplication.domain.ForeshadowCoordinator
+import com.example.myapplication.domain.ForeshadowInterpreterFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -13,6 +19,10 @@ import java.util.UUID
 object EchoLifeTools {
 
     private val recordRepo = LifeRecordRepository()
+    private val foreshadowCoordinator = ForeshadowCoordinator(
+        interpreter = ForeshadowInterpreterFactory.configuredOrNull()
+    )
+    private val foreshadowScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun registerAll() {
         ToolRegistry.register(ToolDefinition(
@@ -68,6 +78,13 @@ object EchoLifeTools {
                     importance = importance.coerceIn(1, 5)
                 )
                 recordRepo.add(record)
+                foreshadowScope.launch {
+                    try {
+                        foreshadowCoordinator.onRecordSaved(record)
+                    } catch (_: Exception) {
+                        // Recording succeeds even when background interpretation does not.
+                    }
+                }
                 jsonOk("已记录", record.id)
             }
         ))

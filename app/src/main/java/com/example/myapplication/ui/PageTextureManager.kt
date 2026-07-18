@@ -35,13 +35,13 @@ object PageTextureManager {
     /**
      * 为页面根 View 设置纹理背景。textureKey == NONE 时恢复主题色。
      */
-    fun apply(view: View, textureKey: String) {
+    fun apply(view: View, textureKey: String, transparentWhenNone: Boolean = false) {
         if (textureKey == NONE) {
-            remove(view)
+            remove(view, transparentWhenNone)
             return
         }
         val bitmap = CardTextureManager.loadBitmap(view.resources, textureKey) ?: run {
-            remove(view)
+            remove(view, transparentWhenNone)
             return
         }
         view.background = CardTextureManager.CenterCropDrawable(bitmap)
@@ -50,8 +50,12 @@ object PageTextureManager {
     /**
      * 移除纹理，恢复 XML 中定义的主题背景色（echoBackground）。
      */
-    fun remove(view: View) {
+    fun remove(view: View, transparent: Boolean = false) {
         view.background = null
+        if (transparent) {
+            view.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            return
+        }
         val tv = TypedValue()
         if (view.context.theme.resolveAttribute(R.attr.echoBackground, tv, true)) {
             view.setBackgroundColor(tv.data)

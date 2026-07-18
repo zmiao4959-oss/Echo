@@ -11,6 +11,11 @@ object TodaySpotlightPolicy {
         val recordCreatedAtMillis: Long? = null
     )
 
+    data class ForeshadowCandidate(
+        val id: String,
+        val question: String
+    )
+
     sealed class Spotlight {
         data class MicroEcho(
             val text: String?,
@@ -20,12 +25,18 @@ object TodaySpotlightPolicy {
 
         data class ReturnWelcome(val message: String) : Spotlight()
 
+        data class Foreshadow(
+            val id: String,
+            val question: String
+        ) : Spotlight()
+
         object Hidden : Spotlight()
     }
 
     fun select(
         returnWelcome: ReturnWelcomePolicy.Welcome,
         echo: EchoCandidate?,
+        foreshadow: ForeshadowCandidate? = null,
         nowMillis: Long = System.currentTimeMillis()
     ): Spotlight {
         if (echo?.generating == true) {
@@ -43,6 +54,10 @@ object TodaySpotlightPolicy {
                     freshUntilMillis = createdAt + ECHO_FRESHNESS_MILLIS
                 )
             }
+        }
+
+        if (foreshadow != null && foreshadow.question.isNotBlank()) {
+            return Spotlight.Foreshadow(foreshadow.id, foreshadow.question)
         }
 
         if (returnWelcome is ReturnWelcomePolicy.Welcome.WelcomeBack) {
