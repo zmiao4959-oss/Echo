@@ -33,6 +33,19 @@ import java.util.Locale
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == GentleRecordReminderScheduler.ACTION_GENTLE_RECORD_REMINDER) {
+            val pendingResult = goAsync()
+            val appContext = context.applicationContext
+            CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+                try {
+                    GentleRecordReminderScheduler.handleTrigger(appContext)
+                } finally {
+                    pendingResult.finish()
+                }
+            }
+            return
+        }
+
         // Phase 8: EchoPlan 闹钟 → 同步启动前台服务 + 数据处理
         val planId = intent.getStringExtra("plan_id")
         if (planId != null && intent.action == "com.example.myapplication.ECHO_PLAN_ALARM") {

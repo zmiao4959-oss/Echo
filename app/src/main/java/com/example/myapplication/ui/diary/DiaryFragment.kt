@@ -71,7 +71,7 @@ class DiaryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         viewModel = ViewModelProvider(
-            this,
+            requireActivity(),
             ViewModelProvider.AndroidViewModelFactory(requireActivity().application as MyApplication)
         )[DiaryViewModel::class.java]
 

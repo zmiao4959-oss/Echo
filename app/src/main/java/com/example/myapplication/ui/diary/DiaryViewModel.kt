@@ -245,17 +245,17 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     /** 为指定日期生成日记（补生成） */
     fun generateDiaryForDate(date: String) {
+        if (_isGenerating.value) return
+        _isGenerating.value = true
         viewModelScope.launch {
-            val records = recordRepo.getByDate(date)
-            if (records.isEmpty()) {
-                _statusMessage.value = "${date} 没有生活记录"
-                return@launch
-            }
-
-            _isGenerating.value = true
-            _statusMessage.value = "正在为 $date 生成日记…"
-
             try {
+                val records = recordRepo.getByDate(date)
+                if (records.isEmpty()) {
+                    _statusMessage.value = "${date} 没有生活记录"
+                    return@launch
+                }
+
+                _statusMessage.value = "正在为 $date 生成日记…"
                 val diary = generateDiaryFromRecords(records, date)
                 diaryRepo.add(diary)
                 if (date == today()) {

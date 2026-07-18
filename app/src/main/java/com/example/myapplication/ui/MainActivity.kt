@@ -21,6 +21,7 @@ import com.example.myapplication.ui.diary.DiaryViewModel
 import com.example.myapplication.ui.diary.DiaryFragment
 import com.example.myapplication.ui.memory.MemoryFragment
 import com.example.myapplication.ui.plan.PlanFragment
+import com.example.myapplication.ui.today.QuickRecordRoute
 import com.example.myapplication.ui.today.TodayFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.flow.collectLatest
@@ -78,8 +79,9 @@ class MainActivity : ThemedActivity() {
             }
         }
 
-        // 默认显示今日页
-        if (savedInstanceState == null) {
+        // 提醒入口优先；普通冷启动仍默认显示今日页。
+        val openedQuickRecord = handleQuickRecordIntent(intent)
+        if (!openedQuickRecord && savedInstanceState == null) {
             bottomNav.selectedItemId = R.id.nav_today
         }
 
@@ -91,6 +93,31 @@ class MainActivity : ThemedActivity() {
         // 请求通知权限 (Android 13+)
         requestNotificationPermissionIfNeeded()
         applyPageTextures()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleQuickRecordIntent(intent)
+    }
+
+    private fun handleQuickRecordIntent(sourceIntent: Intent?): Boolean {
+        if (!QuickRecordRoute.isQuickRecordAction(sourceIntent?.action)) return false
+
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        if (bottomNav.selectedItemId != R.id.nav_today) {
+            bottomNav.selectedItemId = R.id.nav_today
+        } else if (currentFragment !is TodayFragment) {
+            showTodayFragment()
+        }
+
+        supportFragmentManager.setFragmentResult(
+            QuickRecordRoute.RESULT_FOCUS_QUICK_INPUT,
+            Bundle.EMPTY
+        )
+        // 一次点击只消费一次，避免配置变化后再次抢占输入焦点。
+        sourceIntent?.setAction(null)
+        return true
     }
 
     override fun onResume() {
@@ -158,6 +185,12 @@ class MainActivity : ThemedActivity() {
             .replace(R.id.fragment_container, diaryFragment!!)
             .commit()
         return true
+    }
+
+    /** Called by the Today page after the user explicitly chooses to build today's diary. */
+    fun openDiaryAndGenerateToday() {
+        bottomNav.selectedItemId = R.id.nav_diary
+        diaryViewModel.generateTodayDiary()
     }
 
     private fun showPlanFragment(): Boolean {

@@ -4,6 +4,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.Manifest
+import android.app.TimePickerDialog
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
@@ -13,11 +16,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.config.AppConfig
+import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.data.store.DataExporter
+import com.example.myapplication.policy.MicroEchoFeedbackPolicy
+import com.example.myapplication.schedule.GentleRecordReminderScheduler
+import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,6 +35,21 @@ import kotlinx.coroutines.withContext
 class SettingsActivity : ThemedActivity() {
 
     private lateinit var config: AppConfig
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val reminderSwitch = findViewById<SwitchMaterial>(R.id.switch_gentle_record_reminder)
+        if (granted) {
+            config.gentleRecordReminderEnabled = true
+            GentleRecordReminderScheduler.scheduleNext(this)
+        } else {
+            config.gentleRecordReminderEnabled = false
+            reminderSwitch.isChecked = false
+            GentleRecordReminderScheduler.cancel(this)
+            Toast.makeText(this, R.string.gentle_record_reminder_permission_denied, Toast.LENGTH_LONG).show()
+        }
+    }
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -99,6 +123,127 @@ class SettingsActivity : ThemedActivity() {
         quietStart.setText(config.companionQuietStart.toString())
         val quietEnd = findViewById<EditText>(R.id.companion_quiet_end)
         quietEnd.setText(config.companionQuietEnd.toString())
+
+        // 温和记录提醒：独立开关，即时生效，默认关闭。
+        val gentleReminderSwitch = findViewById<SwitchMaterial>(R.id.switch_gentle_record_reminder)
+        val gentleReminderTime = findViewById<Button>(R.id.btn_gentle_record_reminder_time)
+        fun refreshGentleReminderTime() {
+            val fallbackHour = config.gentleRecordReminderHour
+            val fallbackMinute = config.gentleRecordReminderMinute
+            gentleReminderTime.text = getString(
+                R.string.gentle_record_reminder_time_value,
+                fallbackHour,
+                fallbackMinute
+            )
+            lifecycleScope.launch {
+                val preferred = withContext(Dispatchers.IO) {
+                    GentleRecordReminderScheduler.preferredTime(this@SettingsActivity)
+                }
+                if (config.gentleRecordReminderHour == fallbackHour &&
+                    config.gentleRecordReminderMinute == fallbackMinute &&
+                    (preferred.hour != fallbackHour || preferred.minute != fallbackMinute)
+                ) {
+                    gentleReminderTime.text = getString(
+                        R.string.gentle_record_reminder_time_adaptive,
+                        preferred.hour,
+                        preferred.minute,
+                        fallbackHour,
+                        fallbackMinute
+                    )
+                }
+            }
+        }
+        refreshGentleReminderTime()
+        gentleReminderSwitch.isChecked = config.gentleRecordReminderEnabled
+        gentleReminderSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                config.gentleRecordReminderEnabled = isChecked
+                if (isChecked) {
+                    GentleRecordReminderScheduler.scheduleNext(this)
+                } else {
+                    GentleRecordReminderScheduler.cancel(this)
+                }
+            }
+        }
+        gentleReminderTime.setOnClickListener {
+            TimePickerDialog(
+                this,
+                { _, hour, minute ->
+                    config.gentleRecordReminderHour = hour
+                    config.gentleRecordReminderMinute = minute
+                    refreshGentleReminderTime()
+                    if (config.gentleRecordReminderEnabled) {
+                        GentleRecordReminderScheduler.scheduleNext(this)
+                    }
+                },
+                config.gentleRecordReminderHour,
+                config.gentleRecordReminderMinute,
+                true
+            ).show()
+        }
+
+        // Echo 回声偏好：只管理反馈标记，不改动记录和回声原文。
+        val echoPreferenceRepo = LifeRecordRepository()
+        val echoPreferenceStatus = findViewById<TextView>(R.id.tv_micro_echo_preferences_status)
+        val clearEchoPreferences = findViewById<Button>(R.id.btn_clear_micro_echo_preferences)
+        fun refreshEchoPreferenceSummary() {
+            lifecycleScope.launch {
+                try {
+                    val summary = withContext(Dispatchers.IO) {
+                        MicroEchoFeedbackPolicy.summarize(echoPreferenceRepo.getAll())
+                    }
+                    echoPreferenceStatus.text = if (summary.totalCount == 0) {
+                        getString(R.string.micro_echo_preferences_empty)
+                    } else {
+                        getString(
+                            R.string.micro_echo_preferences_status,
+                            summary.likedCount,
+                            summary.rejectedCount
+                        )
+                    }
+                    clearEchoPreferences.isEnabled = summary.totalCount > 0
+                    clearEchoPreferences.alpha = if (summary.totalCount > 0) 1f else 0.5f
+                } catch (_: Exception) {
+                    echoPreferenceStatus.setText(R.string.micro_echo_preferences_empty)
+                    clearEchoPreferences.isEnabled = false
+                    clearEchoPreferences.alpha = 0.5f
+                }
+            }
+        }
+        clearEchoPreferences.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.micro_echo_preferences_clear_title)
+                .setMessage(R.string.micro_echo_preferences_clear_message)
+                .setPositiveButton(R.string.micro_echo_preferences_clear) { _, _ ->
+                    lifecycleScope.launch {
+                        try {
+                            withContext(Dispatchers.IO) {
+                                echoPreferenceRepo.clearMicroEchoPreferences()
+                            }
+                            Toast.makeText(
+                                this@SettingsActivity,
+                                R.string.micro_echo_preferences_cleared,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            refreshEchoPreferenceSummary()
+                        } catch (_: Exception) {
+                            Toast.makeText(
+                                this@SettingsActivity,
+                                R.string.micro_echo_preferences_clear_failed,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+        refreshEchoPreferenceSummary()
 
         // 检索模式配置
         val spinnerRetrievalMode = findViewById<Spinner>(R.id.spinner_retrieval_mode)

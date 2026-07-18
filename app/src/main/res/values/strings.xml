@@ -13,15 +13,39 @@
     <string name="today_greeting">今天，想留下什么？</string>
     <string name="today_input_hint">写下一段生活片段…</string>
     <string name="today_record_button">记录</string>
+    <string name="weekly_footprint_title">最近 7 天</string>
+    <string name="weekly_footprint_stats">%1$d 天 · %2$d 个片段</string>
+    <string name="weekly_footprint_empty_stats">今天也来得及</string>
+    <string name="weekly_footprint_day_recorded">%1$s，记录了 %2$d 个片段</string>
+    <string name="weekly_footprint_day_empty">%1$s，暂无片段</string>
+    <string name="return_welcome_title">回来就好</string>
+    <string name="return_welcome_action">从一句话开始 ›</string>
+    <string name="micro_echo_title">Echo 回声</string>
+    <string name="micro_echo_generating">这一刻已经留下了，Echo 正在回应…</string>
+    <string name="micro_echo_like">有共鸣</string>
+    <string name="micro_echo_regenerate">不太像我，换一句</string>
+    <string name="micro_echo_preferences_title">Echo 回声偏好</string>
+    <string name="micro_echo_preferences_description">“有共鸣”和“换一句”会帮助 Echo 调整表达。偏好保存在本机；生成时会把少量入选示例发给你配置的 LLM。</string>
+    <string name="micro_echo_preferences_empty">还没有记住回声偏好</string>
+    <string name="micro_echo_preferences_status">有共鸣 %1$d 条　·　不太像我 %2$d 条</string>
+    <string name="micro_echo_preferences_clear">清空 Echo 偏好</string>
+    <string name="micro_echo_preferences_clear_title">清空 Echo 偏好？</string>
+    <string name="micro_echo_preferences_clear_message">只会清除“有共鸣”和“不太像我”的选择，不会删除生活记录或已经生成的回声。</string>
+    <string name="micro_echo_preferences_cleared">已清空 Echo 偏好</string>
+    <string name="micro_echo_preferences_clear_failed">清空失败，生活记录没有改变</string>
     <string name="today_records_title">今日片段</string>
     <string name="today_no_records">今天还没有记录\n点击上方输入框开始记录生活</string>
     <string name="today_chat_section">对话</string>
     <string name="today_chat_card_title">和 Echo 聊聊</string>
     <string name="today_chat_card_subtitle">把想法说出来，我会帮你慢慢整理。</string>
     <string name="today_enter_chat">进入对话</string>
-    <string name="today_ai_preview_title">AI 整理</string>
-    <string name="today_diary_ready">已记录 %d 个片段，可以生成今日日记</string>
-    <string name="today_diary_empty">今天还没有记录</string>
+    <string name="today_ai_preview_title">今日正在形成</string>
+    <string name="today_formation_count">%d 个片段，已经让今天有了轮廓</string>
+    <string name="today_formation_mood">情绪线索 · %1$s</string>
+    <string name="today_formation_themes">浮现的主题 · %1$s</string>
+    <string name="today_diary_closure_build">整理成今日日记 ›</string>
+    <string name="today_diary_closure_ready">今日日记已形成 · 去看看 ›</string>
+    <string name="today_diary_closure_changed">%1$d 个片段有变化 · 去更新日记 ›</string>
 
     <!-- 日记页 -->
     <string name="diary_page_title">日记</string>
@@ -47,12 +71,17 @@
     <string name="memory_page_subtitle">过去的你，也在这里</string>
     <string name="memory_search_hint">搜索过去的记录、日记和记忆…</string>
     <string name="memory_search_empty">未找到相关记录</string>
-    <string name="memory_today_echo">今日回声</string>
+    <string name="memory_today_echo">今天遇见的回忆</string>
     <string name="memory_no_cards">还没有记忆卡片</string>
     <string name="memory_cards_section">记忆卡片</string>
     <string name="memory_empty_cards">记录生活后，Echo 会帮你提取值得记住的片段</string>
     <string name="memory_profile_section">Echo 记住了什么</string>
     <string name="memory_no_profile">Echo 还在慢慢了解你…</string>
+    <string name="memory_past_echo">往日回声</string>
+    <string name="memory_past_echo_meta">%1$s · %2$s</string>
+    <string name="memory_past_echo_spoken">当时 Echo 说 · %1$s</string>
+    <string name="memory_past_echo_mood">心情 · %1$s</string>
+    <string name="memory_view_echo">查看 ›</string>
 
     <!-- 个人中心 -->
     <string name="profile_entry">个人中心</string>
@@ -197,4 +226,13 @@
     <string name="save">保存</string>
     <string name="schedule_status_generating">正在生成提醒…</string>
     <string name="schedule_notification_title">⏰ Echo 提醒</string>
+
+    <!-- 温和记录提醒 -->
+    <string name="gentle_record_reminder_title">温和记录提醒</string>
+    <string name="gentle_record_reminder_switch">当天没记录时提醒我</string>
+    <string name="gentle_record_reminder_description">默认关闭，当天已经记录就不打扰。积累至少 3 个记录日后，会参考最近的记录时间自动调整。</string>
+    <string name="gentle_record_reminder_time_value">记录较少时　%1$02d:%2$02d</string>
+    <string name="gentle_record_reminder_time_adaptive">当前预计 %1$02d:%2$02d　基础 %3$02d:%4$02d</string>
+    <string name="gentle_record_reminder_permission_denied">没有通知权限，温和记录提醒未开启</string>
+    <string name="gentle_record_reminder_write_action">写一句</string>
 </resources>

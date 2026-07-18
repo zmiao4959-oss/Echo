@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.policy.PastEchoPolicy
 import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.PageTextureManager
 import com.example.myapplication.ui.diary.DiaryDetailActivity
@@ -43,6 +44,7 @@ class MemoryFragment : Fragment() {
     private lateinit var tvOnThisDayDate: TextView
     private lateinit var tvOnThisDayTitle: TextView
     private lateinit var tvOnThisDaySnippet: TextView
+    private lateinit var tvOnThisDayEcho: TextView
     private lateinit var recyclerCards: RecyclerView
     private lateinit var tvEmptyCards: TextView
     private lateinit var recyclerProfiles: RecyclerView
@@ -112,6 +114,7 @@ class MemoryFragment : Fragment() {
         tvOnThisDayDate = view.findViewById(R.id.tv_on_this_day_date)
         tvOnThisDayTitle = view.findViewById(R.id.tv_on_this_day_title)
         tvOnThisDaySnippet = view.findViewById(R.id.tv_on_this_day_snippet)
+        tvOnThisDayEcho = view.findViewById(R.id.tv_on_this_day_echo)
         recyclerCards = view.findViewById(R.id.recycler_cards)
         tvEmptyCards = view.findViewById(R.id.tv_empty_cards)
         recyclerProfiles = view.findViewById(R.id.recycler_profiles)
@@ -194,14 +197,24 @@ class MemoryFragment : Fragment() {
             viewModel.onThisDayItem.collectLatest { item ->
                 if (item != null) {
                     cardOnThisDay.visibility = View.VISIBLE
-                    tvOnThisDayDate.text = item.date
+                    tvOnThisDayDate.text = getString(
+                        R.string.memory_past_echo_meta,
+                        item.contextLabel,
+                        item.date
+                    )
                     tvOnThisDayTitle.text = item.title
                     tvOnThisDaySnippet.text = item.snippet
+                    tvOnThisDayEcho.visibility = if (item.microEcho != null) View.VISIBLE else View.GONE
+                    tvOnThisDayEcho.text = item.microEcho?.let {
+                        getString(R.string.memory_past_echo_spoken, it)
+                    }.orEmpty()
                     cardOnThisDay.setOnClickListener {
-                        if (item.diaryId != null) {
+                        if (item.sourceType == "diary") {
                             val intent = Intent(requireContext(), com.example.myapplication.ui.diary.DiaryDetailActivity::class.java)
-                            intent.putExtra("diary_id", item.diaryId)
+                            intent.putExtra("diary_id", item.sourceId)
                             startActivity(intent)
+                        } else {
+                            showPastEcho(item)
                         }
                     }
                 } else {
@@ -223,6 +236,29 @@ class MemoryFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun showPastEcho(item: PastEchoPolicy.PastEcho) {
+        val details = buildString {
+            appendLine(item.date)
+            appendLine()
+            append(item.snippet)
+            item.mood?.let {
+                appendLine()
+                appendLine()
+                append(getString(R.string.memory_past_echo_mood, it))
+            }
+            item.microEcho?.let {
+                appendLine()
+                appendLine()
+                append(getString(R.string.memory_past_echo_spoken, it))
+            }
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(item.contextLabel)
+            .setMessage(details)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun updateSearchResultUI(result: MemorySearchUiResult) {

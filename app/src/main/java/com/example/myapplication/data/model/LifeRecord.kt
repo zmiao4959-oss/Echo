@@ -15,5 +15,9 @@ data class LifeRecord(
     val importance: Int = 1,       // 1-5
     val linkedPlanId: String? = null,
     val rawConversationId: String? = null,
-    val audioPath: String? = null  // 语音便签的音频文件路径
+    val audioPath: String? = null, // 语音便签的音频文件路径
+    val microEcho: String? = null, // 保存片段后 Echo 给出的即时短回应
+    val microEchoLiked: Boolean = false,
+    // 可空以兼容旧版 Gson 数据中不存在的新字段。
+    val rejectedMicroEchoes: List<String>? = null
 )

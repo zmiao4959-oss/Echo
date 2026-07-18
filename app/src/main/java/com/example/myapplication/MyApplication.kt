@@ -14,6 +14,7 @@ import com.example.myapplication.tools.WebTools
 import com.example.myapplication.tools.WeatherTools
 import com.example.myapplication.schedule.PlanScheduler
 import com.example.myapplication.schedule.ScheduleEngine
+import com.example.myapplication.schedule.GentleRecordReminderScheduler
 import com.example.myapplication.data.store.AuditLogStore
 import com.example.myapplication.data.store.EmbeddingCacheStore
 import com.example.myapplication.policy.MemoryGovernanceService
@@ -64,6 +65,9 @@ class MyApplication : Application() {
         EchoDiaryTools.registerAll()
         EchoPlanTools.registerAll()
         EchoMemoryTools.registerAll()
+
+        // 轻提醒只涉及本地非精确闹钟，先同步恢复，避免被其他初始化工作延后。
+        GentleRecordReminderScheduler.scheduleNext(this)
 
         // 恢复定时闹钟（开机 / 应用启动）
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {

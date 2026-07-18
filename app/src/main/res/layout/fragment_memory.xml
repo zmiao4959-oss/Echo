@@ -149,7 +149,7 @@
             android:orientation="vertical"
             android:visibility="visible">
 
-            <!-- 今日回声卡片 -->
+            <!-- 今天遇见的回忆 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -212,7 +212,7 @@
                 android:textColor="?attr/echoHint"
                 android:visibility="gone" />
 
-            <!-- 那天的你卡片 -->
+            <!-- 往日回声卡片 -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_on_this_day"
                 android:layout_width="match_parent"
@@ -237,7 +237,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="那天的你"
+                        android:text="@string/memory_past_echo"
                         android:textSize="13sp"
                         android:textStyle="bold"
                         android:textColor="?attr/echoAccent" />
@@ -273,11 +273,22 @@
                         tools:text="今天完成了代码审查，感觉..." />
 
                     <TextView
+                        android:id="@+id/tv_on_this_day_echo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textSize="13sp"
+                        android:textColor="?attr/echoAccent"
+                        android:visibility="gone"
+                        tools:visibility="visible"
+                        tools:text="当时 Echo 说 · 这一步值得记住。" />
+
+                    <TextView
                         android:id="@+id/tv_on_this_day_action"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="查看 ›"
+                        android:text="@string/memory_view_echo"
                         android:textSize="13sp"
                         android:textColor="?attr/echoPrimary" />
                 </LinearLayout>

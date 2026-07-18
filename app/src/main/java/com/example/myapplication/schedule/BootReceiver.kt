@@ -19,6 +19,7 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         Log.d("BootReceiver", "BOOT_COMPLETED — rescheduling tasks")
+        GentleRecordReminderScheduler.scheduleNext(context)
         scope.launch {
             ScheduleEngine.rescheduleAll(context)
             PlanScheduler.rescheduleAll(context)

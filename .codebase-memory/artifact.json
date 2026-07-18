@@ -1,11 +1,11 @@
 {
-    "schema_version": 1,
-    "commit": "",
-    "indexed_at": "2026-06-24T08:50:36Z",
-    "project": "C-Users-35059-app-android-projects-project1",
-    "nodes": 198,
-    "edges": 203,
-    "original_size": 1179648,
-    "compressed_size": 17664,
-    "compression_level": 9
+    "schema_version": 2,
+    "commit": "efa5f88f8c828985694a61f412ca54f5b6331b3f",
+    "indexed_at": "2026-07-18T15:47:14Z",
+    "project": "project1",
+    "nodes": 3289,
+    "edges": 17112,
+    "original_size": 11599872,
+    "compressed_size": 2259865,
+    "compression_level": 3
 }

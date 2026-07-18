@@ -25,6 +25,7 @@ UI (Fragment/Activity/ViewModel)
     → Repository → FileStore/JsonAtomicWriter → JSON 文件持久化
   → MemoryRepository → UserProfileMemory / MemoryCard / LifeRecord / DailyDiary
   → PlanScheduler / ScheduleEngine → AlarmManager 定时触发
+  → GentleRecordReminderScheduler → 当天无片段时的可选本地轻提醒
   → policy/* (纯 Kotlin 策略层，JVM 可测) → 打分/过滤/聚合/去重/格式化
   → diagnostics/ServiceHealth → 失败记录与诊断
 ```
@@ -145,6 +146,7 @@ UI (Fragment/Activity/ViewModel)
 | 全局配置 | `config/AppConfig.kt` |
 | 工作区文件 | `memory/FileStore.kt` |
 | 规划调度 | `schedule/PlanScheduler.kt` / `schedule/ScheduleEngine.kt` |
+| 温和记录提醒 | `schedule/GentleRecordReminderScheduler.kt` + `policy/GentleRecordReminderPolicy.kt` — 默认关闭、非精确本地闹钟、当天有记录则静默 |
 | 天气工具 | `tools/WeatherTools.kt` |
 | 时间解析 | `domain/TimeParser.kt` |
 | 诊断记录 | `diagnostics/ServiceHealth.kt` |
@@ -156,7 +158,7 @@ UI (Fragment/Activity/ViewModel)
 | 排序策略 | `policy/HybridRankingPolicy.kt` — 多因素融合排序（关键词+语义+置顶+时间） |
 | 敏感过滤 | `policy/SensitiveContentFilter.kt` — 敏感内容不发送 Embedding API |
 | 缓存持久化 | `data/store/EmbeddingCacheStore.kt` — LRU + model 隔离 + 损坏恢复 |
-| 测试示例 | `app/src/test/` 下有 29 个测试文件（**353 个用例**，含 SearchIndex/DataHealth/Migration/RetrievalEngine/PhaseJ 专项测试） |
+| 测试示例 | `app/src/test/` 下有 40 个测试文件（**433 个用例**，含 SearchIndex/DataHealth/Migration/RetrievalEngine/PhaseJ/微回声偏好排序与管理/今日形成/往日回声/聊天 Diff/本周足迹/日记闭环/回归欢迎/自适应温和记录提醒/提醒直达/动态反馈位专项测试） |
 | 检索引擎文档 | `dev-handover/retrieval.md` |
 | 检索评估报告 | `dev-handover/retrieval-eval.md` |
 | 接力笔记 | `dev-handover/handover-note-phase-ij.md` — Phase I~J 开发者笔记 |
@@ -220,6 +222,16 @@ UI (Fragment/Activity/ViewModel)
 - **Phase I-Fix**: 接通检索引擎 — MemoryContextBuilder 接入 HybridRetrievalEngine（检索模式真实切换）；豆包 DoubaoEmbeddingProvider（OkHttp → `/embeddings/multimodal`）；semantic 空时自动回退规则；诊断面板 Embedding 错误详情；去掉用户消息中的 memoryPrefix（消除与 System Prompt 重复）；Runtime Info 增加星期几+自然语言时间；7 链路测试
 - **Phase I-RC**: 提示词整理 — 修复 SOUL.md/IDENTITY.md/AGENTS.md 未加载 bug；去掉 echo_profile.md 加载（内容已迁移到 workspace 文件）；WORKSPACE_VERSION 升至 4，精简四个文件各司其职；对话 dump `_last_prompt.md` 调试入口
 - **Phase J**: 可控语义检索落地 — J1 EmbeddingCacheStore 重写（LRU 1000 条 + model/provider 隔离 + textHash 变更检测 + 短摘要不含原文 + 损坏重建 + 一键清空）；J2 fake provider 小样本评估闭环 + retrieval-eval.md；J3 HybridRankingPolicy 多因素排序（exact match boost + source weight + pinned + recency，规则 exact match 优先于弱语义相似）；J4 explain 区分关键词命中/语义相似/置顶/最近；J5 SensitiveContentFilter 敏感内容不发送 Embedding API + remoteSemanticEnabled 隐私开关；J6 DataHealth 第 9 项 embedding cache 检查 + DataExporter 默认不导出 cache；J7 30 新增测试；353 测试基线，29 测试文件
+- **体验优化：记录后微回声**：今日页保存生活片段后立即展示 Echo 短回应；记录先落盘，LLM 在后台生成，未配置/超时/失败时使用本地克制文案；最多参考当天此前 4 个片段；回声随 LifeRecord 持久化，重进页面可恢复；359 测试基线，30 测试文件
+- **体验优化：今日正在形成**：原“AI 整理”计数卡升级为当天的渐进式反馈，展示记录轮廓、可靠的主题与情绪线索，以及随片段数量变化的阶段性观察；优先使用已有标签/情绪，仅在明确词汇或跨记录重复短语出现时本地推断，不新增 LLM 调用；368 测试基线，31 测试文件
+- **体验优化：往日回声**：回忆页原“那天的你”不再局限于往年同月同日；按周年、30/14/7 天节点、稳定历史轮换的顺序带回真实日记或生活片段，显示距今天数，并复现已保存的微回声；日记可直接打开，生活片段可查看详情；明显痛苦/创伤内容不参与自动回声但仍保留在历史与搜索中；全程本地选择；377 测试基线，32 测试文件
+- **质量修复：聊天页 Lint 清零**：旧 `onBackPressed()` 改为 AndroidX `OnBackPressedDispatcher`，保持“直接退出当前聊天”的行为并支持系统返回手势；ChatAdapter 使用 ChatMessage 数据类结构比较，消除工具调用列表的可疑相等判断；381 测试基线，33 测试文件
+- **体验优化：最近 7 天足迹**：今日页顶部新增滚动 7 天记录足迹，圆点显示每天的片段数，同时统计活跃天数与片段总数；只庆祝相较前 7 天的正向变化，较安静的一周不会出现下降、中断或归零文案；新增/删除记录后实时重算，全程本地完成；389 测试基线，34 测试文件
+- **体验优化：当天日记闭环**：“今日正在形成”卡片根据真实状态提供下一步：有片段无日记时一键切换日记页并开始生成，日记已覆盖当前片段时直接打开，生成后片段有增删时提示去更新；MainActivity 与 DiaryFragment 统一使用 Activity 级 DiaryViewModel，跨页面生成状态不丢失；同时增加重复生成保护；396 测试基线，35 测试文件
+- **体验优化：回来就好**：距离上次记录至少 2 天且今天尚未记录时，今日页展示一次无压力回归卡片；按间隔长度提供“无需补齐、过去记录仍在、没有欠下打卡”等克制文案，点击直接聚焦输入框并打开键盘，保存后立即隐藏；首次使用、今天或昨天记录过时不打扰；全程本地判断；404 测试基线，36 测试文件
+- **体验优化：温和记录提醒与直达输入**：可选的本地非精确闹钟只在当天没有片段时出现，默认关闭且时间可配置；点击通知正文或“写一句”操作会直接切到今日页、滚动并聚焦输入框，同时兼容冷启动、后台和当前页状态；414 测试基线，37 测试文件
+- **体验优化：常驻统计与动态反馈位**：“最近 7 天”和每日片段次数恢复为始终可见的稳定进度信息；其下方仅保留一个临时反馈位，按“生成中/30 分钟内的新鲜微回声 > 真实回归欢迎 > 隐藏”原位切换，到期自动收起，兼顾积累感与反馈焦点；419 测试基线，38 测试文件
+- **体验优化：回声偏好与自适应提醒**：新鲜微回声支持“有共鸣”和“不太像我，换一句”，认可与拒绝的表达随 LifeRecord 保存在本地；选例时按正文关键词/中文词组、mood、tags 和来源计算本地相关性，相同时再按时间排序，并避免高度相似实例重复占位；远程生成不可用时从 10 条分类兜底候选中避开当前拒绝列表，拒绝记录达到上限或纯语音片段时也不会立即重复；设置页可查看有效偏好数量或一键清空，且不删除原记录与回声；温和提醒保留“当天已记录则静默”，至少 3 个记录日后按最近最多 21 个记录日的首条时间中位数自动调整，并限制在 07:00～22:30；433 测试基线，40 测试文件
 
 详见：[检索引擎架构](./retrieval.md)
 

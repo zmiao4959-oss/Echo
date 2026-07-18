@@ -19,6 +19,7 @@ import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -29,7 +30,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -60,6 +60,12 @@ class ChatActivity : ThemedActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
+
+        // Keep the existing product behavior (leave chat directly), while also
+        // supporting the system back gesture through AndroidX's dispatcher.
+        onBackPressedDispatcher.addCallback(this) {
+            finish()
+        }
 
         val app = application as com.example.myapplication.MyApplication
         BackgroundManager.apply(this, app.appConfig.backgroundKey)
@@ -169,12 +175,6 @@ class ChatActivity : ThemedActivity() {
             updateTitle()
             inputMessage.text.clear()
         }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        // Exit directly, don't navigate through conversation history
-        finish()
     }
 
     private fun updateTitle() {

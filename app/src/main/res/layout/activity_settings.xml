@@ -317,6 +317,91 @@
 
         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
+        <!-- 温和记录提醒 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/gentle_record_reminder_title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/gentle_record_reminder_switch"
+                android:textSize="14sp"
+                android:textColor="#333" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_gentle_record_reminder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/gentle_record_reminder_description"
+            android:textSize="12sp"
+            android:textColor="#888"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btn_gentle_record_reminder_time"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:textColor="?attr/echoPrimary"
+            android:backgroundTint="?attr/echoSurfaceVariant" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
+
+        <!-- Echo 回声偏好 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/micro_echo_preferences_title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/echoPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/micro_echo_preferences_description"
+            android:textSize="12sp"
+            android:textColor="?attr/echoTextSecondary"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tv_micro_echo_preferences_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/micro_echo_preferences_empty"
+            android:textSize="14sp"
+            android:textColor="?attr/echoTextPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btn_clear_micro_echo_preferences"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="@string/micro_echo_preferences_clear"
+            android:textColor="?attr/echoPrimary"
+            android:backgroundTint="?attr/echoSurfaceVariant" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
+
         <!-- 保存按钮 -->
         <Button
             android:id="@+id/btn_save"

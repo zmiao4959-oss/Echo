@@ -2,18 +2,25 @@ package com.example.myapplication.ui.today
 
 import android.Manifest
 import android.content.Intent
+import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.media.MediaRecorder
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -22,11 +29,21 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.R
+import com.example.myapplication.policy.TodayFormationPolicy
+import com.example.myapplication.policy.TodaySpotlightPolicy
+import com.example.myapplication.policy.WeeklyFootprintPolicy
+import com.example.myapplication.policy.TodayDiaryClosurePolicy
+import com.example.myapplication.policy.ReturnWelcomePolicy
 import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.PageTextureManager
 import com.example.myapplication.ui.ChatActivity
+import com.example.myapplication.ui.MainActivity
+import com.example.myapplication.ui.diary.DiaryDetailActivity
+import com.example.myapplication.ui.ThemeColors
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -54,6 +71,25 @@ class TodayFragment : Fragment() {
     private lateinit var tvDiaryPreview: TextView
     private lateinit var cardInput: MaterialCardView
     private lateinit var cardAiPreview: MaterialCardView
+    private lateinit var cardWeeklyFootprint: MaterialCardView
+    private lateinit var tvWeeklyStats: TextView
+    private lateinit var layoutWeeklyDays: LinearLayout
+    private lateinit var tvWeeklyMessage: TextView
+    private lateinit var cardTodaySpotlight: MaterialCardView
+    private lateinit var tvTodaySpotlightTitle: TextView
+    private lateinit var tvTodaySpotlightMessage: TextView
+    private lateinit var tvTodaySpotlightAction: TextView
+    private lateinit var layoutMicroEchoFeedbackActions: LinearLayout
+    private lateinit var tvMicroEchoLike: TextView
+    private lateinit var tvMicroEchoRegenerate: TextView
+    private lateinit var btnTodayDiaryAction: View
+    private lateinit var tvTodayDiaryAction: TextView
+    private var diaryClosure: TodayDiaryClosurePolicy.Closure? = null
+    private var currentReturnWelcome: ReturnWelcomePolicy.Welcome =
+        ReturnWelcomePolicy.Welcome.Hidden
+    private var currentMicroEcho: MicroEchoState = MicroEchoState.Hidden
+    private var spotlightExpiryJob: Job? = null
+    private var lastSpotlightKey: String? = null
     private var recordAdapter: TodayRecordAdapter? = null
     private var isRecordsExpanded = false
     private var allRecords: List<LifeRecord> = emptyList()
@@ -87,8 +123,10 @@ class TodayFragment : Fragment() {
         )[TodayViewModel::class.java]
 
         bindViews(view)
+        setupQuickRecordEntry()
         setupRecycler()
         setupInput()
+        setupDiaryClosureAction()
         setupChatCard()
         observeViewModel()
         applyCardTextures()
@@ -114,12 +152,17 @@ class TodayFragment : Fragment() {
 
         // 对话互动
         CardTextureManager.apply(cardInput, config.getCardTextureKey(CardTextureManager.CHAT), R.attr.echoSurface)
+        CardTextureManager.apply(cardWeeklyFootprint, config.getCardTextureKey(CardTextureManager.LIFE_RECORD), R.attr.echoSurface)
+        CardTextureManager.apply(cardTodaySpotlight, config.getCardTextureKey(CardTextureManager.LIFE_RECORD), R.attr.echoSurfaceVariant)
         CardTextureManager.apply(cardChatEntry, config.getCardTextureKey(CardTextureManager.CHAT), R.attr.echoSurface)
         CardTextureManager.apply(cardAiPreview, config.getCardTextureKey(CardTextureManager.CHAT), R.attr.echoSurfaceVariant)
+        renderTodaySpotlight()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        spotlightExpiryJob?.cancel()
+        spotlightExpiryJob = null
+        super.onDestroyView()
     }
 
     // ── View Binding ──
@@ -138,6 +181,19 @@ class TodayFragment : Fragment() {
         btnEnterChat = view.findViewById(R.id.btn_enter_chat)
         tvDiaryPreview = view.findViewById(R.id.tv_diary_preview)
         cardAiPreview = view.findViewById(R.id.card_ai_preview)
+        cardWeeklyFootprint = view.findViewById(R.id.card_weekly_footprint)
+        tvWeeklyStats = view.findViewById(R.id.tv_weekly_stats)
+        layoutWeeklyDays = view.findViewById(R.id.layout_weekly_days)
+        tvWeeklyMessage = view.findViewById(R.id.tv_weekly_message)
+        cardTodaySpotlight = view.findViewById(R.id.card_today_spotlight)
+        tvTodaySpotlightTitle = view.findViewById(R.id.tv_today_spotlight_title)
+        tvTodaySpotlightMessage = view.findViewById(R.id.tv_today_spotlight_message)
+        tvTodaySpotlightAction = view.findViewById(R.id.tv_today_spotlight_action)
+        layoutMicroEchoFeedbackActions = view.findViewById(R.id.layout_micro_echo_feedback_actions)
+        tvMicroEchoLike = view.findViewById(R.id.tv_micro_echo_like)
+        tvMicroEchoRegenerate = view.findViewById(R.id.tv_micro_echo_regenerate)
+        btnTodayDiaryAction = view.findViewById(R.id.btn_today_diary_action)
+        tvTodayDiaryAction = view.findViewById(R.id.tv_today_diary_action)
     }
 
     // ── RecyclerView ──
@@ -168,11 +224,11 @@ class TodayFragment : Fragment() {
                 etQuickInput.text.clear()
                 etQuickInput.hint = "记录今天的生活片段…"
                 btnVoice.clearColorFilter()
-                Toast.makeText(requireContext(), "语音便签已保存", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "语音便签已保存，Echo 正在回应", Toast.LENGTH_SHORT).show()
             } else {
                 viewModel.addRecord(text, "text")
                 etQuickInput.text.clear()
-                Toast.makeText(requireContext(), "已记录", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "已记录，Echo 正在回应", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -220,6 +276,31 @@ class TodayFragment : Fragment() {
             }
         }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.weeklyFootprint.collectLatest(::renderWeeklyFootprint)
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.diaryClosure.collectLatest { closure ->
+                diaryClosure = closure
+                renderDiaryClosureAction(closure)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.returnWelcome.collectLatest { welcome ->
+                currentReturnWelcome = welcome
+                renderTodaySpotlight()
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.microEcho.collectLatest { state ->
+                currentMicroEcho = state
+                renderTodaySpotlight()
+            }
+        }
+
         tvRecordCount.setOnClickListener {
             isRecordsExpanded = !isRecordsExpanded
             applyRecordFilter()
@@ -256,10 +337,276 @@ class TodayFragment : Fragment() {
         tvEmptyRecords.visibility = if (count == 0) View.VISIBLE else View.GONE
         recyclerRecords.visibility = if (count == 0) View.GONE else View.VISIBLE
 
-        if (count > 0) {
-            tvDiaryPreview.text = getString(R.string.today_diary_ready, count)
+        renderTodayFormation(allRecords)
+        renderTodaySpotlight()
+    }
+
+    private fun renderTodayFormation(records: List<LifeRecord>) {
+        val formation = TodayFormationPolicy.build(records)
+        val lines = mutableListOf<String>()
+
+        if (formation.recordCount > 0) {
+            lines += getString(R.string.today_formation_count, formation.recordCount)
+            formation.mood?.let { lines += getString(R.string.today_formation_mood, it) }
+            if (formation.themes.isNotEmpty()) {
+                lines += getString(
+                    R.string.today_formation_themes,
+                    formation.themes.joinToString(" · ")
+                )
+            }
+        }
+        lines += formation.observation
+        tvDiaryPreview.text = lines.joinToString("\n")
+    }
+
+    private fun setupQuickRecordEntry() {
+        parentFragmentManager.setFragmentResultListener(
+            QuickRecordRoute.RESULT_FOCUS_QUICK_INPUT,
+            viewLifecycleOwner
+        ) { _, _ ->
+            focusQuickInput()
+        }
+    }
+
+    private fun focusQuickInput() {
+        etQuickInput.post {
+            etQuickInput.requestFocus()
+            etQuickInput.setSelection(etQuickInput.text.length)
+            cardInput.requestRectangleOnScreen(
+                Rect(0, 0, cardInput.width, cardInput.height),
+                true
+            )
+            val keyboard = context?.getSystemService(Context.INPUT_METHOD_SERVICE)
+                as? InputMethodManager ?: return@post
+            activity?.window?.let { window ->
+                WindowCompat.getInsetsController(window, etQuickInput)
+                    .show(WindowInsetsCompat.Type.ime())
+            }
+            keyboard.showSoftInput(etQuickInput, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+
+    private fun setupDiaryClosureAction() {
+        btnTodayDiaryAction.setOnClickListener {
+            when (val closure = diaryClosure) {
+                is TodayDiaryClosurePolicy.Closure.Build -> {
+                    (requireActivity() as? MainActivity)?.openDiaryAndGenerateToday()
+                }
+                is TodayDiaryClosurePolicy.Closure.Ready -> openDiary(closure.diaryId)
+                is TodayDiaryClosurePolicy.Closure.ReviewChanges -> openDiary(closure.diaryId)
+                TodayDiaryClosurePolicy.Closure.Hidden, null -> Unit
+            }
+        }
+    }
+
+    private fun renderDiaryClosureAction(closure: TodayDiaryClosurePolicy.Closure?) {
+        btnTodayDiaryAction.visibility = when (closure) {
+            null, TodayDiaryClosurePolicy.Closure.Hidden -> View.GONE
+            else -> View.VISIBLE
+        }
+        tvTodayDiaryAction.text = when (closure) {
+            is TodayDiaryClosurePolicy.Closure.Build ->
+                getString(R.string.today_diary_closure_build)
+            is TodayDiaryClosurePolicy.Closure.Ready ->
+                getString(R.string.today_diary_closure_ready)
+            is TodayDiaryClosurePolicy.Closure.ReviewChanges ->
+                getString(R.string.today_diary_closure_changed, closure.changedRecordCount)
+            TodayDiaryClosurePolicy.Closure.Hidden, null -> ""
+        }
+    }
+
+    private fun openDiary(diaryId: String) {
+        startActivity(Intent(requireContext(), DiaryDetailActivity::class.java).apply {
+            putExtra("diary_id", diaryId)
+        })
+    }
+
+    private fun renderTodaySpotlight() {
+        val echoCandidate = when (val state = currentMicroEcho) {
+            MicroEchoState.Hidden -> null
+            is MicroEchoState.Generating -> TodaySpotlightPolicy.EchoCandidate(
+                generating = true
+            )
+            is MicroEchoState.Ready -> TodaySpotlightPolicy.EchoCandidate(
+                text = state.text,
+                recordCreatedAtMillis = allRecords
+                    .firstOrNull { it.id == state.recordId }
+                    ?.createdAt
+            )
+        }
+        val spotlight = TodaySpotlightPolicy.select(
+            returnWelcome = currentReturnWelcome,
+            echo = echoCandidate
+        )
+
+        when (spotlight) {
+            is TodaySpotlightPolicy.Spotlight.MicroEcho -> {
+                cardTodaySpotlight.visibility = View.VISIBLE
+                renderMicroEchoSpotlight(spotlight)
+            }
+            is TodaySpotlightPolicy.Spotlight.ReturnWelcome -> {
+                cardTodaySpotlight.visibility = View.VISIBLE
+                renderWelcomeSpotlight(spotlight)
+            }
+            TodaySpotlightPolicy.Spotlight.Hidden -> {
+                cardTodaySpotlight.visibility = View.GONE
+                setSpotlightInputAction(enabled = false)
+            }
+        }
+
+        val spotlightKey = when (spotlight) {
+            is TodaySpotlightPolicy.Spotlight.MicroEcho ->
+                if (spotlight.generating) "echo-generating" else "echo-ready:${spotlight.text.hashCode()}"
+            is TodaySpotlightPolicy.Spotlight.ReturnWelcome -> "return-welcome"
+            TodaySpotlightPolicy.Spotlight.Hidden -> "hidden"
+        }
+        if (spotlight !is TodaySpotlightPolicy.Spotlight.Hidden &&
+            lastSpotlightKey != null && lastSpotlightKey != spotlightKey
+        ) {
+            cardTodaySpotlight.alpha = 0.75f
+            cardTodaySpotlight.animate().alpha(1f).setDuration(220L).start()
+        }
+        lastSpotlightKey = spotlightKey
+        scheduleSpotlightExpiry(spotlight)
+    }
+
+    private fun renderMicroEchoSpotlight(
+        spotlight: TodaySpotlightPolicy.Spotlight.MicroEcho
+    ) {
+        tvTodaySpotlightTitle.setText(R.string.micro_echo_title)
+        tvTodaySpotlightAction.visibility = View.GONE
+        val ready = currentMicroEcho as? MicroEchoState.Ready
+        val actionableEcho = ready?.takeIf { !spotlight.generating && !it.liked }
+        layoutMicroEchoFeedbackActions.visibility =
+            if (actionableEcho != null) View.VISIBLE else View.GONE
+        if (actionableEcho != null) {
+            tvMicroEchoLike.setOnClickListener { viewModel.likeMicroEcho(actionableEcho.recordId) }
+            tvMicroEchoRegenerate.setOnClickListener {
+                viewModel.regenerateMicroEcho(actionableEcho.recordId)
+            }
         } else {
-            tvDiaryPreview.text = getString(R.string.today_diary_empty)
+            tvMicroEchoLike.setOnClickListener(null)
+            tvMicroEchoRegenerate.setOnClickListener(null)
+        }
+        tvTodaySpotlightMessage.setTextColor(ThemeColors.textPrimary(requireContext()))
+        tvTodaySpotlightMessage.text = if (spotlight.generating) {
+            getString(R.string.micro_echo_generating)
+        } else {
+            spotlight.text.orEmpty()
+        }
+        setSpotlightInputAction(enabled = false)
+        applySpotlightTexture(CardTextureManager.CHAT, R.attr.echoSurfaceVariant)
+    }
+
+    private fun renderWelcomeSpotlight(
+        spotlight: TodaySpotlightPolicy.Spotlight.ReturnWelcome
+    ) {
+        tvTodaySpotlightTitle.setText(R.string.return_welcome_title)
+        tvTodaySpotlightAction.visibility = View.VISIBLE
+        layoutMicroEchoFeedbackActions.visibility = View.GONE
+        tvTodaySpotlightMessage.setTextColor(ThemeColors.textPrimary(requireContext()))
+        tvTodaySpotlightMessage.text = spotlight.message
+        setSpotlightInputAction(enabled = true)
+        applySpotlightTexture(CardTextureManager.LIFE_RECORD, R.attr.echoSurfaceVariant)
+    }
+
+    private fun renderWeeklyFootprint(footprint: WeeklyFootprintPolicy.WeeklyFootprint) {
+        tvWeeklyStats.text = if (footprint.activeDays == 0) {
+            getString(R.string.weekly_footprint_empty_stats)
+        } else {
+            getString(
+                R.string.weekly_footprint_stats,
+                footprint.activeDays,
+                footprint.totalRecords
+            )
+        }
+        tvWeeklyMessage.text = footprint.message
+        layoutWeeklyDays.removeAllViews()
+
+        footprint.days.forEach { day ->
+            val column = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = android.view.Gravity.CENTER
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val label = TextView(requireContext()).apply {
+                text = day.weekdayLabel
+                textSize = 11f
+                gravity = android.view.Gravity.CENTER
+                setTextColor(ThemeColors.hint(requireContext()))
+            }
+            val dot = TextView(requireContext()).apply {
+                text = when {
+                    day.recordCount > 9 -> "9+"
+                    day.hasRecord -> day.recordCount.toString()
+                    else -> "·"
+                }
+                textSize = 12f
+                gravity = android.view.Gravity.CENTER
+                setTextColor(
+                    if (day.hasRecord) ThemeColors.onPrimary(requireContext())
+                    else ThemeColors.hint(requireContext())
+                )
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    if (day.hasRecord) {
+                        setColor(ThemeColors.primary(requireContext()))
+                    } else {
+                        setColor(ThemeColors.surfaceVariant(requireContext()))
+                        setStroke(
+                            if (day.weekdayLabel == "今") 2.dpToPx() else 1.dpToPx(),
+                            if (day.weekdayLabel == "今") ThemeColors.primary(requireContext())
+                            else ThemeColors.border(requireContext())
+                        )
+                    }
+                }
+                layoutParams = LinearLayout.LayoutParams(30.dpToPx(), 30.dpToPx()).apply {
+                    topMargin = 5.dpToPx()
+                }
+                contentDescription = if (day.hasRecord) {
+                    getString(R.string.weekly_footprint_day_recorded, day.weekdayLabel, day.recordCount)
+                } else {
+                    getString(R.string.weekly_footprint_day_empty, day.weekdayLabel)
+                }
+            }
+            column.addView(label)
+            column.addView(dot)
+            layoutWeeklyDays.addView(column)
+        }
+    }
+
+    private fun setSpotlightInputAction(enabled: Boolean) {
+        cardTodaySpotlight.isClickable = enabled
+        cardTodaySpotlight.isFocusable = enabled
+        if (enabled) {
+            cardTodaySpotlight.setOnClickListener { focusQuickInput() }
+        } else {
+            cardTodaySpotlight.setOnClickListener(null)
+        }
+    }
+
+    private fun applySpotlightTexture(textureGroup: String, fallbackAttr: Int) {
+        val config = (requireActivity().application as MyApplication).appConfig
+        CardTextureManager.apply(
+            cardTodaySpotlight,
+            config.getCardTextureKey(textureGroup),
+            fallbackAttr
+        )
+    }
+
+    private fun scheduleSpotlightExpiry(spotlight: TodaySpotlightPolicy.Spotlight) {
+        spotlightExpiryJob?.cancel()
+        val freshUntil = (spotlight as? TodaySpotlightPolicy.Spotlight.MicroEcho)
+            ?.freshUntilMillis
+            ?: run {
+                spotlightExpiryJob = null
+                return
+            }
+        val delayMillis = (freshUntil - System.currentTimeMillis()).coerceAtLeast(1L)
+        spotlightExpiryJob = viewLifecycleOwner.lifecycleScope.launch {
+            delay(delayMillis)
+            spotlightExpiryJob = null
+            renderTodaySpotlight()
         }
     }
 
@@ -283,6 +630,11 @@ class TodayFragment : Fragment() {
         record.mood?.let { sb.appendLine("心情: $it") }
         record.tags.takeIf { it.isNotEmpty() }?.let {
             sb.appendLine("标签: ${it.joinToString(", ")}")
+        }
+        record.microEcho?.takeIf { it.isNotBlank() }?.let {
+            sb.appendLine()
+            sb.appendLine("Echo 回声")
+            sb.appendLine(it)
         }
 
         AlertDialog.Builder(requireContext())
@@ -493,6 +845,8 @@ class TodayFragment : Fragment() {
         bytes < 1024 * 1024 -> "${bytes / 1024}KB"
         else -> "${"%.1f".format(bytes / (1024.0 * 1024.0))}MB"
     }
+
+    private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray

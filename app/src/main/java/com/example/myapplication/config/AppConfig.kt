@@ -134,6 +134,19 @@ class AppConfig(context: Context) {
         get() = prefs.getBoolean(KEY_COMPANION_ALLOW_VOICE, false)
         set(value) = prefs.edit().putBoolean(KEY_COMPANION_ALLOW_VOICE, value).apply()
 
+    // ── 温和记录提醒（默认关闭）──
+    var gentleRecordReminderEnabled: Boolean
+        get() = prefs.getBoolean(KEY_GENTLE_RECORD_REMINDER_ENABLED, false)
+        set(value) = prefs.edit().putBoolean(KEY_GENTLE_RECORD_REMINDER_ENABLED, value).apply()
+
+    var gentleRecordReminderHour: Int
+        get() = prefs.getInt(KEY_GENTLE_RECORD_REMINDER_HOUR, 21).coerceIn(0, 23)
+        set(value) = prefs.edit().putInt(KEY_GENTLE_RECORD_REMINDER_HOUR, value.coerceIn(0, 23)).apply()
+
+    var gentleRecordReminderMinute: Int
+        get() = prefs.getInt(KEY_GENTLE_RECORD_REMINDER_MINUTE, 30).coerceIn(0, 59)
+        set(value) = prefs.edit().putInt(KEY_GENTLE_RECORD_REMINDER_MINUTE, value.coerceIn(0, 59)).apply()
+
     // ── 卡片圆角半径（dp） ──
     var cardCornerRadiusDp: Float
         get() = prefs.getFloat(KEY_CARD_CORNER_RADIUS, 20f)
@@ -220,6 +233,9 @@ class AppConfig(context: Context) {
         private const val KEY_COMPANION_QUIET_START = "companion_quiet_start"
         private const val KEY_COMPANION_QUIET_END = "companion_quiet_end"
         private const val KEY_COMPANION_ALLOW_VOICE = "companion_allow_voice"
+        private const val KEY_GENTLE_RECORD_REMINDER_ENABLED = "gentle_record_reminder_enabled"
+        private const val KEY_GENTLE_RECORD_REMINDER_HOUR = "gentle_record_reminder_hour"
+        private const val KEY_GENTLE_RECORD_REMINDER_MINUTE = "gentle_record_reminder_minute"
         private const val KEY_AVATAR_PATH = "avatar_path"
     }
 

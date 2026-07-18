@@ -80,10 +80,9 @@ class ChatAdapter : ListAdapter<ChatMessage, ChatAdapter.ViewHolder>(DiffCallbac
         }
 
         override fun areContentsTheSame(oldItem: ChatMessage, newItem: ChatMessage): Boolean {
-            return oldItem.content == newItem.content
-                    && oldItem.isStreaming == newItem.isStreaming
-                    && oldItem.toolCalls == newItem.toolCalls
-                    && oldItem.toolResults == newItem.toolResults
+            // ChatMessage is a data class, so its generated equals() performs
+            // structural comparison for content, streaming state and tool lists.
+            return oldItem == newItem
         }
     }
 }

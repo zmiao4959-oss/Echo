@@ -48,6 +48,18 @@ class LifeRecordRepository {
         }
     }
 
+    /** 只清除 Echo 偏好标记，不删除记录或已生成的回声。 */
+    suspend fun clearMicroEchoPreferences(): Int = withContext(Dispatchers.IO) {
+        val items = JsonAtomicWriter.readItems<LifeRecord>(file)
+        val affected = items.count {
+            it.microEchoLiked || it.rejectedMicroEchoes.orEmpty().isNotEmpty()
+        }
+        if (affected > 0) {
+            JsonAtomicWriter.writeItems(file, withoutMicroEchoPreferences(items))
+        }
+        affected
+    }
+
     /** 删除一条 LifeRecord */
     suspend fun delete(id: String) = withContext(Dispatchers.IO) {
         val items = JsonAtomicWriter.readItems<LifeRecord>(file).filter { it.id != id }
@@ -63,5 +75,15 @@ class LifeRecordRepository {
     /** 按标签搜索 */
     suspend fun getByTag(tag: String): List<LifeRecord> = withContext(Dispatchers.IO) {
         JsonAtomicWriter.readItems<LifeRecord>(file).filter { tag in it.tags }
+    }
+
+    companion object {
+        internal fun withoutMicroEchoPreferences(records: List<LifeRecord>): List<LifeRecord> =
+            records.map {
+                it.copy(
+                    microEchoLiked = false,
+                    rejectedMicroEchoes = null
+                )
+            }
     }
 }
