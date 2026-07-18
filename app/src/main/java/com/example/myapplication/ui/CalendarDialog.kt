@@ -1,5 +1,7 @@
 package com.example.myapplication.ui
 
+import com.example.myapplication.R
+
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
@@ -73,7 +75,7 @@ class CalendarDialog(
         }
 
         btnPrev = ImageButton(context).apply {
-            setImageResource(android.R.drawable.ic_media_previous)
+            setImageResource(R.drawable.ic_echo_back)
             background = null
             setOnClickListener {
                 cal.set(currentYear, currentMonth, 1)
@@ -94,7 +96,8 @@ class CalendarDialog(
         header.addView(tvMonthLabel)
 
         btnNext = ImageButton(context).apply {
-            setImageResource(android.R.drawable.ic_media_next)
+            setImageResource(R.drawable.ic_echo_back)
+            rotation = 180f
             background = null
             setOnClickListener {
                 cal.set(currentYear, currentMonth, 1)

@@ -16,6 +16,7 @@ import com.example.myapplication.R
 import com.example.myapplication.MyApplication
 import com.example.myapplication.data.model.EchoPlan
 import com.example.myapplication.data.repository.PlanRepository
+import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.schedule.PlanScheduler
 import com.example.myapplication.ui.ThemeColors
 import kotlinx.coroutines.Dispatchers
@@ -32,8 +33,10 @@ class PlanEditActivity : ThemedActivity() {
     private var pickedDate: Long = 0L
     private var pickedTimeHour = 9
     private var pickedTimeMinute = 0
+    private var sourceRecordId: String? = null
 
     private val planRepo = PlanRepository()
+    private val recordRepo = LifeRecordRepository()
 
     private lateinit var etTitle: EditText
     private lateinit var etMessage: EditText
@@ -55,6 +58,7 @@ class PlanEditActivity : ThemedActivity() {
         setContentView(R.layout.activity_plan_edit)
 
         planId = intent.getStringExtra("plan_id")
+        sourceRecordId = intent.getStringExtra(EXTRA_SOURCE_RECORD_ID)
 
         etTitle = findViewById(R.id.et_title)
         etMessage = findViewById(R.id.et_message)
@@ -90,6 +94,23 @@ class PlanEditActivity : ThemedActivity() {
 
         if (planId != null) {
             loadPlan()
+        } else {
+            applyDraftFromIntent()
+        }
+    }
+
+    private fun applyDraftFromIntent() {
+        intent.getStringExtra(EXTRA_DRAFT_TITLE)?.let(etTitle::setText)
+        intent.getStringExtra(EXTRA_DRAFT_MESSAGE)?.let(etMessage::setText)
+        intent.getStringExtra(EXTRA_DRAFT_REPEAT)?.let(etRepeat::setText)
+
+        val draftTriggerAt = intent.getLongExtra(EXTRA_DRAFT_TRIGGER_AT, -1L)
+        if (draftTriggerAt > 0L) {
+            pickedDate = draftTriggerAt
+            val cal = Calendar.getInstance().apply { timeInMillis = draftTriggerAt }
+            pickedTimeHour = cal.get(Calendar.HOUR_OF_DAY)
+            pickedTimeMinute = cal.get(Calendar.MINUTE)
+            updateDateTimeDisplay()
         }
     }
 
@@ -234,6 +255,9 @@ class PlanEditActivity : ThemedActivity() {
             } else {
                 withContext(Dispatchers.IO) { planRepo.add(plan) }
             }
+            sourceRecordId?.let { recordId ->
+                withContext(Dispatchers.IO) { recordRepo.linkToPlan(recordId, plan.id) }
+            }
             PlanScheduler.schedule(this@PlanEditActivity, plan)
             Toast.makeText(this@PlanEditActivity, "已保存", Toast.LENGTH_SHORT).show()
             finish()
@@ -248,7 +272,10 @@ class PlanEditActivity : ThemedActivity() {
                 lifecycleScope.launch {
                     planId?.let {
                         PlanScheduler.cancel(this@PlanEditActivity, it)
-                        withContext(Dispatchers.IO) { planRepo.delete(it) }
+                        withContext(Dispatchers.IO) {
+                            planRepo.delete(it)
+                            recordRepo.unlinkPlan(it)
+                        }
                     }
                     Toast.makeText(this@PlanEditActivity, "已删除", Toast.LENGTH_SHORT).show()
                     finish()
@@ -274,5 +301,13 @@ class PlanEditActivity : ThemedActivity() {
             }
         }
         tvPickedTime.text = String.format("%02d:%02d", pickedTimeHour, pickedTimeMinute)
+    }
+
+    companion object {
+        const val EXTRA_DRAFT_TITLE = "draft_title"
+        const val EXTRA_DRAFT_MESSAGE = "draft_message"
+        const val EXTRA_DRAFT_TRIGGER_AT = "draft_trigger_at"
+        const val EXTRA_DRAFT_REPEAT = "draft_repeat"
+        const val EXTRA_SOURCE_RECORD_ID = "source_record_id"
     }
 }

@@ -48,6 +48,20 @@ class LifeRecordRepository {
         }
     }
 
+    /** 将一条生活片段与计划关联。 */
+    suspend fun linkToPlan(recordId: String, planId: String) = withContext(Dispatchers.IO) {
+        val items = JsonAtomicWriter.readItems<LifeRecord>(file)
+        val updated = withPlanLink(items, recordId, planId)
+        if (updated != items) JsonAtomicWriter.writeItems(file, updated)
+    }
+
+    /** 删除计划时清理所有反向关联，避免记录卡留下失效入口。 */
+    suspend fun unlinkPlan(planId: String) = withContext(Dispatchers.IO) {
+        val items = JsonAtomicWriter.readItems<LifeRecord>(file)
+        val updated = withoutPlanLink(items, planId)
+        if (updated != items) JsonAtomicWriter.writeItems(file, updated)
+    }
+
     /** 只清除 Echo 偏好标记，不删除记录或已生成的回声。 */
     suspend fun clearMicroEchoPreferences(): Int = withContext(Dispatchers.IO) {
         val items = JsonAtomicWriter.readItems<LifeRecord>(file)
@@ -78,6 +92,21 @@ class LifeRecordRepository {
     }
 
     companion object {
+        internal fun withPlanLink(
+            records: List<LifeRecord>,
+            recordId: String,
+            planId: String
+        ): List<LifeRecord> = records.map {
+            if (it.id == recordId) it.copy(linkedPlanId = planId) else it
+        }
+
+        internal fun withoutPlanLink(
+            records: List<LifeRecord>,
+            planId: String
+        ): List<LifeRecord> = records.map {
+            if (it.linkedPlanId == planId) it.copy(linkedPlanId = null) else it
+        }
+
         internal fun withoutMicroEchoPreferences(records: List<LifeRecord>): List<LifeRecord> =
             records.map {
                 it.copy(

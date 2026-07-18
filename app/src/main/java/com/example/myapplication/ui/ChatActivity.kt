@@ -1,6 +1,8 @@
 package com.example.myapplication.ui
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -26,6 +28,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.example.myapplication.data.model.LifeRecord
+import com.example.myapplication.data.model.MemoryCard
+import com.example.myapplication.data.repository.LifeRecordRepository
+import com.example.myapplication.data.repository.MemoryRepository
+import com.example.myapplication.tts.TTSParser
+import com.example.myapplication.ui.plan.PlanEditActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -34,6 +42,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 class ChatActivity : ThemedActivity() {
 
@@ -84,11 +93,12 @@ class ChatActivity : ThemedActivity() {
         statusText = findViewById(R.id.status_text)
         progressLoading = findViewById(R.id.progress_loading)
 
-        adapter = ChatAdapter()
+        adapter = ChatAdapter(::showMessageActions)
         recycler.layoutManager = LinearLayoutManager(this).apply {
             stackFromEnd = true
         }
         recycler.adapter = adapter
+        showMessageActionHintOnce()
 
         // 加载会话
         viewModel.loadSession(currentChatId)
@@ -164,6 +174,102 @@ class ChatActivity : ThemedActivity() {
         }
 
         initSpeechRecognizer()
+    }
+
+    private fun showMessageActionHintOnce() {
+        val prefs = getSharedPreferences("clawspeaker_config", MODE_PRIVATE)
+        if (!prefs.getBoolean("chat_message_action_hint_shown", false)) {
+            Toast.makeText(this, "长按任意消息，可转为记录、计划或回忆", Toast.LENGTH_LONG).show()
+            prefs.edit().putBoolean("chat_message_action_hint_shown", true).apply()
+        }
+    }
+
+    private fun showMessageActions(message: ChatMessage) {
+        val text = messageDisplayText(message)
+        if (text.isBlank()) return
+        AlertDialog.Builder(this)
+            .setTitle("留下这段内容")
+            .setItems(arrayOf("复制", "保存为今日片段", "转为计划", "保存为回忆")) { _, which ->
+                when (which) {
+                    0 -> copyMessage(text)
+                    1 -> saveAsLifeRecord(text)
+                    2 -> openAsPlan(text)
+                    3 -> showSaveMemoryDialog(message, text)
+                }
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun messageDisplayText(message: ChatMessage): String =
+        if (message.role == "assistant") TTSParser.toDisplayText(message.content) else message.content.trim()
+
+    private fun copyMessage(text: String) {
+        val clipboard = getSystemService(ClipboardManager::class.java)
+        clipboard.setPrimaryClip(ClipData.newPlainText("Echo 对话", text))
+        Toast.makeText(this, "已复制", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun saveAsLifeRecord(text: String) {
+        lifecycleScope.launch {
+            val now = System.currentTimeMillis()
+            val record = LifeRecord(
+                id = UUID.randomUUID().toString(),
+                createdAt = now,
+                date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(now)),
+                content = text,
+                source = "chat",
+                rawConversationId = currentChatId
+            )
+            withContext(Dispatchers.IO) { LifeRecordRepository().add(record) }
+            Toast.makeText(this@ChatActivity, "已保存到今日片段", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openAsPlan(text: String) {
+        val title = text.lineSequence().firstOrNull { it.isNotBlank() }
+            ?.trim()?.take(40).orEmpty().ifEmpty { "来自对话的计划" }
+        startActivity(Intent(this, PlanEditActivity::class.java).apply {
+            putExtra(PlanEditActivity.EXTRA_DRAFT_TITLE, title)
+            putExtra(PlanEditActivity.EXTRA_DRAFT_MESSAGE, text)
+        })
+    }
+
+    private fun showSaveMemoryDialog(message: ChatMessage, text: String) {
+        val input = EditText(this).apply {
+            setText(text)
+            minLines = 3
+            maxLines = 8
+            setSelection(length())
+        }
+        AlertDialog.Builder(this)
+            .setTitle("保存为回忆")
+            .setMessage("可以先删减，只留下以后想再次遇见的部分。")
+            .setView(input)
+            .setPositiveButton(getString(R.string.save)) { _, _ ->
+                val quote = input.text.toString().trim()
+                if (quote.isNotEmpty()) saveMemory(message, quote)
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun saveMemory(message: ChatMessage, quote: String) {
+        lifecycleScope.launch {
+            val now = System.currentTimeMillis()
+            val card = MemoryCard(
+                id = UUID.randomUUID().toString(),
+                createdAt = now,
+                memoryDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(now)),
+                quote = quote,
+                note = "",
+                tags = listOf("对话"),
+                sourceType = "chat",
+                sourceId = "$currentChatId:${message.id}"
+            )
+            withContext(Dispatchers.IO) { MemoryRepository().addCard(card) }
+            Toast.makeText(this@ChatActivity, "已保存到回忆", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

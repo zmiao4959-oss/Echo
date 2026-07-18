@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
+import android.content.res.ColorStateList
 import android.view.View
 import android.widget.ImageView
 import java.io.File
@@ -50,25 +51,31 @@ object AvatarManager {
     /** 将圆形头像设置到 ImageView（ImageView 需为正方形） */
     fun applyToImageView(view: ImageView, path: String?) {
         if (path == null) {
-            view.setImageResource(android.R.drawable.ic_menu_myplaces)
+            applyDefaultAvatar(view)
             view.scaleType = ImageView.ScaleType.CENTER
             return
         }
         val file = File(path)
         if (!file.exists()) {
-            view.setImageResource(android.R.drawable.ic_menu_myplaces)
+            applyDefaultAvatar(view)
             view.scaleType = ImageView.ScaleType.CENTER
             return
         }
         val bitmap = BitmapFactory.decodeFile(path)
         if (bitmap == null) {
-            view.setImageResource(android.R.drawable.ic_menu_myplaces)
+            applyDefaultAvatar(view)
             view.scaleType = ImageView.ScaleType.CENTER
             return
         }
+        view.imageTintList = null
         view.setImageBitmap(circleCrop(bitmap))
         view.scaleType = ImageView.ScaleType.FIT_CENTER
         bitmap.recycle()
+    }
+
+    private fun applyDefaultAvatar(view: ImageView) {
+        view.setImageResource(com.example.myapplication.R.drawable.ic_profile_outline)
+        view.imageTintList = ColorStateList.valueOf(ThemeColors.textSecondary(view.context))
     }
 
     /** 将圆形头像设置到任意 View 的背景 */

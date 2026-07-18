@@ -5,7 +5,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -67,7 +70,7 @@ class PlanFragment : Fragment() {
         fabAddPlan = view.findViewById(R.id.fab_add_plan)
 
         setupAdapters()
-        fabAddPlan.setOnClickListener { openEdit(null) }
+        fabAddPlan.setOnClickListener { showQuickPlanDialog() }
 
         observeViewModel()
         applyPageTexture()
@@ -110,6 +113,45 @@ class PlanFragment : Fragment() {
         val intent = Intent(requireContext(), PlanEditActivity::class.java)
         if (planId != null) intent.putExtra("plan_id", planId)
         startActivity(intent)
+    }
+
+    private fun showQuickPlanDialog() {
+        val input = EditText(requireContext()).apply {
+            hint = "例如：明天下午三点提醒我取快递"
+            minLines = 2
+            maxLines = 4
+            val density = resources.displayMetrics.density
+            setPadding(
+                (20 * density).toInt(),
+                (12 * density).toInt(),
+                (20 * density).toInt(),
+                (8 * density).toInt()
+            )
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle("一句话创建计划")
+            .setMessage("说清时间和要做的事，下一步仍可检查和修改。")
+            .setView(input)
+            .setPositiveButton("继续") { _, _ ->
+                val draft = NaturalLanguagePlanParser.parse(input.text.toString())
+                if (draft == null) {
+                    Toast.makeText(requireContext(), "先写下计划内容", Toast.LENGTH_SHORT).show()
+                } else {
+                    openDraft(draft)
+                }
+            }
+            .setNeutralButton("详细创建") { _, _ -> openEdit(null) }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun openDraft(draft: PlanDraft) {
+        startActivity(Intent(requireContext(), PlanEditActivity::class.java).apply {
+            putExtra(PlanEditActivity.EXTRA_DRAFT_TITLE, draft.title)
+            putExtra(PlanEditActivity.EXTRA_DRAFT_MESSAGE, draft.message)
+            putExtra(PlanEditActivity.EXTRA_DRAFT_TRIGGER_AT, draft.triggerAt)
+            draft.repeatRule?.let { putExtra(PlanEditActivity.EXTRA_DRAFT_REPEAT, it) }
+        })
     }
 
     private fun observeViewModel() {

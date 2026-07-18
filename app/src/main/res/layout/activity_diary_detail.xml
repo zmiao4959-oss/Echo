@@ -28,7 +28,7 @@
                 android:layout_height="48dp"
                 android:padding="12dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_revert"
+                android:src="@drawable/ic_echo_back"
                 android:contentDescription="返回"
                 app:tint="?attr/echoTextPrimary" />
 
@@ -47,7 +47,7 @@
                 android:layout_height="48dp"
                 android:padding="10dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_btn_speak_now"
+                android:src="@drawable/ic_echo_speaker"
                 android:contentDescription="朗读"
                 app:tint="?attr/echoPrimary" />
 
@@ -57,7 +57,7 @@
                 android:layout_height="48dp"
                 android:padding="10dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_delete"
+                android:src="@drawable/ic_echo_delete"
                 android:contentDescription="删除"
                 app:tint="?attr/echoDestructive" />
         </LinearLayout>
@@ -124,6 +124,35 @@
                 android:layout_marginBottom="16dp"
                 android:background="?attr/echoBorder" />
 
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggle_diary_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:checkedButton="@id/btn_view_diary"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_view_diary"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="整理后的日记"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_view_raw"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:text="原始片段"
+                    android:textSize="13sp" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
             <TextView
                 android:id="@+id/tv_detail_body"
                 android:layout_width="match_parent"
@@ -132,6 +161,17 @@
                 android:textColor="?attr/echoTextPrimary"
                 android:lineSpacingExtra="6dp"
                 tools:text="日记正文内容..." />
+
+            <TextView
+                android:id="@+id/tv_detail_raw_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="6dp"
+                android:textColor="?attr/echoTextPrimary"
+                android:textSize="15sp"
+                android:visibility="gone"
+                tools:text="09:20 · 文字\n完成了今天最重要的一件事。"
+                tools:visibility="visible" />
 
             <!-- 来源片段 -->
             <TextView

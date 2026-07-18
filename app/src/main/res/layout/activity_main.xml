@@ -41,8 +41,8 @@
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:contentDescription="日历"
                 android:padding="10dp"
-                android:src="@android:drawable/ic_menu_month"
-                app:tint="?attr/echoTextPrimary" />
+                android:src="@drawable/ic_calendar_outline"
+                app:tint="?attr/echoTextSecondary" />
 
             <ImageButton
                 android:id="@+id/btn_profile"
@@ -51,7 +51,7 @@
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/profile_entry"
                 android:padding="10dp"
-                android:src="@android:drawable/ic_menu_myplaces" />
+                android:src="@drawable/ic_profile_outline" />
         </LinearLayout>
 
         <!-- Fragment 容器（底部留出导航栏空间） -->
@@ -70,6 +70,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="?attr/echoSurface"
+        android:elevation="6dp"
         app:menu="@menu/bottom_nav"
         app:labelVisibilityMode="labeled"
         tools:ignore="VisualLintBottomNav" />

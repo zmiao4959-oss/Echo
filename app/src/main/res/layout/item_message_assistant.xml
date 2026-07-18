@@ -3,14 +3,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="4dp">
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="6dp">
 
     <TextView
         android:id="@+id/role_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/role_claw"
+        android:background="@drawable/bg_chat_role_label"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp"
         android:textColor="?attr/echoPrimary"
         android:textSize="11sp"
         android:textStyle="bold" />
@@ -19,10 +22,11 @@
         android:id="@+id/message_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:maxWidth="280dp"
+        android:maxWidth="320dp"
         android:background="@drawable/bg_message_assistant"
-        android:padding="12dp"
-        android:textColor="@android:color/black"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp"
+        android:textColor="?attr/echoTextPrimary"
         android:textSize="15sp"
         android:lineSpacingExtra="4dp" />
 
@@ -31,7 +35,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:maxWidth="280dp"
+        android:maxWidth="320dp"
         android:background="@drawable/bg_tool_info"
         android:padding="8dp"
         android:textColor="?attr/echoTextSecondary"

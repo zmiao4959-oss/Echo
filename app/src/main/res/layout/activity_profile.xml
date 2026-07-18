@@ -23,7 +23,7 @@
                 android:id="@+id/avatar"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
-                android:src="@android:drawable/ic_menu_myplaces"
+                android:src="@drawable/ic_echo_profile"
                 android:scaleType="center"
                 android:clickable="true"
                 android:focusable="true"

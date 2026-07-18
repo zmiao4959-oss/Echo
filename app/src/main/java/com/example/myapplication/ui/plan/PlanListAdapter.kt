@@ -36,8 +36,8 @@ class PlanListAdapter(
         CardTextureManager.apply(holder.card, app.appConfig.getCardTextureKey(CardTextureManager.PLAN), R.attr.echoSurface)
 
         // 类型图标
-        val iconView = holder.card.findViewById<android.widget.TextView>(R.id.tv_type_icon)
-        iconView.text = typeEmoji(plan.type)
+        val iconView = holder.card.findViewById<android.widget.ImageView>(R.id.tv_type_icon)
+        iconView.setImageResource(typeIcon(plan.type))
 
         // 标题
         val titleView = holder.card.findViewById<android.widget.TextView>(R.id.tv_plan_title)
@@ -55,7 +55,7 @@ class PlanListAdapter(
 
         // 语音播报标记
         val speakView = holder.card.findViewById<android.widget.TextView>(R.id.tv_auto_speak)
-        speakView.text = if (plan.autoSpeak) "🔊 语音播报" else ""
+        speakView.text = if (plan.autoSpeak) "语音播报" else ""
         speakView.visibility = if (plan.autoSpeak)
             android.view.View.VISIBLE else android.view.View.GONE
 
@@ -69,12 +69,12 @@ class PlanListAdapter(
         holder.card.setOnClickListener { onClick(plan) }
     }
 
-    private fun typeEmoji(type: String): String = when (type) {
-        "task_reminder" -> "⏰"
-        "companion_checkin" -> "👋"
-        "memory_trigger" -> "💭"
-        "auto_diary" -> "📝"
-        else -> "📌"
+    private fun typeIcon(type: String): Int = when (type) {
+        "task_reminder" -> R.drawable.ic_plan_task
+        "companion_checkin" -> R.drawable.ic_plan_checkin
+        "memory_trigger" -> R.drawable.ic_plan_memory
+        "auto_diary" -> R.drawable.ic_plan_diary
+        else -> R.drawable.ic_plan_task
     }
 
     private fun formatTriggerTime(timestamp: Long): String {

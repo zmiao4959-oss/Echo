@@ -143,12 +143,22 @@ class MainActivity : ThemedActivity() {
     private fun setupInsets() {
         val fragmentContainer: View = findViewById(R.id.fragment_container)
 
-        // 顶栏：顶部留出状态栏高度，让 topBar 背景延伸到状态栏后方但内容不被遮挡
+        // 顶栏：在原有 56dp 内容高度之外增加安全区，而不是把安全区塞进固定高度。
+        // 这样有刘海/强制 edge-to-edge 的设备不会裁切标题，无额外 inset 的设备保持原高度。
+        val topBarContentHeight = topBar.layoutParams.height
+        val topBarInitialPaddingTop = topBar.paddingTop
         ViewCompat.setOnApplyWindowInsetsListener(topBar) { v, insets ->
             val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-            v.updatePadding(top = statusBars.top)
+            val cutoutTop = insets.displayCutout?.safeInsetTop ?: 0
+            val safeTop = maxOf(statusBars.top, cutoutTop)
+            v.updatePadding(top = topBarInitialPaddingTop + safeTop)
+            val desiredHeight = topBarContentHeight + safeTop
+            if (v.layoutParams.height != desiredHeight) {
+                v.layoutParams = v.layoutParams.apply { height = desiredHeight }
+            }
             insets
         }
+        ViewCompat.requestApplyInsets(topBar)
 
         // 底部导航：底部留出导航栏高度
         ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
@@ -246,6 +256,7 @@ class MainActivity : ThemedActivity() {
         )
         bottomNav.itemIconTintList = colorStateList
         bottomNav.itemTextColor = colorStateList
+        bottomNav.itemActiveIndicatorColor = ColorStateList.valueOf(ThemeColors.surfaceVariant(this))
     }
 
     private fun applyAvatar() {

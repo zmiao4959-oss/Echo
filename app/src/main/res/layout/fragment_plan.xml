@@ -45,7 +45,10 @@
                 android:paddingHorizontal="20dp"
                 android:paddingTop="8dp"
                 android:paddingBottom="4dp"
-                android:text="⏰ 任务提醒"
+                android:text="任务提醒"
+                android:drawableStart="@drawable/ic_plan_task"
+                android:drawableTint="?attr/echoPrimary"
+                android:drawablePadding="8dp"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="?attr/echoPrimary" />
@@ -77,10 +80,13 @@
                 android:paddingHorizontal="20dp"
                 android:paddingTop="16dp"
                 android:paddingBottom="4dp"
-                android:text="💬 主动问候"
+                android:text="主动问候"
+                android:drawableStart="@drawable/ic_plan_checkin"
+                android:drawableTint="?attr/echoPrimary"
+                android:drawablePadding="8dp"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="?attr/echoTextSecondary" />
+                android:textColor="?attr/echoPrimary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_checkin_plans"
@@ -109,10 +115,13 @@
                 android:paddingHorizontal="20dp"
                 android:paddingTop="16dp"
                 android:paddingBottom="4dp"
-                android:text="💭 回忆触发"
+                android:text="回忆触发"
+                android:drawableStart="@drawable/ic_plan_memory"
+                android:drawableTint="?attr/echoPrimary"
+                android:drawablePadding="8dp"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="?attr/echoTextSecondary" />
+                android:textColor="?attr/echoPrimary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_memory_plans"
@@ -141,10 +150,13 @@
                 android:paddingHorizontal="20dp"
                 android:paddingTop="16dp"
                 android:paddingBottom="4dp"
-                android:text="📖 自动整理"
+                android:text="自动整理"
+                android:drawableStart="@drawable/ic_plan_diary"
+                android:drawableTint="?attr/echoPrimary"
+                android:drawablePadding="8dp"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="?attr/echoTextSecondary" />
+                android:textColor="?attr/echoPrimary" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_autodiary_plans"
@@ -175,7 +187,7 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="32dp"
-        android:src="@android:drawable/ic_input_add"
+        android:src="@drawable/ic_echo_add"
         android:contentDescription="新建规划"
         app:backgroundTint="?attr/echoPrimary"
         app:tint="?attr/echoOnPrimary" />

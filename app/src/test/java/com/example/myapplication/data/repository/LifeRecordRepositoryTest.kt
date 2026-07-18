@@ -29,4 +29,21 @@ class LifeRecordRepositoryTest {
         assertFalse(cleared.microEchoLiked)
         assertNull(cleared.rejectedMicroEchoes)
     }
+
+    @Test
+    fun `linking and deleting a plan keeps record relation consistent`() {
+        val first = LifeRecord("record-1", 1L, "2026-07-19", "买牛奶", "text")
+        val second = LifeRecord("record-2", 2L, "2026-07-19", "散步", "text")
+
+        val linked = LifeRecordRepository.withPlanLink(
+            listOf(first, second),
+            recordId = first.id,
+            planId = "plan-1"
+        )
+        assertEquals("plan-1", linked.first().linkedPlanId)
+        assertNull(linked.last().linkedPlanId)
+
+        val unlinked = LifeRecordRepository.withoutPlanLink(linked, "plan-1")
+        assertNull(unlinked.first().linkedPlanId)
+    }
 }

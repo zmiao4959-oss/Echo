@@ -28,6 +28,9 @@ class DiaryDetailActivity : ThemedActivity() {
     private lateinit var audioPlayer: AudioPlayer
 
     private var diaryId: String? = null
+    private var sourceRecords: List<com.example.myapplication.data.model.LifeRecord> = emptyList()
+    private var showingRawRecords = false
+    private var renderedRawMode: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +54,14 @@ class DiaryDetailActivity : ThemedActivity() {
         findViewById<View>(R.id.btn_delete).setOnClickListener { showDeleteConfirmation() }
         findViewById<View>(R.id.btn_regenerate).setOnClickListener { regenerateDiary() }
         findViewById<View>(R.id.btn_read_aloud).setOnClickListener { readAloud() }
+        findViewById<View>(R.id.btn_view_diary).setOnClickListener {
+            showingRawRecords = false
+            renderBodyMode()
+        }
+        findViewById<View>(R.id.btn_view_raw).setOnClickListener {
+            showingRawRecords = true
+            renderBodyMode()
+        }
 
         observeViewModel()
         viewModel.loadDiaries()
@@ -60,6 +71,13 @@ class DiaryDetailActivity : ThemedActivity() {
         lifecycleScope.launch {
             viewModel.diaries.collectLatest { _ ->
                 updateDetailView()
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.detailSourceRecords.collectLatest { records ->
+                sourceRecords = records
+                renderBodyMode()
             }
         }
 
@@ -86,6 +104,8 @@ class DiaryDetailActivity : ThemedActivity() {
         findViewById<TextView>(R.id.tv_detail_mood).text = diary.mood
         findViewById<TextView>(R.id.tv_detail_body).text = diary.diaryText
         findViewById<TextView>(R.id.tv_source_count).text = "基于 ${diary.sourceRecordIds.size} 条生活记录生成"
+        viewModel.loadSourceRecords(diary.id)
+        renderBodyMode()
 
         // 仅今日日记可重新生成
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
@@ -103,6 +123,41 @@ class DiaryDetailActivity : ThemedActivity() {
             chip.isCheckable = false
             chip.isClickable = false
             chipGroup.addView(chip)
+        }
+    }
+
+    private fun renderBodyMode() {
+        val diaryBody = findViewById<TextView>(R.id.tv_detail_body)
+        val rawBody = findViewById<TextView>(R.id.tv_detail_raw_body)
+        diaryBody.visibility = if (showingRawRecords) View.GONE else View.VISIBLE
+        rawBody.visibility = if (showingRawRecords) View.VISIBLE else View.GONE
+        val visibleBody = if (showingRawRecords) rawBody else diaryBody
+        if (renderedRawMode != showingRawRecords) {
+            visibleBody.animate().cancel()
+            visibleBody.alpha = 0f
+            visibleBody.translationY = 8f * resources.displayMetrics.density
+            visibleBody.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(240L)
+                .start()
+            renderedRawMode = showingRawRecords
+        }
+        if (!showingRawRecords) return
+
+        rawBody.text = if (sourceRecords.isEmpty()) {
+            "这些来源片段已被删除，整理后的日记仍然保留。"
+        } else {
+            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+            sourceRecords.joinToString("\n\n") { record ->
+                val source = when (record.source) {
+                    "voice" -> "语音"
+                    "chat" -> "对话"
+                    "checkin" -> "问候"
+                    else -> "文字"
+                }
+                "${timeFormat.format(Date(record.createdAt))} · $source\n${record.content}"
+            }
         }
     }
 

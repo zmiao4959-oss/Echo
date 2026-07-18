@@ -11,7 +11,7 @@
     <!-- 顶部栏 -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="12dp"
@@ -75,7 +75,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingVertical="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="16dp"
         android:clipToPadding="false" />
 
     <!-- 加载指示器 -->
@@ -93,9 +94,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="?attr/echoBackground"
-        android:elevation="4dp">
+        android:paddingHorizontal="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="12dp"
+        android:background="?attr/echoSurface"
+        android:elevation="6dp">
 
         <EditText
             android:id="@+id/input_message"
@@ -114,7 +117,7 @@
             android:layout_height="48dp"
             android:layout_marginStart="4dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_btn_speak_now"
+            android:src="@drawable/ic_echo_mic"
             android:contentDescription="@string/voice_input"
             app:tint="?attr/echoTextSecondary" />
 
@@ -124,7 +127,7 @@
             android:layout_height="48dp"
             android:layout_marginStart="4dp"
             android:background="@drawable/bg_send_button"
-            android:src="@android:drawable/ic_menu_send"
+            android:src="@drawable/ic_echo_send"
             android:contentDescription="@string/send"
             app:tint="?attr/echoOnPrimary" />
     </LinearLayout>

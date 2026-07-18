@@ -115,20 +115,20 @@
     主题 5: 暗夜 (Dark)
     ============================================================ -->
     <style name="Theme.MyApplication.Dark" parent="Theme.MyApplication.Base">
-        <item name="echoPrimary">#BB86FC</item>
-        <item name="echoPrimaryDark">#9C64E8</item>
-        <item name="echoBackground">#121212</item>
-        <item name="echoSurface">#1E1E1E</item>
-        <item name="echoSurfaceVariant">#2C2C2C</item>
-        <item name="echoTextPrimary">#E0E0E0</item>
-        <item name="echoTextSecondary">#A0A0A0</item>
-        <item name="echoAccent">#03DAC6</item>
-        <item name="echoOnPrimary">#000000</item>
-        <item name="echoBorder">#3D3D3D</item>
-        <item name="echoDestructive">#CF6679</item>
-        <item name="echoHint">#757575</item>
-        <item name="echoBubbleUser">#BB86FC</item>
-        <item name="echoBubbleAssistant">#2C2C2C</item>
-        <item name="echoToolInfoBg">#2C2C2C</item>
+        <item name="echoPrimary">#A980FF</item>
+        <item name="echoPrimaryDark">#7657C8</item>
+        <item name="echoBackground">#0B0A0F</item>
+        <item name="echoSurface">#17151F</item>
+        <item name="echoSurfaceVariant">#211E2B</item>
+        <item name="echoTextPrimary">#F1EDF7</item>
+        <item name="echoTextSecondary">#AAA2B7</item>
+        <item name="echoAccent">#68DED6</item>
+        <item name="echoOnPrimary">#120D1A</item>
+        <item name="echoBorder">#383243</item>
+        <item name="echoDestructive">#E47B91</item>
+        <item name="echoHint">#756E80</item>
+        <item name="echoBubbleUser">#8E69DB</item>
+        <item name="echoBubbleAssistant">#18151F</item>
+        <item name="echoToolInfoBg">#211E2B</item>
     </style>
 </resources>

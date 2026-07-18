@@ -26,7 +26,7 @@
                 android:layout_height="48dp"
                 android:padding="12dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_revert"
+                android:src="@drawable/ic_echo_back"
                 app:tint="?attr/echoTextPrimary"
                 android:contentDescription="返回" />
 
@@ -70,7 +70,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:src="@android:drawable/ic_input_add"
+        android:src="@drawable/ic_echo_add"
         android:contentDescription="@string/add_schedule"
         app:backgroundTint="?attr/echoPrimary"
         app:tint="?attr/echoOnPrimary" />

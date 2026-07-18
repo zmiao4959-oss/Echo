@@ -71,7 +71,7 @@
     <string name="memory_page_subtitle">过去的你，也在这里</string>
     <string name="memory_search_hint">搜索过去的记录、日记和记忆…</string>
     <string name="memory_search_empty">未找到相关记录</string>
-    <string name="memory_today_echo">今天遇见的回忆</string>
+    <string name="memory_today_echo">随机漫游</string>
     <string name="memory_no_cards">还没有记忆卡片</string>
     <string name="memory_cards_section">记忆卡片</string>
     <string name="memory_empty_cards">记录生活后，Echo 会帮你提取值得记住的片段</string>

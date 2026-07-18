@@ -5,101 +5,152 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="4dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="1dp"
+    android:layout_marginVertical="6dp"
     app:cardBackgroundColor="?attr/echoSurface"
-    app:strokeWidth="0dp">
+    app:cardCornerRadius="18dp"
+    app:cardElevation="1dp"
+    app:strokeColor="?attr/echoBorder"
+    app:strokeWidth="1dp">
 
-    <!-- 双层结构：文字层始终占位（INVISIBLE），纹理层填充同高度 -->
-    <FrameLayout
+    <LinearLayout
+        android:id="@+id/text_layer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="?attr/echoSurface"
+        android:orientation="vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp">
 
-        <!-- ═══ 文字层（背后，始终占位但默认不可见） ═══ -->
         <LinearLayout
-            android:id="@+id/text_layer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingVertical="12dp"
-            android:paddingHorizontal="14dp"
-            android:background="?attr/echoSurface"
-            android:visibility="invisible"
-            tools:visibility="visible">
+            android:orientation="horizontal">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginEnd="12dp"
                 android:gravity="center_vertical"
-                android:layout_marginEnd="12dp">
+                android:orientation="horizontal">
 
-                <TextView
+                <com.example.myapplication.ui.widget.EchoMomentGlyphView
                     android:id="@+id/tv_time_icon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="18sp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:layout_marginEnd="4dp"
-                    tools:text="☀️" />
+                    android:importantForAccessibility="no" />
 
                 <TextView
                     android:id="@+id/tv_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="12sp"
                     android:textColor="?attr/echoHint"
+                    android:textSize="12sp"
                     tools:text="14:30" />
             </LinearLayout>
 
             <View
                 android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:layout_marginVertical="2dp"
+                android:layout_height="32dp"
                 android:background="?attr/echoBorder" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/tv_content"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginStart="12dp">
+                android:ellipsize="end"
+                android:lineSpacingExtra="2dp"
+                android:maxLines="4"
+                android:textColor="?attr/echoTextPrimary"
+                android:textSize="14sp"
+                tools:text="上午完成了代码审查，也终于把拖了几天的事情收尾。" />
 
-                <TextView
-                    android:id="@+id/tv_content"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="14sp"
-                    android:textColor="?attr/echoTextPrimary"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    tools:text="上午完成了代码审查..." />
-
-                <ImageButton
-                    android:id="@+id/btn_play_audio"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginStart="4dp"
-                    android:src="@android:drawable/ic_media_play"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/voice_input"
-                    android:visibility="gone"
-                    android:scaleType="centerInside"
-                    tools:visibility="visible" />
-            </LinearLayout>
+            <ImageButton
+                android:id="@+id/btn_play_audio"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/voice_input"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_echo_play"
+                app:tint="?attr/echoPrimary"
+                android:visibility="gone"
+                tools:visibility="visible" />
         </LinearLayout>
 
-        <!-- ═══ 纹理层（前面，纯纹理无文字，match_parent 高度对齐文字层） ═══ -->
-        <View
-            android:id="@+id/texture_layer"
+        <TextView
+            android:id="@+id/tv_linked_plan"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginTop="4dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:gravity="center_vertical"
+            android:text="◷ 已关联计划 · 轻触查看"
+            android:textColor="?attr/echoAccent"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/layout_inline_echo"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent"
-            android:visibility="visible" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
 
-    </FrameLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:alpha="0.65"
+                android:background="?attr/echoBorder" />
 
+            <TextView
+                android:id="@+id/tv_inline_echo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:lineSpacingExtra="2dp"
+                android:textColor="?attr/echoTextSecondary"
+                android:textSize="13sp"
+                tools:text="Echo · 你不是停下了，只是在给下一步留一点呼吸。" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="end|center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/btn_inline_echo_like"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:minWidth="64dp"
+                    android:paddingHorizontal="8dp"
+                    android:text="♡ 有共鸣"
+                    android:textColor="?attr/echoAccent"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/btn_inline_echo_regenerate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:minWidth="64dp"
+                    android:paddingHorizontal="8dp"
+                    android:text="↻ 换一句"
+                    android:textColor="?attr/echoTextSecondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

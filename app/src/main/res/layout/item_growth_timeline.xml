@@ -48,7 +48,7 @@
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:layout_marginTop="4dp"
-        android:src="@android:drawable/ic_media_play"
+        android:src="@drawable/ic_echo_play"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:contentDescription="播放语音"
         android:visibility="gone" />

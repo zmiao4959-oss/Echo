@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.data.model.MemoryCard
 import com.example.myapplication.policy.PastEchoPolicy
 import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.PageTextureManager
@@ -24,6 +25,8 @@ import com.example.myapplication.ui.diary.DiaryDetailActivity
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class MemoryFragment : Fragment() {
 
@@ -123,12 +126,16 @@ class MemoryFragment : Fragment() {
         view.findViewById<View>(R.id.btn_clear_search).setOnClickListener {
             clearSearch()
         }
+        cardRandom.setOnClickListener {
+            viewModel.shuffleRandomCard()
+        }
     }
 
     private fun setupAdapters() {
-        cardAdapter = MemoryCardAdapter { card ->
-            showCardOptions(card)
-        }
+        cardAdapter = MemoryCardAdapter(
+            onClick = { card -> showCardDetail(card) },
+            onLongClick = { card -> showCardOptions(card) }
+        )
         recyclerCards.layoutManager = LinearLayoutManager(requireContext())
         recyclerCards.adapter = cardAdapter
 
@@ -166,7 +173,19 @@ class MemoryFragment : Fragment() {
                     cardRandom.visibility = View.VISIBLE
                     tvNoRandom.visibility = View.GONE
                     tvRandomQuote.text = "「${card.quote}」"
-                    tvRandomDate.text = card.memoryDate
+                    tvRandomDate.text = formatMemoryDate(card.memoryDate)
+                    cardRandom.animate().cancel()
+                    cardRandom.alpha = 0.45f
+                    cardRandom.scaleX = 0.975f
+                    cardRandom.scaleY = 0.975f
+                    cardRandom.translationY = 6f * resources.displayMetrics.density
+                    cardRandom.animate()
+                        .alpha(1f)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .translationY(0f)
+                        .setDuration(240L)
+                        .start()
                 } else {
                     cardRandom.visibility = View.GONE
                     tvNoRandom.visibility = View.VISIBLE
@@ -261,6 +280,14 @@ class MemoryFragment : Fragment() {
             .show()
     }
 
+    private fun formatMemoryDate(value: String): String {
+        return runCatching {
+            val parsed = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(value)
+                ?: return value
+            SimpleDateFormat("M月d日", Locale.CHINESE).format(parsed)
+        }.getOrDefault(value)
+    }
+
     private fun updateSearchResultUI(result: MemorySearchUiResult) {
         val infoView = requireView().findViewById<TextView>(R.id.tv_search_info)
         infoView.text = "搜索「${result.query}」: ${result.totalCount} 条结果"
@@ -313,8 +340,76 @@ class MemoryFragment : Fragment() {
         resultsText.text = sb.toString().trim()
     }
 
-    private fun showCardOptions(card: com.example.myapplication.data.model.MemoryCard) {
+    private fun showCardDetail(card: MemoryCard) {
+        val details = buildString {
+            if (card.note.isNotBlank()) append(card.note)
+            card.mood?.takeIf { it.isNotBlank() }?.let {
+                if (isNotEmpty()) appendLine().appendLine()
+                append("心情：$it")
+            }
+            if (card.tags.isNotEmpty()) {
+                if (isNotEmpty()) appendLine().appendLine()
+                append("标签：${card.tags.joinToString(" · ")}")
+            }
+            if (isEmpty()) append("这张卡片暂时没有补充说明。")
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle("「${card.quote}」")
+            .setMessage(details)
+            .setPositiveButton("关闭", null)
+            .setNeutralButton("编辑") { _, _ -> showEditCardDialog(card) }
+            .show()
+    }
+
+    private fun showEditCardDialog(card: MemoryCard) {
+        val content = layoutInflater.inflate(R.layout.dialog_edit_memory_card, null)
+        val quote = content.findViewById<EditText>(R.id.et_memory_quote).apply {
+            setText(card.quote)
+            setSelection(text.length)
+        }
+        val note = content.findViewById<EditText>(R.id.et_memory_note).apply { setText(card.note) }
+        val mood = content.findViewById<EditText>(R.id.et_memory_mood).apply { setText(card.mood.orEmpty()) }
+        val tags = content.findViewById<EditText>(R.id.et_memory_tags).apply {
+            setText(card.tags.joinToString("，"))
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("整理这张回忆")
+            .setView(content)
+            .setPositiveButton("保存", null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val newQuote = quote.text.toString().trim()
+                if (newQuote.isEmpty()) {
+                    Toast.makeText(requireContext(), "想记住的内容不能为空", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val newTags = tags.text.toString()
+                    .split(Regex("[,，、]"))
+                    .map(String::trim)
+                    .filter(String::isNotEmpty)
+                    .distinct()
+                    .take(8)
+                viewModel.updateCard(
+                    card.copy(
+                        quote = newQuote,
+                        note = note.text.toString().trim(),
+                        mood = mood.text.toString().trim().ifEmpty { null },
+                        tags = newTags
+                    )
+                )
+                dialog.dismiss()
+                Toast.makeText(requireContext(), "回忆已整理", Toast.LENGTH_SHORT).show()
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showCardOptions(card: MemoryCard) {
         val items = arrayOf(
+            "编辑",
             if (card.pinned) "取消置顶" else "置顶",
             "删除"
         )
@@ -322,19 +417,14 @@ class MemoryFragment : Fragment() {
             .setTitle(card.quote.take(30) + "…")
             .setItems(items) { _, which ->
                 when (which) {
-                    0 -> viewModel.togglePin(card.id)
-                    1 -> {
+                    0 -> showEditCardDialog(card)
+                    1 -> viewModel.togglePin(card.id)
+                    2 -> {
                         AlertDialog.Builder(requireContext())
                             .setTitle("删除记忆卡片")
                             .setMessage("确定要删除这张卡片吗？")
                             .setPositiveButton("删除") { _, _ ->
-                                lifecycleScope.launch {
-                                    val repo = com.example.myapplication.data.repository.MemoryRepository()
-                                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                        repo.deleteCard(card.id)
-                                    }
-                                    viewModel.loadMemories()
-                                }
+                                viewModel.deleteCard(card.id)
                             }
                             .setNegativeButton("取消", null)
                             .show()

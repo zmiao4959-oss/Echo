@@ -104,7 +104,7 @@ class WorkspaceFilesActivity : ThemedActivity() {
                 textFileContent.text = content
                 textFileContent.isVisible = true
                 editFileContent.isVisible = false
-                btnEditSave.setImageResource(android.R.drawable.ic_menu_edit)
+                btnEditSave.setImageResource(R.drawable.ic_echo_edit)
 
                 listContainer.isVisible = false
                 editorContainer.isVisible = true
@@ -125,7 +125,7 @@ class WorkspaceFilesActivity : ThemedActivity() {
         editFileContent.setText(textFileContent.text.toString())
         textFileContent.isVisible = false
         editFileContent.isVisible = true
-        btnEditSave.setImageResource(android.R.drawable.ic_menu_save)
+        btnEditSave.setImageResource(R.drawable.ic_echo_save)
         editFileContent.requestFocus()
     }
 
@@ -141,7 +141,7 @@ class WorkspaceFilesActivity : ThemedActivity() {
                     textFileContent.text = content
                     textFileContent.isVisible = true
                     editFileContent.isVisible = false
-                    btnEditSave.setImageResource(android.R.drawable.ic_menu_edit)
+                    btnEditSave.setImageResource(R.drawable.ic_echo_edit)
                     Toast.makeText(this@WorkspaceFilesActivity, getString(R.string.file_saved), Toast.LENGTH_SHORT).show()
                     loadFileList()
                 } else {

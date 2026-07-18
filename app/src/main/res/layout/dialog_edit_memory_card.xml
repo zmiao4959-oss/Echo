@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="4dp">
+
+    <EditText
+        android:id="@+id/et_memory_quote"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="想记住的那句话"
+        android:inputType="textCapSentences|textMultiLine"
+        android:maxLines="4" />
+
+    <EditText
+        android:id="@+id/et_memory_note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="补充说明（可选）"
+        android:inputType="textCapSentences|textMultiLine"
+        android:maxLines="4" />
+
+    <EditText
+        android:id="@+id/et_memory_mood"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="当时的心情（可选）"
+        android:inputType="textCapSentences"
+        android:maxLines="1" />
+
+    <EditText
+        android:id="@+id/et_memory_tags"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="标签，用逗号分隔"
+        android:inputType="textCapSentences"
+        android:maxLines="1" />
+</LinearLayout>

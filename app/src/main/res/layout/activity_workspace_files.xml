@@ -28,7 +28,7 @@
                 android:layout_height="48dp"
                 android:padding="12dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_revert"
+                android:src="@drawable/ic_echo_back"
                 app:tint="?attr/echoTextPrimary"
                 android:contentDescription="返回" />
 
@@ -88,7 +88,7 @@
                 android:layout_height="48dp"
                 android:padding="12dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_revert"
+                android:src="@drawable/ic_echo_back"
                 app:tint="?attr/echoTextPrimary"
                 android:contentDescription="返回" />
 
@@ -107,7 +107,7 @@
                 android:layout_height="48dp"
                 android:padding="10dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_edit"
+                android:src="@drawable/ic_echo_edit"
                 app:tint="?attr/echoPrimary"
                 android:contentDescription="编辑" />
 

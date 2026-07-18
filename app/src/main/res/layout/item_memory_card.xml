@@ -70,7 +70,7 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:layout_marginStart="6dp"
-                android:src="@android:drawable/btn_star_big_on"
+                android:src="@drawable/ic_echo_spark"
                 android:visibility="gone"
                 app:tint="?attr/echoAccent"
                 tools:visibility="visible" />

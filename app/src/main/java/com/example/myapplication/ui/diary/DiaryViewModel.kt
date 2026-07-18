@@ -39,6 +39,9 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val _todayRecords = MutableStateFlow<List<LifeRecord>>(emptyList())
     val todayRecords: StateFlow<List<LifeRecord>> = _todayRecords.asStateFlow()
 
+    private val _detailSourceRecords = MutableStateFlow<List<LifeRecord>>(emptyList())
+    val detailSourceRecords: StateFlow<List<LifeRecord>> = _detailSourceRecords.asStateFlow()
+
     private val _isGenerating = MutableStateFlow(false)
     val isGenerating: StateFlow<Boolean> = _isGenerating.asStateFlow()
 
@@ -95,6 +98,21 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             _todayDiary.value = diaryRepo.getByDate(today())
             _todayRecords.value = recordRepo.getByDate(today())
             computeMoodStats(_moodStatsDays.value)
+        }
+    }
+
+    /** 加载某篇日记真正引用的原始片段，顺序保持为当天时间线。 */
+    fun loadSourceRecords(diaryId: String) {
+        viewModelScope.launch {
+            val diary = diaryRepo.getById(diaryId)
+            if (diary == null) {
+                _detailSourceRecords.value = emptyList()
+                return@launch
+            }
+            val sourceIds = diary.sourceRecordIds.toSet()
+            _detailSourceRecords.value = recordRepo.getByDate(diary.date)
+                .filter { it.id in sourceIds }
+                .sortedBy { it.createdAt }
         }
     }
 

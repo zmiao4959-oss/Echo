@@ -64,7 +64,7 @@
                 android:layout_marginStart="4dp"
                 android:padding="10dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_search"
+                android:src="@drawable/ic_echo_search"
                 android:contentDescription="搜索"
                 app:tint="?attr/echoPrimary" />
         </LinearLayout>
@@ -167,6 +167,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="3dp"
                 app:cardBackgroundColor="?attr/echoSurfaceVariant"
@@ -198,6 +201,14 @@
                         android:textSize="13sp"
                         android:textColor="?attr/echoHint"
                         tools:text="2025年6月24日" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="轻触换一条"
+                        android:textColor="?attr/echoAccent"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

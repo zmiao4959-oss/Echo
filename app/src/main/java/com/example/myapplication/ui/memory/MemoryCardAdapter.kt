@@ -16,6 +16,7 @@ import java.util.Date
 import java.util.Locale
 
 class MemoryCardAdapter(
+    private val onClick: ((MemoryCard) -> Unit)? = null,
     private val onLongClick: ((MemoryCard) -> Unit)? = null
 ) : ListAdapter<MemoryCard, MemoryCardAdapter.ViewHolder>(DiffCallback()) {
 
@@ -74,6 +75,7 @@ class MemoryCardAdapter(
             onLongClick?.invoke(card)
             true
         }
+        holder.card.setOnClickListener { onClick?.invoke(card) }
     }
 
     private fun formatDate(isoDate: String): String {

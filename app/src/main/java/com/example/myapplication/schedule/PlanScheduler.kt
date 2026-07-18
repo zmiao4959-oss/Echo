@@ -10,6 +10,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.myapplication.MyApplication
+import com.example.myapplication.R
 import com.example.myapplication.data.model.DailyDiary
 import com.example.myapplication.data.model.EchoPlan
 import com.example.myapplication.data.repository.DiaryRepository
@@ -468,7 +469,7 @@ $fragments
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ECHO)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_echo_notification)
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)

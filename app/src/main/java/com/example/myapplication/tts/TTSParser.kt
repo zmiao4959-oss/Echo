@@ -14,6 +14,8 @@ object TTSParser {
 
     /** 修复 LLM 偶尔输出的破损关闭标签（如 `</ mood>` `</mood >`） */
     private val BROKEN_CLOSE_RE = Regex("</\\s*mood\\s*>", setOf(RegexOption.IGNORE_CASE))
+    private val OPEN_MOOD_RE = Regex("<\\s*mood\\s*>", setOf(RegexOption.IGNORE_CASE))
+    private val STRAY_MOOD_TAG_RE = Regex("</?\\s*mood\\s*>", setOf(RegexOption.IGNORE_CASE))
 
     /**
      * 一段待合成的语音。
@@ -22,6 +24,24 @@ object TTSParser {
         val text: String,
         val mood: String? = null
     )
+
+    /**
+     * Returns the conversational text without TTS-only mood directives.
+     * While a streaming response contains an unfinished mood tag, the partial
+     * directive stays hidden until the closing tag arrives.
+     */
+    fun toDisplayText(script: String): String {
+        if (script.isBlank()) return ""
+        var cleaned = BROKEN_CLOSE_RE.replace(script, "</mood>")
+        cleaned = MOOD_TAG_RE.replace(cleaned, "")
+
+        val unfinishedMood = OPEN_MOOD_RE.find(cleaned)
+        if (unfinishedMood != null) {
+            cleaned = cleaned.substring(0, unfinishedMood.range.first)
+        }
+
+        return STRAY_MOOD_TAG_RE.replace(cleaned, "").trim()
+    }
 
     /**
      * 解析剧本文本，返回若干 TTSSegment。

@@ -44,8 +44,19 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
     fun loadMemories() {
         viewModelScope.launch {
             _cards.value = memoryRepo.getAllCards().sortedByDescending { it.createdAt }
-            _randomCard.value = memoryRepo.getRandomCard()
+            shuffleRandomCard()
             _profiles.value = memoryRepo.getEnabledProfiles()
+        }
+    }
+
+    /** 从已确认的记忆中换一张，尽量避免连续看到同一张。 */
+    fun shuffleRandomCard() {
+        val candidates = _cards.value.filter { it.status == "confirmed" }
+        val currentId = _randomCard.value?.id
+        _randomCard.value = when {
+            candidates.isEmpty() -> null
+            candidates.size == 1 -> candidates.first()
+            else -> candidates.filterNot { it.id == currentId }.random()
         }
     }
 
@@ -53,6 +64,20 @@ class MemoryViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             val card = memoryRepo.getCardById(cardId) ?: return@launch
             memoryRepo.updateCard(card.copy(pinned = !card.pinned))
+            loadMemories()
+        }
+    }
+
+    fun updateCard(card: MemoryCard) {
+        viewModelScope.launch {
+            memoryRepo.updateCard(card)
+            loadMemories()
+        }
+    }
+
+    fun deleteCard(cardId: String) {
+        viewModelScope.launch {
+            memoryRepo.deleteCard(cardId)
             loadMemories()
         }
     }

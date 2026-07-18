@@ -67,7 +67,7 @@ class GrowthTimelineAdapter(
         // Voice play button
         if (item is TimelineItem.LifeRecordItem && item.source == "voice" && item.audioPath != null && File(item.audioPath).exists()) {
             holder.playBtn.visibility = View.VISIBLE
-            holder.playBtn.setImageResource(android.R.drawable.ic_media_play)
+            holder.playBtn.setImageResource(R.drawable.ic_echo_play)
             holder.playBtn.setOnClickListener {
                 togglePlayback(item.audioPath, holder.playBtn)
             }
@@ -85,7 +85,7 @@ class GrowthTimelineAdapter(
             mediaPlayer?.stop()
             mediaPlayer?.release()
             mediaPlayer = null
-            playBtn.setImageResource(android.R.drawable.ic_media_play)
+            playBtn.setImageResource(R.drawable.ic_echo_play)
             return
         }
 
@@ -97,12 +97,12 @@ class GrowthTimelineAdapter(
                 prepare()
                 start()
                 setOnCompletionListener {
-                    playBtn.setImageResource(android.R.drawable.ic_media_play)
+                    playBtn.setImageResource(R.drawable.ic_echo_play)
                     release()
                     this@GrowthTimelineAdapter.mediaPlayer = null
                 }
             }
-            playBtn.setImageResource(android.R.drawable.ic_media_pause)
+            playBtn.setImageResource(R.drawable.ic_echo_pause)
         } catch (e: Exception) {
             Toast.makeText(playBtn.context, "无法播放语音", Toast.LENGTH_SHORT).show()
             mediaPlayer?.release()

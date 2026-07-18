@@ -156,15 +156,15 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
 
     /** 记住用户认可的回声语气，后续生成仅作为本地示例使用。 */
     fun likeMicroEcho(recordId: String) {
-        val snapshot = _microEcho.value as? MicroEchoState.Ready ?: return
-        if (snapshot.recordId != recordId || snapshot.liked) return
         viewModelScope.launch {
             try {
                 val record = recordRepo.getById(recordId) ?: return@launch
+                val echo = record.microEcho?.takeIf { it.isNotBlank() } ?: return@launch
+                if (record.microEchoLiked) return@launch
                 recordRepo.update(record.copy(microEchoLiked = true))
                 refreshRecordsAndFootprint()
                 val current = _microEcho.value as? MicroEchoState.Ready
-                if (current?.recordId == recordId && current.text == snapshot.text) {
+                if (current?.recordId == recordId && current.text == echo) {
                     _microEcho.value = current.copy(liked = true)
                 }
             } catch (_: Exception) {
@@ -175,18 +175,23 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
 
     /** 拒绝当前表达并基于已积累的喜好重新生成一句。 */
     fun regenerateMicroEcho(recordId: String) {
-        val snapshot = _microEcho.value as? MicroEchoState.Ready ?: return
-        if (snapshot.recordId != recordId) return
-
         microEchoJob?.cancel()
         _microEcho.value = MicroEchoState.Generating(recordId)
         microEchoJob = viewModelScope.launch {
+            var fallbackSnapshot: MicroEchoState.Ready? = null
             try {
                 val record = recordRepo.getById(recordId)
-                    ?: return@launch restoreEchoSnapshot(snapshot)
+                    ?: return@launch hideGeneratingEcho(recordId)
+                val previousEcho = record.microEcho?.takeIf { it.isNotBlank() }
+                    ?: return@launch hideGeneratingEcho(recordId)
+                fallbackSnapshot = MicroEchoState.Ready(
+                    recordId = record.id,
+                    text = previousEcho,
+                    liked = record.microEchoLiked
+                )
                 val rejectedForRecord = MicroEchoFeedbackPolicy.addRejected(
                     record.rejectedMicroEchoes,
-                    snapshot.text
+                    previousEcho
                 )
                 val pendingRecord = record.copy(
                     microEchoLiked = false,
@@ -205,7 +210,52 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
-                restoreEchoSnapshot(snapshot)
+                fallbackSnapshot?.let(::restoreEchoSnapshot) ?: hideGeneratingEcho(recordId)
+            }
+        }
+    }
+
+    /** 修改片段正文，并为新内容重新生成与之匹配的微回声。 */
+    fun updateRecordContent(recordId: String, content: String) {
+        val trimmed = content.trim()
+        if (trimmed.isEmpty()) return
+
+        microEchoJob?.cancel()
+        _microEcho.value = MicroEchoState.Generating(recordId)
+        microEchoJob = viewModelScope.launch {
+            try {
+                val original = recordRepo.getById(recordId)
+                    ?: return@launch hideGeneratingEcho(recordId)
+                val updated = original.copy(
+                    content = trimmed,
+                    microEcho = null,
+                    microEchoLiked = false
+                )
+                recordRepo.update(updated)
+                refreshRecordsAndFootprint()
+
+                val context = buildEchoContext(updated, replaceExisting = true)
+                val echo = microEchoGenerator.generate(
+                    content = updated.content,
+                    recentContents = context.recentContents,
+                    likedEchoes = context.preferences.liked,
+                    rejectedEchoes = context.preferences.rejected
+                )
+                recordRepo.update(updated.copy(microEcho = echo))
+                refreshRecordsAndFootprint()
+                _microEcho.value = MicroEchoState.Ready(recordId, echo, liked = false)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                val current = recordRepo.getById(recordId)
+                if (current != null) {
+                    val fallback = MicroEchoGenerator.localFallback(current.content)
+                    recordRepo.update(current.copy(microEcho = fallback, microEchoLiked = false))
+                    refreshRecordsAndFootprint()
+                    _microEcho.value = MicroEchoState.Ready(recordId, fallback, liked = false)
+                } else {
+                    hideGeneratingEcho(recordId)
+                }
             }
         }
     }
@@ -282,6 +332,12 @@ class TodayViewModel(application: Application) : AndroidViewModel(application) {
     private fun restoreEchoSnapshot(snapshot: MicroEchoState.Ready) {
         if ((_microEcho.value as? MicroEchoState.Generating)?.recordId == snapshot.recordId) {
             _microEcho.value = snapshot
+        }
+    }
+
+    private fun hideGeneratingEcho(recordId: String) {
+        if ((_microEcho.value as? MicroEchoState.Generating)?.recordId == recordId) {
+            _microEcho.value = MicroEchoState.Hidden
         }
     }
 
