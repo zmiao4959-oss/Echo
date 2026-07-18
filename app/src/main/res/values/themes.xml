@@ -15,7 +15,8 @@
         <item name="colorSurface">?attr/echoSurface</item>
         <item name="colorOnPrimary">?attr/echoOnPrimary</item>
         <item name="colorOnSurface">?attr/echoTextPrimary</item>
-        <item name="android:statusBarColor">?attr/echoBackground</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
     <!-- ── 卡片样式 ── -->

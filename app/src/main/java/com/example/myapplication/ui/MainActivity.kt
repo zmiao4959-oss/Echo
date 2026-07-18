@@ -10,19 +10,33 @@ import android.widget.ImageButton
 import android.widget.Toast
 import android.content.res.ColorStateList
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.ui.diary.DiaryViewModel
 import com.example.myapplication.ui.diary.DiaryFragment
 import com.example.myapplication.ui.memory.MemoryFragment
 import com.example.myapplication.ui.plan.PlanFragment
 import com.example.myapplication.ui.today.TodayFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MainActivity : ThemedActivity() {
 
     private lateinit var topBar: View
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var btnProfile: ImageButton
+    private lateinit var btnCalendar: ImageButton
+
+    private val diaryViewModel: DiaryViewModel by lazy {
+        ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory(application as MyApplication))
+            .get(DiaryViewModel::class.java)
+    }
 
     // 持有 Fragment 实例，避免重复创建
     private var todayFragment: TodayFragment? = null
@@ -44,6 +58,9 @@ class MainActivity : ThemedActivity() {
         }
 
         topBar = findViewById(R.id.top_bar)
+
+        btnCalendar = findViewById(R.id.btn_calendar)
+        btnCalendar.setOnClickListener { openCalendar() }
 
         btnProfile = findViewById(R.id.btn_profile)
         btnProfile.setOnClickListener { openProfile(it) }
@@ -68,6 +85,9 @@ class MainActivity : ThemedActivity() {
 
         // 定时闹钟已在 MyApplication.onCreate() 中统一恢复，此处不再重复
 
+        // Edge-to-Edge: 处理系统栏 insets
+        setupInsets()
+
         // 请求通知权限 (Android 13+)
         requestNotificationPermissionIfNeeded()
         applyPageTextures()
@@ -90,6 +110,32 @@ class MainActivity : ThemedActivity() {
         val config = (application as MyApplication).appConfig
         PageTextureManager.apply(topBar, config.getPageTextureKey(PageTextureManager.TOP_BAR))
         PageTextureManager.apply(bottomNav, config.getPageTextureKey(PageTextureManager.BOTTOM_BAR))
+    }
+
+    /** Edge-to-Edge: 为顶栏/底栏/内容容器补充系统栏的 padding */
+    private fun setupInsets() {
+        val fragmentContainer: View = findViewById(R.id.fragment_container)
+
+        // 顶栏：顶部留出状态栏高度，让 topBar 背景延伸到状态栏后方但内容不被遮挡
+        ViewCompat.setOnApplyWindowInsetsListener(topBar) { v, insets ->
+            val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = statusBars.top)
+            insets
+        }
+
+        // 底部导航：底部留出导航栏高度
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
+            val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.updatePadding(bottom = navBars.bottom)
+            insets
+        }
+
+        // 内容容器：底部额外留出导航栏高度（已通过 XML paddingBottom="64dp" 留出 bottomNav 空间）
+        ViewCompat.setOnApplyWindowInsetsListener(fragmentContainer) { v, insets ->
+            val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.updatePadding(bottom = navBars.bottom + (64 * resources.displayMetrics.density).toInt())
+            insets
+        }
     }
 
     // ── Fragment 切换 ──
@@ -172,6 +218,18 @@ class MainActivity : ThemedActivity() {
     private fun applyAvatar() {
         val path = (application as MyApplication).appConfig.avatarPath
         AvatarManager.applyToImageView(btnProfile, path)
+    }
+
+    private fun openCalendar() {
+        val dialog = CalendarDialog(this) { date ->
+            diaryViewModel.generateDiaryForDate(date)
+            lifecycleScope.launch {
+                diaryViewModel.statusMessage.collectLatest { msg ->
+                    msg?.let { Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show() }
+                }
+            }
+        }
+        dialog.show()
     }
 
     fun openProfile(view: View) {

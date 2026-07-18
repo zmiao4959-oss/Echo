@@ -147,6 +147,28 @@ class AppConfig(context: Context) {
         prefs.edit().putString("card_texture_$category", key).apply()
     }
 
+    // ── 生活记录分时段纹理 ──
+    /** 是否启用分时段纹理（仅 LIFE_RECORD 卡片生效） */
+    var lifeRecordUseTimeTexture: Boolean
+        get() = prefs.getBoolean(KEY_LIFE_RECORD_USE_TIME_TEXTURE, false)
+        set(value) = prefs.edit().putBoolean(KEY_LIFE_RECORD_USE_TIME_TEXTURE, value).apply()
+
+    /** 获取某个时间段的纹理 key，未设置时返回 "none" */
+    fun getLifeRecordPeriodTextureKey(period: String): String =
+        prefs.getString("card_texture_life_record_$period", "none") ?: "none"
+
+    fun setLifeRecordPeriodTextureKey(period: String, key: String) {
+        prefs.edit().putString("card_texture_life_record_$period", key).apply()
+    }
+
+    // ── 生活记录文字层分时段纹理（左滑后的文字层背景） ──
+    fun getLifeRecordTextLayerPeriodTextureKey(period: String): String =
+        prefs.getString("card_texture_life_record_text_$period", "none") ?: "none"
+
+    fun setLifeRecordTextLayerPeriodTextureKey(period: String, key: String) {
+        prefs.edit().putString("card_texture_life_record_text_$period", key).apply()
+    }
+
     // ── 页面纹理（四个底栏页） ──
     fun getPageTextureKey(category: String): String =
         prefs.getString("page_texture_$category", "none") ?: "none"
@@ -187,6 +209,7 @@ class AppConfig(context: Context) {
         private const val KEY_BACKGROUND = "background_key"
         private const val KEY_CARD_OPACITY = "card_opacity"
         private const val KEY_CARD_CORNER_RADIUS = "card_corner_radius"
+        private const val KEY_LIFE_RECORD_USE_TIME_TEXTURE = "life_record_use_time_texture"
         private const val KEY_RETRIEVAL_MODE = "retrieval_mode"
         private const val KEY_EMBEDDING_API_KEY = "embedding_api_key"
         private const val KEY_EMBEDDING_BASE_URL = "embedding_base_url"

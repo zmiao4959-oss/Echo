@@ -240,27 +240,34 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
 
     /** 手动生成今日日记 */
     fun generateTodayDiary() {
+        generateDiaryForDate(today())
+    }
+
+    /** 为指定日期生成日记（补生成） */
+    fun generateDiaryForDate(date: String) {
         viewModelScope.launch {
-            val records = recordRepo.getByDate(today())
+            val records = recordRepo.getByDate(date)
             if (records.isEmpty()) {
-                _statusMessage.value = "今天还没有生活记录"
+                _statusMessage.value = "${date} 没有生活记录"
                 return@launch
             }
 
             _isGenerating.value = true
-            _statusMessage.value = "正在生成日记…"
+            _statusMessage.value = "正在为 $date 生成日记…"
 
             try {
-                val diary = generateDiaryFromRecords(records)
+                val diary = generateDiaryFromRecords(records, date)
                 diaryRepo.add(diary)
-                _todayDiary.value = diary
+                if (date == today()) {
+                    _todayDiary.value = diary
+                }
                 _diaries.value = diaryRepo.getAll()
+                _statusMessage.value = "$date 日记已生成"
             } catch (e: Exception) {
-                Log.e("DiaryVM", "Diary generation failed", e)
+                Log.e("DiaryVM", "Diary generation failed for $date", e)
                 _statusMessage.value = "日记生成失败: ${e.message}"
             } finally {
                 _isGenerating.value = false
-                _statusMessage.value = null
             }
         }
     }
@@ -287,7 +294,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             _isGenerating.value = true
             _statusMessage.value = "正在重新生成…"
             try {
-                val newDiary = generateDiaryFromRecords(records)
+                val newDiary = generateDiaryFromRecords(records, diary.date)
                 // 原地更新，保留原 id 和 date，UI 自动刷新
                 val updated = diary.copy(
                     title = newDiary.title,
@@ -312,7 +319,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** 调用 LLM 根据 LifeRecord 生成 DailyDiary */
-    private suspend fun generateDiaryFromRecords(records: List<LifeRecord>): DailyDiary =
+    private suspend fun generateDiaryFromRecords(records: List<LifeRecord>, date: String): DailyDiary =
         withContext(Dispatchers.IO) {
             val config = app.appConfig
             if (!config.isLLMConfigured) throw IllegalStateException("LLM 未配置")
@@ -361,7 +368,7 @@ $fragmentsText
 
             DailyDiary(
                 id = UUID.randomUUID().toString(),
-                date = today(),
+                date = date,
                 title = json.get("title")?.asString ?: "日记",
                 summary = json.get("summary")?.asString ?: "",
                 diaryText = json.get("diaryText")?.asString ?: response.content,

@@ -50,6 +50,46 @@ object CardTextureManager {
         else -> cat
     }
 
+    // ── 时间段纹理 ──
+    const val PERIOD_DAWN = "dawn"
+    const val PERIOD_MORNING = "morning"
+    const val PERIOD_FORENOON = "forenoon"
+    const val PERIOD_NOON = "noon"
+    const val PERIOD_AFTERNOON = "afternoon"
+    const val PERIOD_DUSK = "dusk"
+    const val PERIOD_EVENING = "evening"
+    const val PERIOD_NIGHT = "night"
+
+    val TIME_PERIODS: List<String> = listOf(
+        PERIOD_DAWN, PERIOD_MORNING, PERIOD_FORENOON, PERIOD_NOON,
+        PERIOD_AFTERNOON, PERIOD_DUSK, PERIOD_EVENING, PERIOD_NIGHT
+    )
+
+    /** 时间段 → 显示名 */
+    fun periodLabel(period: String): String = when (period) {
+        PERIOD_DAWN -> "清晨 (5-6)"
+        PERIOD_MORNING -> "早晨 (7-8)"
+        PERIOD_FORENOON -> "上午 (9-11)"
+        PERIOD_NOON -> "中午 (12-13)"
+        PERIOD_AFTERNOON -> "下午 (14-16)"
+        PERIOD_DUSK -> "傍晚 (17-18)"
+        PERIOD_EVENING -> "晚上 (19-21)"
+        PERIOD_NIGHT -> "深夜 (22-4)"
+        else -> period
+    }
+
+    /** 小时 → 时间段 key */
+    fun periodForHour(hour: Int): String = when (hour) {
+        in 5..6   -> PERIOD_DAWN
+        in 7..8   -> PERIOD_MORNING
+        in 9..11  -> PERIOD_FORENOON
+        in 12..13 -> PERIOD_NOON
+        in 14..16 -> PERIOD_AFTERNOON
+        in 17..18 -> PERIOD_DUSK
+        in 19..21 -> PERIOD_EVENING
+        else      -> PERIOD_NIGHT
+    }
+
     // ── 自定义纹理数据 ──
     data class CustomTexture(val id: String, var name: String, val filePath: String)
 
@@ -236,6 +276,25 @@ object CardTextureManager {
         if (opacity >= 100) return base or (0xFF shl 24)  // 确保完全不透明
         val alpha = (255 * opacity / 100)
         return (alpha shl 24) or (base and 0x00FFFFFF)
+    }
+
+    /**
+     * 给普通 View（非 MaterialCardView）设置纹理背景，带渐变遮罩。
+     * 适用于卡片内部子 View 的背景纹理（如文字层）。
+     */
+    fun applyTextureToView(view: View, textureKey: String, scrimBaseColor: Int, opacity: Int) {
+        if (textureKey == NONE) {
+            view.background = null
+            return
+        }
+        val bitmap = loadBitmap(view.resources, textureKey) ?: run {
+            view.background = null
+            return
+        }
+        val alpha = if (opacity >= 100) 255 else (255 * opacity / 100)
+        val overlay = if (opacity <= 0) Color.TRANSPARENT
+            else (alpha shl 24) or (scrimBaseColor and 0x00FFFFFF)
+        view.background = CenterCropDrawable(bitmap, overlay)
     }
 
     /** 查找或创建卡片内的纹理背景 View（tag = "card_texture_bg"） */

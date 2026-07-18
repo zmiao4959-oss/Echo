@@ -24,6 +24,8 @@ class ProfileActivity : ThemedActivity() {
     // 当前正在编辑纹理的类别（添加自定义纹理时用）
     private var pendingTextureCategory: String? = null
     private var pendingIsPageTexture: Boolean = false
+    private var pendingLifeRecordPeriod: String? = null  // 分时段纹理：指定时段
+    private var pendingIsTextLayerTexture: Boolean = false  // true=文字层纹理，false=正面纹理
 
     private val pickAvatarImage = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -329,15 +331,280 @@ class ProfileActivity : ThemedActivity() {
         val categories = CardTextureManager.ALL_CATEGORIES
         val labels = categories.map {
             val key = config.getCardTextureKey(it)
-            "${CardTextureManager.categoryLabel(it)}  →  ${CardTextureManager.textureLabel(this, key)}"
+            val label = if (it == CardTextureManager.LIFE_RECORD && config.lifeRecordUseTimeTexture) {
+                "⏰ ${CardTextureManager.categoryLabel(it)}  →  分时段"
+            } else {
+                "${CardTextureManager.categoryLabel(it)}  →  ${CardTextureManager.textureLabel(this, key)}"
+            }
+            label
         }.toTypedArray()
 
         AlertDialog.Builder(this)
             .setTitle("选择卡片类型")
             .setItems(labels) { _, which ->
-                showCardTexturePicker(categories[which])
+                val cat = categories[which]
+                if (cat == CardTextureManager.LIFE_RECORD) {
+                    showLifeRecordTextureConfig()
+                } else {
+                    showCardTexturePicker(cat)
+                }
             }
             .setNegativeButton("取消", null)
+            .show()
+    }
+
+    // ── 生活记录分时段纹理 ──
+
+    /** 生活记录纹理配置：开关 + 默认纹理 / 各时段单独设置 */
+    private fun showLifeRecordTextureConfig() {
+        val config = (application as MyApplication).appConfig
+        val usePeriod = config.lifeRecordUseTimeTexture
+
+        val items = mutableListOf<String>()
+        // 选项 0：开关
+        items.add(if (usePeriod) "✅ 分时段纹理（已启用）" else "☐ 分时段纹理（已关闭）")
+        // 选项 1：默认纹理（始终可用）
+        val defaultKey = config.getCardTextureKey(CardTextureManager.LIFE_RECORD)
+        items.add("默认纹理  →  ${CardTextureManager.textureLabel(this, defaultKey)}")
+        // 选项 2+：各时段（仅启用时显示，点击进入子菜单选正面/文字层）
+        if (usePeriod) {
+            for (period in CardTextureManager.TIME_PERIODS) {
+                val frontKey = config.getLifeRecordPeriodTextureKey(period)
+                val frontLabel = if (frontKey == CardTextureManager.NONE) "（继承默认）" else CardTextureManager.textureLabel(this, frontKey)
+                val textKey = config.getLifeRecordTextLayerPeriodTextureKey(period)
+                val textLabel = if (textKey == CardTextureManager.NONE) "（继承默认）" else CardTextureManager.textureLabel(this, textKey)
+                items.add("${CardTextureManager.periodLabel(period)}  正面:$frontLabel  文字:$textLabel")
+            }
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("生活记录 — 纹理配置")
+            .setItems(items.toTypedArray()) { _, which ->
+                when {
+                    which == 0 -> {
+                        config.lifeRecordUseTimeTexture = !usePeriod
+                        ThemeManager.pendingChange = true
+                        showLifeRecordTextureConfig()
+                    }
+                    which == 1 -> {
+                        showCardTexturePicker(CardTextureManager.LIFE_RECORD)
+                    }
+                    usePeriod && which >= 2 -> {
+                        val periodIdx = which - 2
+                        showPeriodLayerPicker(CardTextureManager.TIME_PERIODS[periodIdx])
+                    }
+                }
+            }
+            .setNegativeButton("返回", null)
+            .show()
+    }
+
+    /** 选择配置正面纹理还是文字层纹理 */
+    private fun showPeriodLayerPicker(period: String) {
+        AlertDialog.Builder(this)
+            .setTitle("${CardTextureManager.periodLabel(period)}")
+            .setItems(arrayOf("正面纹理（卡片）", "文字层纹理")) { _, which ->
+                when (which) {
+                    0 -> showPeriodTexturePicker(period)
+                    1 -> showTextLayerPeriodTexturePicker(period)
+                }
+            }
+            .setNegativeButton("返回") { _, _ -> showLifeRecordTextureConfig() }
+            .show()
+    }
+
+    /** 为指定时间段选择文字层纹理 */
+    private fun showTextLayerPeriodTexturePicker(period: String) {
+        val config = (application as MyApplication).appConfig
+        val allTextures = CardTextureManager.allTextureKeys(this)
+        val currentKey = config.getLifeRecordTextLayerPeriodTextureKey(period)
+        val currentIndex = allTextures.indexOfFirst { it.first == currentKey }.coerceAtLeast(0)
+        val labels = allTextures.map { it.second }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("${CardTextureManager.periodLabel(period)} — 文字层纹理")
+            .setSingleChoiceItems(labels, currentIndex) { dialog, which ->
+                val (newKey, _) = allTextures[which]
+                if (newKey != currentKey) {
+                    if (newKey == CardTextureManager.NONE || newKey.startsWith("texture_")) {
+                        config.setLifeRecordTextLayerPeriodTextureKey(period, newKey)
+                        dialog.dismiss()
+                        ThemeManager.pendingChange = true
+                        showLifeRecordTextureConfig()
+                    } else {
+                        dialog.dismiss()
+                        showTextLayerPeriodCustomActions(period, newKey)
+                    }
+                }
+            }
+            .setNeutralButton("＋ 添加纹理") { dialog, _ ->
+                dialog.dismiss()
+                pendingTextureCategory = CardTextureManager.LIFE_RECORD
+                pendingIsPageTexture = false
+                pendingLifeRecordPeriod = period
+                pendingIsTextLayerTexture = true
+                pickTextureImage.launch("image/*")
+            }
+            .setNegativeButton("返回") { _, _ -> showLifeRecordTextureConfig() }
+            .show()
+    }
+
+    /** 文字层时间段自定义纹理的操作 */
+    private fun showTextLayerPeriodCustomActions(period: String, textureKey: String) {
+        val name = CardTextureManager.textureLabel(this, textureKey)
+
+        AlertDialog.Builder(this)
+            .setTitle(name)
+            .setItems(arrayOf("使用此纹理", "重命名", "删除")) { _, which ->
+                when (which) {
+                    0 -> {
+                        (application as MyApplication).appConfig.setLifeRecordTextLayerPeriodTextureKey(period, textureKey)
+                        ThemeManager.pendingChange = true
+                        finish()
+                        startActivity(Intent(this@ProfileActivity, ProfileActivity::class.java))
+                    }
+                    1 -> {
+                        showTextLayerPeriodRenameDialog(period, textureKey, name)
+                    }
+                    2 -> {
+                        showTextLayerPeriodDeleteDialog(period, textureKey, name)
+                    }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showTextLayerPeriodRenameDialog(period: String, textureKey: String, oldName: String) {
+        val input = EditText(this).apply {
+            setText(oldName)
+            setSingleLine(true)
+            setSelection(oldName.length)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("重命名纹理")
+            .setView(input)
+            .setPositiveButton("确定") { _, _ ->
+                val newName = input.text.toString().trim().ifEmpty { return@setPositiveButton }
+                CardTextureManager.renameCustom(this, textureKey, newName)
+                showTextLayerPeriodTexturePicker(period)
+            }
+            .setNegativeButton("取消") { _, _ -> showTextLayerPeriodTexturePicker(period) }
+            .show()
+    }
+
+    private fun showTextLayerPeriodDeleteDialog(period: String, textureKey: String, name: String) {
+        AlertDialog.Builder(this)
+            .setTitle("删除「$name」")
+            .setMessage("确定要删除这个自定义纹理吗？")
+            .setPositiveButton("删除") { _, _ ->
+                CardTextureManager.deleteCustom(this, textureKey)
+                val config = (application as MyApplication).appConfig
+                if (config.getLifeRecordTextLayerPeriodTextureKey(period) == textureKey) {
+                    config.setLifeRecordTextLayerPeriodTextureKey(period, CardTextureManager.NONE)
+                }
+                ThemeManager.pendingChange = true
+                finish()
+                startActivity(Intent(this@ProfileActivity, ProfileActivity::class.java))
+            }
+            .setNegativeButton("取消") { _, _ -> showTextLayerPeriodTexturePicker(period) }
+            .show()
+    }
+
+    /** 为指定时间段选择纹理 */
+    private fun showPeriodTexturePicker(period: String) {
+        val config = (application as MyApplication).appConfig
+        val allTextures = CardTextureManager.allTextureKeys(this)
+        val currentKey = config.getLifeRecordPeriodTextureKey(period)
+        val currentIndex = allTextures.indexOfFirst { it.first == currentKey }.coerceAtLeast(0)
+        val labels = allTextures.map { it.second }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("${CardTextureManager.periodLabel(period)} — 纹理")
+            .setSingleChoiceItems(labels, currentIndex) { dialog, which ->
+                val (newKey, _) = allTextures[which]
+                if (newKey != currentKey) {
+                    if (newKey == CardTextureManager.NONE || newKey.startsWith("texture_")) {
+                        config.setLifeRecordPeriodTextureKey(period, newKey)
+                        dialog.dismiss()
+                        ThemeManager.pendingChange = true
+                        showLifeRecordTextureConfig()
+                    } else {
+                        dialog.dismiss()
+                        showPeriodCustomActions(period, newKey)
+                    }
+                }
+            }
+            .setNeutralButton("＋ 添加纹理") { dialog, _ ->
+                dialog.dismiss()
+                pendingTextureCategory = CardTextureManager.LIFE_RECORD
+                pendingIsPageTexture = false
+                pendingLifeRecordPeriod = period
+                pickTextureImage.launch("image/*")
+            }
+            .setNegativeButton("返回") { _, _ -> showLifeRecordTextureConfig() }
+            .show()
+    }
+
+    /** 时间段自定义纹理的操作 */
+    private fun showPeriodCustomActions(period: String, textureKey: String) {
+        val name = CardTextureManager.textureLabel(this, textureKey)
+
+        AlertDialog.Builder(this)
+            .setTitle(name)
+            .setItems(arrayOf("使用此纹理", "重命名", "删除")) { _, which ->
+                when (which) {
+                    0 -> {
+                        (application as MyApplication).appConfig.setLifeRecordPeriodTextureKey(period, textureKey)
+                        ThemeManager.pendingChange = true
+                        finish()
+                        startActivity(Intent(this@ProfileActivity, ProfileActivity::class.java))
+                    }
+                    1 -> {
+                        showPeriodRenameDialog(period, textureKey, name)
+                    }
+                    2 -> {
+                        showPeriodDeleteDialog(period, textureKey, name)
+                    }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showPeriodRenameDialog(period: String, textureKey: String, oldName: String) {
+        val input = EditText(this).apply {
+            setText(oldName)
+            setSingleLine(true)
+            setSelection(oldName.length)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("重命名纹理")
+            .setView(input)
+            .setPositiveButton("确定") { _, _ ->
+                val newName = input.text.toString().trim().ifEmpty { return@setPositiveButton }
+                CardTextureManager.renameCustom(this, textureKey, newName)
+                showPeriodTexturePicker(period)
+            }
+            .setNegativeButton("取消") { _, _ -> showPeriodTexturePicker(period) }
+            .show()
+    }
+
+    private fun showPeriodDeleteDialog(period: String, textureKey: String, name: String) {
+        AlertDialog.Builder(this)
+            .setTitle("删除「$name」")
+            .setMessage("确定要删除这个自定义纹理吗？")
+            .setPositiveButton("删除") { _, _ ->
+                CardTextureManager.deleteCustom(this, textureKey)
+                val config = (application as MyApplication).appConfig
+                if (config.getLifeRecordPeriodTextureKey(period) == textureKey) {
+                    config.setLifeRecordPeriodTextureKey(period, CardTextureManager.NONE)
+                }
+                ThemeManager.pendingChange = true
+                finish()
+                startActivity(Intent(this@ProfileActivity, ProfileActivity::class.java))
+            }
+            .setNegativeButton("取消") { _, _ -> showPeriodTexturePicker(period) }
             .show()
     }
 
@@ -407,6 +674,11 @@ class ProfileActivity : ThemedActivity() {
             hint = "输入纹理名称"
             setSingleLine(true)
         }
+        val period = pendingLifeRecordPeriod
+        val isTextLayer = pendingIsTextLayerTexture
+        pendingLifeRecordPeriod = null
+        pendingIsTextLayerTexture = false
+
         AlertDialog.Builder(this)
             .setTitle("命名纹理")
             .setView(input)
@@ -417,6 +689,10 @@ class ProfileActivity : ThemedActivity() {
                     val config = (application as MyApplication).appConfig
                     if (isPageTexture) {
                         config.setPageTextureKey(category, key)
+                    } else if (period != null && isTextLayer) {
+                        config.setLifeRecordTextLayerPeriodTextureKey(period, key)
+                    } else if (period != null) {
+                        config.setLifeRecordPeriodTextureKey(period, key)
                     } else {
                         config.setCardTextureKey(category, key)
                     }

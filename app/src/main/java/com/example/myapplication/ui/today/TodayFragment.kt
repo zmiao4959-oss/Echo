@@ -286,8 +286,12 @@ class TodayFragment : Fragment() {
         }
 
         AlertDialog.Builder(requireContext())
+            .setTitle("记录详情")
             .setMessage(sb.toString().trim())
             .setPositiveButton("关闭", null)
+            .setNegativeButton("删除") { _, _ ->
+                showDeleteConfirmation(record.id)
+            }
             .show()
     }
 

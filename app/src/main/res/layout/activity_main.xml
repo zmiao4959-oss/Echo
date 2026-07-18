@@ -35,6 +35,16 @@
                 tools:ignore="VisualLintSystemUi" />
 
             <ImageButton
+                android:id="@+id/btn_calendar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="日历"
+                android:padding="10dp"
+                android:src="@android:drawable/ic_menu_month"
+                app:tint="?attr/echoTextPrimary" />
+
+            <ImageButton
                 android:id="@+id/btn_profile"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
