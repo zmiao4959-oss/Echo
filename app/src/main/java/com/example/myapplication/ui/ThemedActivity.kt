@@ -5,6 +5,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import com.example.myapplication.MyApplication
 
 /**
@@ -24,6 +26,20 @@ abstract class ThemedActivity : AppCompatActivity() {
         ThemeManager.applyTheme(this, config.themeKey)
         super.onCreate(savedInstanceState)
         setupEdgeToEdge()
+        supportFragmentManager.registerFragmentLifecycleCallbacks(
+            object : FragmentManager.FragmentLifecycleCallbacks() {
+                override fun onFragmentViewCreated(
+                    fm: FragmentManager,
+                    fragment: Fragment,
+                    view: View,
+                    savedInstanceState: Bundle?,
+                ) {
+                    FontManager.applyToView(view, config.fontKey, config.themeKey)
+                    CardTextureManager.applyThemeDefaults(view)
+                }
+            },
+            true,
+        )
     }
 
     /** 启用 Edge-to-Edge：内容延伸到系统栏后方，栏位透明 */
@@ -39,16 +55,19 @@ abstract class ThemedActivity : AppCompatActivity() {
 
     override fun setContentView(layoutResID: Int) {
         super.setContentView(layoutResID)
-        FontManager.applyToActivity(this, config.fontKey)
+        FontManager.applyToActivity(this, config.fontKey, config.themeKey)
+        CardTextureManager.applyThemeDefaults(window.decorView)
     }
 
     override fun setContentView(view: View) {
         super.setContentView(view)
-        FontManager.applyToActivity(this, config.fontKey)
+        FontManager.applyToActivity(this, config.fontKey, config.themeKey)
+        CardTextureManager.applyThemeDefaults(window.decorView)
     }
 
     override fun setContentView(view: View, params: ViewGroup.LayoutParams?) {
         super.setContentView(view, params)
-        FontManager.applyToActivity(this, config.fontKey)
+        FontManager.applyToActivity(this, config.fontKey, config.themeKey)
+        CardTextureManager.applyThemeDefaults(window.decorView)
     }
 }

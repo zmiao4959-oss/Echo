@@ -76,10 +76,10 @@ class EchoEnvironmentView @JvmOverloads constructor(
         if (!ThemeManager.isDynamic(config.themeKey) || !animationsEnabled()) return
         animator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = when (spec.motion) {
-                ThemeManager.Motion.TIDE -> 22_000L
-                ThemeManager.Motion.ORBIT -> 32_000L
-                ThemeManager.Motion.GROVE -> 16_000L
-                ThemeManager.Motion.INK_RAIN -> 12_000L
+                ThemeManager.Motion.TIDE -> 13_000L
+                ThemeManager.Motion.ORBIT -> 19_000L
+                ThemeManager.Motion.GROVE -> 12_000L
+                ThemeManager.Motion.INK_RAIN -> 8_000L
                 else -> 20_000L
             }
             repeatCount = ValueAnimator.INFINITE
@@ -162,7 +162,7 @@ class EchoEnvironmentView @JvmOverloads constructor(
         val background = ThemeColors.background(context)
         val primary = ThemeColors.primary(context)
         val accent = ThemeColors.accent(context)
-        val shift = sin(phase * TWO_PI) * height * 0.08f
+        val shift = sin(phase * TWO_PI) * height * 0.14f
         paint.shader = LinearGradient(
             width * 0.12f,
             shift,
@@ -170,17 +170,17 @@ class EchoEnvironmentView @JvmOverloads constructor(
             height + shift,
             intArrayOf(
                 ColorUtils.blendARGB(background, Color.WHITE, 0.12f),
-                ColorUtils.blendARGB(background, primary, 0.22f),
-                ColorUtils.blendARGB(background, accent, 0.16f),
+                ColorUtils.blendARGB(background, primary, 0.30f),
+                ColorUtils.blendARGB(background, accent, 0.24f),
             ),
             floatArrayOf(0f, 0.54f, 1f),
             Shader.TileMode.CLAMP,
         )
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
 
-        repeat(4) { index ->
-            val baseline = height * (0.20f + index * 0.22f)
-            val amplitude = height * (0.018f + index * 0.004f)
+        repeat(7) { index ->
+            val baseline = height * (0.10f + index * 0.145f)
+            val amplitude = height * (0.026f + index % 3 * 0.006f)
             val travel = phase * TWO_PI + index * 0.9f
             path.reset()
             path.moveTo(-width * 0.1f, baseline)
@@ -192,8 +192,20 @@ class EchoEnvironmentView @JvmOverloads constructor(
             }
             finePaint.style = Paint.Style.STROKE
             finePaint.strokeWidth = resources.displayMetrics.density * (0.7f + index * 0.25f)
-            finePaint.color = ColorUtils.setAlphaComponent(if (index % 2 == 0) primary else accent, 24 + index * 8)
+            finePaint.color = ColorUtils.setAlphaComponent(if (index % 2 == 0) primary else accent, 48 + index * 6)
             canvas.drawPath(path, finePaint)
+        }
+
+        repeat(11) { index ->
+            val local = (phase * (0.55f + index % 3 * 0.12f) + index * 0.113f) % 1f
+            val x = width * (-0.08f + local * 1.16f)
+            val y = height * (0.08f + ((index * 23) % 88) / 100f)
+            finePaint.style = Paint.Style.FILL
+            finePaint.color = ColorUtils.setAlphaComponent(if (index % 4 == 0) accent else Color.WHITE, 35 + index % 3 * 12)
+            canvas.drawOval(
+                RectF(x - width * 0.035f, y - resources.displayMetrics.density, x + width * 0.035f, y + resources.displayMetrics.density),
+                finePaint,
+            )
         }
 
         val glowX = width * (0.2f + phase * 0.6f)
@@ -202,7 +214,7 @@ class EchoEnvironmentView @JvmOverloads constructor(
             glowX,
             glowY,
             width * 0.42f,
-            ColorUtils.setAlphaComponent(Color.WHITE, 48),
+            ColorUtils.setAlphaComponent(Color.WHITE, 76),
             Color.TRANSPARENT,
             Shader.TileMode.CLAMP,
         )
@@ -232,28 +244,28 @@ class EchoEnvironmentView @JvmOverloads constructor(
             val radiusY = radiusX * (0.32f + index * 0.025f)
             finePaint.style = Paint.Style.STROKE
             finePaint.strokeWidth = resources.displayMetrics.density * 0.75f
-            finePaint.color = ColorUtils.setAlphaComponent(primary, 28 - index * 5)
+            finePaint.color = ColorUtils.setAlphaComponent(primary, 58 - index * 8)
             canvas.drawOval(RectF(centerX - radiusX, centerY - radiusY, centerX + radiusX, centerY + radiusY), finePaint)
 
             val angle = phase * TWO_PI * (0.55f + index * 0.15f) + index * 2.1f
             val dotX = centerX + cos(angle) * radiusX
             val dotY = centerY + sin(angle) * radiusY
             finePaint.style = Paint.Style.FILL
-            finePaint.color = ColorUtils.setAlphaComponent(if (index == 1) accent else primary, 170)
-            canvas.drawCircle(dotX, dotY, resources.displayMetrics.density * (1.4f + index * 0.4f), finePaint)
+            finePaint.color = ColorUtils.setAlphaComponent(if (index == 1) accent else primary, 220)
+            canvas.drawCircle(dotX, dotY, resources.displayMetrics.density * (2.2f + index * 0.65f), finePaint)
         }
 
         repeat(46) { index ->
             val seedX = ((index * 137) % 997) / 997f
             val seedY = ((index * 223) % 887) / 887f
-            val drift = sin(phase * TWO_PI + index * 0.63f) * width * 0.004f
+            val drift = (phase * width * (0.09f + index % 4 * 0.018f)) % width
             val pulse = 0.45f + 0.55f * sin(phase * TWO_PI * 1.7f + index)
             finePaint.color = ColorUtils.setAlphaComponent(
                 if (index % 9 == 0) accent else Color.WHITE,
-                (20 + pulse * 52).toInt().coerceIn(12, 74),
+                (34 + pulse * 86).toInt().coerceIn(24, 122),
             )
             canvas.drawCircle(
-                seedX * width + drift,
+                (seedX * width + drift) % width,
                 seedY * height * 0.78f,
                 resources.displayMetrics.density * (0.35f + index % 3 * 0.22f),
                 finePaint,
@@ -269,6 +281,23 @@ class EchoEnvironmentView @JvmOverloads constructor(
         )
         canvas.drawCircle(centerX, centerY, width * 0.34f, paint)
         paint.shader = null
+
+        val cometX = width * (-0.18f + ((phase * 1.35f) % 1f) * 1.36f)
+        val cometY = height * (0.34f + sin(phase * TWO_PI) * 0.12f)
+        finePaint.style = Paint.Style.STROKE
+        finePaint.strokeCap = Paint.Cap.ROUND
+        finePaint.strokeWidth = resources.displayMetrics.density * 1.15f
+        finePaint.shader = LinearGradient(
+            cometX - width * 0.14f,
+            cometY + height * 0.025f,
+            cometX,
+            cometY,
+            Color.TRANSPARENT,
+            ColorUtils.setAlphaComponent(accent, 165),
+            Shader.TileMode.CLAMP,
+        )
+        canvas.drawLine(cometX - width * 0.14f, cometY + height * 0.025f, cometX, cometY, finePaint)
+        finePaint.shader = null
     }
 
     private fun drawBreathingGrove(canvas: Canvas) {
@@ -295,7 +324,7 @@ class EchoEnvironmentView @JvmOverloads constructor(
                 x,
                 y,
                 radius,
-                ColorUtils.setAlphaComponent(if (index % 3 == 0) accent else primary, 22 + index % 3 * 6),
+                ColorUtils.setAlphaComponent(if (index % 3 == 0) accent else primary, 38 + index % 3 * 11),
                 Color.TRANSPARENT,
                 Shader.TileMode.CLAMP,
             )
@@ -303,10 +332,10 @@ class EchoEnvironmentView @JvmOverloads constructor(
         }
         paint.shader = null
 
-        repeat(9) { index ->
-            val sway = sin(phase * TWO_PI + index * 0.52f) * width * 0.018f
-            val x = width * (0.06f + index * 0.12f) + sway
-            val y = height * (0.12f + (index % 4) * 0.23f)
+        repeat(16) { index ->
+            val sway = sin(phase * TWO_PI + index * 0.52f) * width * 0.046f
+            val x = width * (0.02f + (index % 9) * 0.12f) + sway
+            val y = height * (0.07f + ((index * 19) % 88) / 100f + sin(phase * TWO_PI + index) * 0.018f)
             val leafW = width * (0.026f + index % 2 * 0.009f)
             val leafH = leafW * 2.1f
             path.reset()
@@ -314,7 +343,25 @@ class EchoEnvironmentView @JvmOverloads constructor(
             path.cubicTo(x + leafW, y - leafH * 0.45f, x + leafW, y + leafH * 0.45f, x, y + leafH)
             path.cubicTo(x - leafW, y + leafH * 0.45f, x - leafW, y - leafH * 0.45f, x, y - leafH)
             finePaint.style = Paint.Style.FILL
-            finePaint.color = ColorUtils.setAlphaComponent(primary, 12 + index % 3 * 6)
+            finePaint.color = ColorUtils.setAlphaComponent(if (index % 5 == 0) accent else primary, 24 + index % 4 * 10)
+            canvas.drawPath(path, finePaint)
+        }
+
+        repeat(4) { index ->
+            val y = height * (0.16f + index * 0.23f)
+            path.reset()
+            path.moveTo(-width * 0.1f, y)
+            path.cubicTo(
+                width * 0.23f,
+                y + sin(phase * TWO_PI + index) * height * 0.045f,
+                width * 0.68f,
+                y - cos(phase * TWO_PI + index) * height * 0.04f,
+                width * 1.1f,
+                y,
+            )
+            finePaint.style = Paint.Style.STROKE
+            finePaint.strokeWidth = resources.displayMetrics.density * 0.8f
+            finePaint.color = ColorUtils.setAlphaComponent(primary, 34)
             canvas.drawPath(path, finePaint)
         }
     }
@@ -334,7 +381,7 @@ class EchoEnvironmentView @JvmOverloads constructor(
                 x,
                 y,
                 radius,
-                ColorUtils.setAlphaComponent(if (index == 3) accent else primary, 18 + index * 3),
+                ColorUtils.setAlphaComponent(if (index == 3) accent else primary, 30 + index * 5),
                 Color.TRANSPARENT,
                 Shader.TileMode.CLAMP,
             )
@@ -342,24 +389,24 @@ class EchoEnvironmentView @JvmOverloads constructor(
         }
         paint.shader = null
 
-        repeat(20) { index ->
-            val x = ((index * 83f + phase * width * 0.22f) % (width + 70f)) - 35f
-            val y = ((index * 149f + phase * height * 1.15f) % (height + 160f)) - 80f
+        repeat(42) { index ->
+            val x = ((index * 83f + phase * width * 0.38f) % (width + 70f)) - 35f
+            val y = ((index * 149f + phase * height * 2.05f) % (height + 160f)) - 80f
             finePaint.style = Paint.Style.STROKE
             finePaint.strokeCap = Paint.Cap.ROUND
             finePaint.strokeWidth = resources.displayMetrics.density * (0.65f + index % 3 * 0.16f)
-            finePaint.color = ColorUtils.setAlphaComponent(primary, 18 + index % 4 * 5)
-            canvas.drawLine(x, y, x - resources.displayMetrics.density * 5f, y + resources.displayMetrics.density * 20f, finePaint)
+            finePaint.color = ColorUtils.setAlphaComponent(primary, 34 + index % 5 * 7)
+            canvas.drawLine(x, y, x - resources.displayMetrics.density * 6f, y + resources.displayMetrics.density * 24f, finePaint)
         }
 
-        repeat(5) { index ->
-            val local = (phase * 1.7f + index * 0.23f) % 1f
+        repeat(9) { index ->
+            val local = (phase * 2.1f + index * 0.17f) % 1f
             val x = width * (((index * 43) % 91) / 100f + 0.05f)
             val y = height * (0.18f + (index % 4) * 0.20f)
             val radius = width * 0.12f * local
             finePaint.style = Paint.Style.STROKE
             finePaint.strokeWidth = resources.displayMetrics.density * 0.7f
-            finePaint.color = ColorUtils.setAlphaComponent(primary, ((1f - local) * 45).toInt())
+            finePaint.color = ColorUtils.setAlphaComponent(if (index % 4 == 0) accent else primary, ((1f - local) * 78).toInt())
             canvas.drawOval(RectF(x - radius, y - radius * 0.28f, x + radius, y + radius * 0.28f), finePaint)
         }
     }

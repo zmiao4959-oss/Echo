@@ -20,12 +20,14 @@ class ThemeManagerTest {
         ThemeManager.themes.filter { it.kind == ThemeManager.Kind.STATIC }.forEach {
             assertNotNull(it.artworkRes)
             assertNotNull(it.previewArtworkRes)
+            assertNotNull(it.surfaceTextureRes)
         }
         val motions = ThemeManager.themes
             .filter { it.kind == ThemeManager.Kind.DYNAMIC }
             .map { it.motion }
         assertEquals(4, motions.distinct().size)
         assertTrue(motions.none { it == ThemeManager.Motion.NONE })
+        assertEquals(8, ThemeManager.themes.map { it.typography }.distinct().size)
     }
 
     @Test

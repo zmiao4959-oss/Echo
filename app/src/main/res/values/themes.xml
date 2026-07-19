@@ -13,16 +13,35 @@
         <item name="colorAccent">?attr/echoPrimary</item>
         <item name="android:colorBackground">?attr/echoBackground</item>
         <item name="colorSurface">?attr/echoSurface</item>
+        <item name="colorSurfaceVariant">?attr/echoSurfaceVariant</item>
+        <item name="colorSurfaceContainer">?attr/echoSurface</item>
+        <item name="colorSurfaceContainerLow">?attr/echoSurface</item>
+        <item name="colorSurfaceContainerHigh">?attr/echoSurface</item>
+        <item name="colorSurfaceContainerHighest">?attr/echoSurfaceVariant</item>
         <item name="colorOnPrimary">?attr/echoOnPrimary</item>
         <item name="colorOnSurface">?attr/echoTextPrimary</item>
+        <item name="colorOnSurfaceVariant">?attr/echoTextSecondary</item>
+        <item name="colorOnBackground">?attr/echoTextPrimary</item>
+        <item name="colorOutline">?attr/echoBorder</item>
+        <item name="colorOutlineVariant">?attr/echoBorder</item>
+        <item name="android:forceDarkAllowed">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:fontFamily">sans</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Echo.AlertDialog</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Echo.AlertDialog</item>
         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Echo.Small</item>
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Echo.Medium</item>
         <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Echo.Large</item>
+    </style>
+
+    <style name="ThemeOverlay.Echo.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:windowBackground">@drawable/bg_echo_dialog</item>
+        <item name="colorSurface">?attr/echoSurface</item>
+        <item name="colorOnSurface">?attr/echoTextPrimary</item>
+        <item name="colorOnSurfaceVariant">?attr/echoTextSecondary</item>
     </style>
 
     <style name="ShapeAppearance.Echo.Small" parent="ShapeAppearance.Material3.Corner.Medium">

@@ -11,12 +11,15 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.LayerDrawable
 import android.net.Uri
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.ui.widget.ThemeSurfaceDrawable
 import com.google.android.material.card.MaterialCardView
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -32,6 +35,7 @@ import java.util.UUID
 object CardTextureManager {
 
     const val NONE = "none"
+    const val PURE = "plain"
 
     const val LIFE_RECORD = "life_record"
     const val DIARY = "diary"
@@ -129,7 +133,8 @@ object CardTextureManager {
     fun allTextureKeys(context: Context): List<Pair<String, String>> {
         if (customTextures.isEmpty()) loadCustomList(context)
         val list = mutableListOf<Pair<String, String>>()
-        list.add(NONE to "无纹理")
+        list.add(NONE to "跟随主题")
+        list.add(PURE to "纯色（关闭纹理）")
         list.add("texture_1" to "纹理 1")
         list.add("texture_2" to "纹理 2")
         list.add("texture_3" to "纹理 3")
@@ -142,7 +147,8 @@ object CardTextureManager {
     /** 纹理 key → 显示名 */
     fun textureLabel(context: Context, key: String): String {
         return when (key) {
-            NONE -> "无纹理"
+            NONE -> "跟随主题"
+            PURE -> "纯色（关闭纹理）"
             "texture_1" -> "纹理 1"
             "texture_2" -> "纹理 2"
             "texture_3" -> "纹理 3"
@@ -239,10 +245,28 @@ object CardTextureManager {
         card.radius = px
     }
 
+    /** Fill unconfigured Material cards (settings/profile/detail screens included). */
+    fun applyThemeDefaults(root: View) {
+        if (root is MaterialCardView && !hasTextureLayer(root)) {
+            applyShape(root)
+            applyThemeSurface(root, R.attr.echoSurface)
+        }
+        if (root is ViewGroup) {
+            for (index in 0 until root.childCount) {
+                applyThemeDefaults(root.getChildAt(index))
+            }
+        }
+    }
+
     fun apply(card: MaterialCardView, textureKey: String, fallbackColorAttr: Int) {
         applyShape(card)
 
         if (textureKey == NONE) {
+            applyThemeSurface(card, fallbackColorAttr)
+            return
+        }
+
+        if (textureKey == PURE) {
             remove(card, fallbackColorAttr)
             return
         }
@@ -267,6 +291,46 @@ object CardTextureManager {
         card.setCardBackgroundColor(ColorStateList.valueOf(overlay))
     }
 
+    /** Theme-authored material is the default; user image textures still take priority. */
+    private fun applyThemeSurface(card: MaterialCardView, fallbackColorAttr: Int) {
+        val app = card.context.applicationContext as? MyApplication ?: run {
+            remove(card, fallbackColorAttr)
+            return
+        }
+        val spec = ThemeManager.specFor(app.appConfig.themeKey)
+        val bgView = ensureBgView(card)
+        if (spec.kind == ThemeManager.Kind.STATIC) {
+            val textureRes = spec.surfaceTextureRes ?: run {
+                remove(card, fallbackColorAttr)
+                return
+            }
+            val cacheKey = "theme:${spec.key}"
+            val bitmap = bitmapCache[cacheKey] ?: BitmapFactory.decodeResource(card.resources, textureRes).also {
+                bitmapCache[cacheKey] = it
+            }
+            if (bitmap == null) {
+                remove(card, fallbackColorAttr)
+                return
+            }
+            val scrim = themeScrimColor(card, fallbackColorAttr, if (spec.dark) 190 else 205)
+            bgView.background = CenterCropDrawable(bitmap, scrim)
+        } else {
+            bgView.background = ThemeSurfaceDrawable(
+                motion = spec.motion,
+                primary = ThemeColors.primary(card.context),
+                accent = ThemeColors.accent(card.context),
+                density = card.resources.displayMetrics.density,
+            )
+        }
+        card.setCardBackgroundColor(restoreColor(card, fallbackColorAttr))
+    }
+
+    private fun themeScrimColor(card: MaterialCardView, attrRes: Int, alpha: Int): Int {
+        val tv = TypedValue()
+        card.context.theme.resolveAttribute(attrRes, tv, true)
+        return (alpha shl 24) or (tv.data and 0x00FFFFFF)
+    }
+
     /** 根据透明度百分比计算覆盖色：取 fallback 主题色的 alpha 缩放版本 */
     private fun overlayColor(card: MaterialCardView, attrRes: Int, opacity: Int): Int {
         if (opacity <= 0) return Color.TRANSPARENT
@@ -284,6 +348,10 @@ object CardTextureManager {
      */
     fun applyTextureToView(view: View, textureKey: String, scrimBaseColor: Int, opacity: Int) {
         if (textureKey == NONE) {
+            applyThemeTextureToView(view, scrimBaseColor)
+            return
+        }
+        if (textureKey == PURE) {
             view.background = null
             return
         }
@@ -295,6 +363,37 @@ object CardTextureManager {
         val overlay = if (opacity <= 0) Color.TRANSPARENT
             else (alpha shl 24) or (scrimBaseColor and 0x00FFFFFF)
         view.background = CenterCropDrawable(bitmap, overlay)
+    }
+
+    private fun applyThemeTextureToView(view: View, scrimBaseColor: Int) {
+        val app = view.context.applicationContext as? MyApplication ?: run {
+            view.background = null
+            return
+        }
+        val spec = ThemeManager.specFor(app.appConfig.themeKey)
+        if (spec.kind == ThemeManager.Kind.STATIC) {
+            val textureRes = spec.surfaceTextureRes ?: run {
+                view.background = null
+                return
+            }
+            val cacheKey = "theme:${spec.key}"
+            val bitmap = bitmapCache[cacheKey] ?: BitmapFactory.decodeResource(view.resources, textureRes).also {
+                bitmapCache[cacheKey] = it
+            }
+            view.background = bitmap?.let {
+                val alpha = if (spec.dark) 198 else 214
+                CenterCropDrawable(it, (alpha shl 24) or (scrimBaseColor and 0x00FFFFFF))
+            }
+        } else {
+            val base = ColorDrawable((225 shl 24) or (scrimBaseColor and 0x00FFFFFF))
+            val living = ThemeSurfaceDrawable(
+                motion = spec.motion,
+                primary = ThemeColors.primary(view.context),
+                accent = ThemeColors.accent(view.context),
+                density = view.resources.displayMetrics.density,
+            )
+            view.background = LayerDrawable(arrayOf(base, living))
+        }
     }
 
     /** 查找或创建卡片内的纹理背景 View（tag = "card_texture_bg"） */
@@ -312,6 +411,13 @@ object CardTextureManager {
         }
         card.addView(bg, 0)  // 插入到最底层
         return bg
+    }
+
+    private fun hasTextureLayer(card: MaterialCardView): Boolean {
+        for (i in 0 until card.childCount) {
+            if ("card_texture_bg" == card.getChildAt(i).tag) return true
+        }
+        return false
     }
 
     /** 移除纹理背景子 View 并恢复卡片颜色 */

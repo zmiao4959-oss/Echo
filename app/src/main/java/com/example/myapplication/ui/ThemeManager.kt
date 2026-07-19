@@ -10,6 +10,7 @@ object ThemeManager {
 
     enum class Kind { STATIC, DYNAMIC }
     enum class Motion { NONE, TIDE, ORBIT, GROVE, INK_RAIN }
+    enum class Typography { EDITORIAL, CARTOGRAPHIC, CINEMATIC, LITERARY, AIRY, CELESTIAL, ORGANIC, INK }
 
     data class ThemeSpec(
         val key: String,
@@ -19,7 +20,9 @@ object ThemeManager {
         @param:StyleRes val styleRes: Int,
         @param:DrawableRes val artworkRes: Int? = null,
         @param:DrawableRes val previewArtworkRes: Int? = null,
+        @param:DrawableRes val surfaceTextureRes: Int? = null,
         val motion: Motion = Motion.NONE,
+        val typography: Typography,
         val dark: Boolean = false,
         val previewColors: IntArray,
     )
@@ -49,6 +52,8 @@ object ThemeManager {
             styleRes = R.style.Theme_MyApplication_PaperAtelier,
             artworkRes = R.drawable.theme_paper_atelier,
             previewArtworkRes = R.drawable.theme_paper_atelier_thumb,
+            surfaceTextureRes = R.drawable.theme_texture_paper_atelier,
+            typography = Typography.EDITORIAL,
             previewColors = colors("#F4EFE4", "#526B5F", "#C77C55"),
         ),
         ThemeSpec(
@@ -59,6 +64,8 @@ object ThemeManager {
             styleRes = R.style.Theme_MyApplication_AbyssalArchive,
             artworkRes = R.drawable.theme_abyssal_archive,
             previewArtworkRes = R.drawable.theme_abyssal_archive_thumb,
+            surfaceTextureRes = R.drawable.theme_texture_abyssal_archive,
+            typography = Typography.CARTOGRAPHIC,
             dark = true,
             previewColors = colors("#061421", "#214D66", "#56D1D8"),
         ),
@@ -70,6 +77,8 @@ object ThemeManager {
             styleRes = R.style.Theme_MyApplication_FilmDusk,
             artworkRes = R.drawable.theme_film_dusk,
             previewArtworkRes = R.drawable.theme_film_dusk_thumb,
+            surfaceTextureRes = R.drawable.theme_texture_film_dusk,
+            typography = Typography.CINEMATIC,
             dark = true,
             previewColors = colors("#241B2A", "#6F4A58", "#E29361"),
         ),
@@ -81,6 +90,8 @@ object ThemeManager {
             styleRes = R.style.Theme_MyApplication_CedarStudy,
             artworkRes = R.drawable.theme_cedar_study,
             previewArtworkRes = R.drawable.theme_cedar_study_thumb,
+            surfaceTextureRes = R.drawable.theme_texture_cedar_study,
+            typography = Typography.LITERARY,
             dark = true,
             previewColors = colors("#21170F", "#4E3A24", "#C8A66A"),
         ),
@@ -91,6 +102,7 @@ object ThemeManager {
             kind = Kind.DYNAMIC,
             styleRes = R.style.Theme_MyApplication_TidalLight,
             motion = Motion.TIDE,
+            typography = Typography.AIRY,
             previewColors = colors("#DDECEA", "#4D858B", "#A97D9A"),
         ),
         ThemeSpec(
@@ -100,6 +112,7 @@ object ThemeManager {
             kind = Kind.DYNAMIC,
             styleRes = R.style.Theme_MyApplication_OrbitalNight,
             motion = Motion.ORBIT,
+            typography = Typography.CELESTIAL,
             dark = true,
             previewColors = colors("#090D18", "#36466E", "#D0A96B"),
         ),
@@ -110,6 +123,7 @@ object ThemeManager {
             kind = Kind.DYNAMIC,
             styleRes = R.style.Theme_MyApplication_BreathingGrove,
             motion = Motion.GROVE,
+            typography = Typography.ORGANIC,
             previewColors = colors("#E4E9DF", "#496557", "#B28B62"),
         ),
         ThemeSpec(
@@ -119,6 +133,7 @@ object ThemeManager {
             kind = Kind.DYNAMIC,
             styleRes = R.style.Theme_MyApplication_InkRain,
             motion = Motion.INK_RAIN,
+            typography = Typography.INK,
             previewColors = colors("#E7E4DE", "#4B5051", "#8B6E65"),
         ),
     )

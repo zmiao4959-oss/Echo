@@ -20,6 +20,7 @@ import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.store.DataExporter
 import com.example.myapplication.data.store.EchoFileStore
+import com.example.myapplication.ui.widget.ThemeSurfaceDrawable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -216,10 +217,14 @@ class ProfileActivity : ThemedActivity() {
             if (spec.previewArtworkRes != null) {
                 preview.setImageResource(spec.previewArtworkRes)
             } else {
-                preview.setImageDrawable(GradientDrawable(
-                    GradientDrawable.Orientation.TL_BR,
-                    spec.previewColors,
-                ).apply { cornerRadius = radius })
+                preview.setImageDrawable(
+                    ThemeSurfaceDrawable(
+                        motion = spec.motion,
+                        primary = spec.previewColors[1],
+                        accent = spec.previewColors[2],
+                        density = resources.displayMetrics.density,
+                    ),
+                )
             }
 
             view.findViewById<TextView>(R.id.theme_name).text = spec.name

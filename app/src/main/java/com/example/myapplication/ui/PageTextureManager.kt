@@ -40,6 +40,10 @@ object PageTextureManager {
             remove(view, transparentWhenNone)
             return
         }
+        if (textureKey == CardTextureManager.PURE) {
+            remove(view, false)
+            return
+        }
         val bitmap = CardTextureManager.loadBitmap(view.resources, textureKey) ?: run {
             remove(view, transparentWhenNone)
             return
