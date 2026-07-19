@@ -7,6 +7,7 @@
     android:background="?attr/echoBackground">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/diary_scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"

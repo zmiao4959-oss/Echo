@@ -13,6 +13,7 @@ import com.example.myapplication.llm.LLMMessage
 import com.example.myapplication.llm.ProviderFactory
 import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +30,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as MyApplication
     private val diaryRepo = DiaryRepository()
     private val recordRepo = LifeRecordRepository()
+    private var loadDiariesJob: Job? = null
 
     private val _diaries = MutableStateFlow<List<DailyDiary>>(emptyList())
     val diaries: StateFlow<List<DailyDiary>> = _diaries.asStateFlow()
@@ -73,7 +75,8 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     val filteredDiaries: StateFlow<List<DailyDiary>> = _filteredDiaries.asStateFlow()
 
     fun loadDiaries() {
-        viewModelScope.launch {
+        loadDiariesJob?.cancel()
+        loadDiariesJob = viewModelScope.launch {
             val all = diaryRepo.getAll()
             _diaries.value = all
 
@@ -95,7 +98,8 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
                 .sorted()
 
             applyFilters(all)
-            _todayDiary.value = diaryRepo.getByDate(today())
+            // `all` is already parsed; do not read and parse the same diary file again.
+            _todayDiary.value = all.find { it.date == today() }
             _todayRecords.value = recordRepo.getByDate(today())
             computeMoodStats(_moodStatsDays.value)
         }

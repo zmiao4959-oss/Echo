@@ -25,6 +25,8 @@ import com.example.myapplication.R
 import com.example.myapplication.config.AppConfig
 import com.example.myapplication.data.repository.LifeRecordRepository
 import com.example.myapplication.data.store.DataExporter
+import com.example.myapplication.data.store.WeatherHistoryStore
+import com.example.myapplication.memory.HistoricalWeatherBackfill
 import com.example.myapplication.policy.MicroEchoFeedbackPolicy
 import com.example.myapplication.schedule.GentleRecordReminderScheduler
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -320,6 +322,70 @@ class SettingsActivity : ThemedActivity() {
         // 天气城市
         val weatherCity = findViewById<EditText>(R.id.weather_city)
         weatherCity.setText(config.weatherCity)
+        val backfillWeather = findViewById<Button>(R.id.btn_backfill_weather)
+        val correctWeather = findViewById<Button>(R.id.btn_correct_weather)
+        val weatherHistoryStatus = findViewById<TextView>(R.id.tv_weather_history_status)
+        fun refreshWeatherHistoryStatus() {
+            lifecycleScope.launch {
+                val count = withContext(Dispatchers.IO) { WeatherHistoryStore.all(this@SettingsActivity).size }
+                weatherHistoryStatus.text = if (count == 0) {
+                    getString(R.string.weather_history_status_empty)
+                } else {
+                    getString(R.string.weather_history_status_count, count)
+                }
+            }
+        }
+        refreshWeatherHistoryStatus()
+        backfillWeather.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.weather_history_backfill_title)
+                .setMessage(R.string.weather_history_backfill_message)
+                .setPositiveButton(R.string.weather_history_backfill_start) { _, _ ->
+                    backfillWeather.isEnabled = false
+                    weatherHistoryStatus.setText(R.string.weather_history_backfill_running)
+                    lifecycleScope.launch {
+                        runCatching {
+                            HistoricalWeatherBackfill.backfill(
+                                this@SettingsActivity,
+                                weatherCity.text.toString().trim()
+                            )
+                        }.onSuccess { result ->
+                            weatherHistoryStatus.text = if (result.requestedDays == 0) {
+                                getString(R.string.weather_history_backfill_none)
+                            } else {
+                                getString(
+                                    R.string.weather_history_backfill_result,
+                                    result.locationLabel,
+                                    result.writtenDays,
+                                    result.requestedDays,
+                                    result.unresolvedDays,
+                                    result.syncedIssues
+                                )
+                            }
+                            Toast.makeText(this@SettingsActivity, weatherHistoryStatus.text, Toast.LENGTH_LONG).show()
+                        }.onFailure { error ->
+                            weatherHistoryStatus.text = getString(
+                                R.string.weather_history_backfill_failed,
+                                error.message ?: "未知错误"
+                            )
+                            Toast.makeText(this@SettingsActivity, weatherHistoryStatus.text, Toast.LENGTH_LONG).show()
+                        }
+                        backfillWeather.isEnabled = true
+                    }
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        }
+        correctWeather.setOnClickListener {
+            lifecycleScope.launch {
+                val range = HistoricalWeatherBackfill.recordedDateRange()
+                if (range == null) {
+                    Toast.makeText(this@SettingsActivity, R.string.weather_history_correct_no_records, Toast.LENGTH_LONG).show()
+                } else {
+                    showWeatherCorrectionDialog(weatherCity.text.toString().trim(), range, backfillWeather, correctWeather, weatherHistoryStatus)
+                }
+            }
+        }
 
         // 背景选择按钮
         findViewById<Button>(R.id.bg_follow_theme).setOnClickListener {
@@ -416,6 +482,112 @@ class SettingsActivity : ThemedActivity() {
 
         // 诊断面板
         refreshDiagnostics()
+    }
+
+    private fun showWeatherCorrectionDialog(
+        initialCity: String,
+        initialRange: Pair<String, String>,
+        backfillButton: Button,
+        correctButton: Button,
+        statusView: TextView
+    ) {
+        var startDate = initialRange.first
+        var endDate = initialRange.second
+        val box = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(dp(24), dp(8), dp(24), 0)
+        }
+        box.addView(TextView(this).apply {
+            text = getString(R.string.weather_history_correct_note)
+            setTextColor(ThemeColors.textSecondary(this@SettingsActivity))
+            textSize = 14f
+            setPadding(0, 0, 0, dp(12))
+        })
+        val cityInput = EditText(this).apply {
+            setText(initialCity)
+            hint = getString(R.string.weather_city_hint)
+            setSingleLine()
+        }
+        box.addView(cityInput)
+        val startButton = Button(this).apply {
+            text = getString(R.string.weather_history_correct_start, startDate)
+            setOnClickListener {
+                showDatePicker(startDate) { selected ->
+                    startDate = selected
+                    text = getString(R.string.weather_history_correct_start, selected)
+                }
+            }
+        }
+        val endButton = Button(this).apply {
+            text = getString(R.string.weather_history_correct_end, endDate)
+            setOnClickListener {
+                showDatePicker(endDate) { selected ->
+                    endDate = selected
+                    text = getString(R.string.weather_history_correct_end, selected)
+                }
+            }
+        }
+        box.addView(startButton)
+        box.addView(endButton)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.weather_history_correct_title)
+            .setView(box)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.weather_history_correct_action, null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val city = cityInput.text.toString().trim()
+                if (city.isBlank()) {
+                    Toast.makeText(this, R.string.weather_history_correct_city_required, Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                if (startDate > endDate) {
+                    Toast.makeText(this, "开始日期不能晚于结束日期", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                dialog.dismiss()
+                backfillButton.isEnabled = false
+                correctButton.isEnabled = false
+                statusView.setText(R.string.weather_history_correct_running)
+                lifecycleScope.launch {
+                    runCatching { HistoricalWeatherBackfill.correct(this@SettingsActivity, city, startDate, endDate) }
+                        .onSuccess { result ->
+                            statusView.text = getString(
+                                R.string.weather_history_correct_result,
+                                result.locationLabel,
+                                result.writtenDays,
+                                result.requestedDays,
+                                result.unresolvedDays,
+                                result.syncedIssues
+                            )
+                            Toast.makeText(this@SettingsActivity, statusView.text, Toast.LENGTH_LONG).show()
+                        }
+                        .onFailure { error ->
+                            statusView.text = getString(R.string.weather_history_backfill_failed, error.message ?: "未知错误")
+                            Toast.makeText(this@SettingsActivity, statusView.text, Toast.LENGTH_LONG).show()
+                        }
+                    backfillButton.isEnabled = true
+                    correctButton.isEnabled = true
+                }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showDatePicker(value: String, onSelected: (String) -> Unit) {
+        val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+        val calendar = java.util.Calendar.getInstance().apply {
+            time = runCatching { format.parse(value) }.getOrNull() ?: java.util.Date()
+        }
+        android.app.DatePickerDialog(
+            this,
+            { _, year, month, day -> onSelected(String.format(java.util.Locale.US, "%04d-%02d-%02d", year, month + 1, day)) },
+            calendar.get(java.util.Calendar.YEAR),
+            calendar.get(java.util.Calendar.MONTH),
+            calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        ).show()
     }
 
     private fun styleSettingsInputs(view: View) {
@@ -518,6 +690,8 @@ class SettingsActivity : ThemedActivity() {
     private fun applyCurrentBackground() {
         BackgroundManager.apply(this, config.backgroundKey)
     }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     /** 自动补全 URL scheme，避免 OkHttp "no scheme" 错误 */
     private fun normalizeUrl(url: String): String {

@@ -205,9 +205,29 @@
 
     <!-- 天气设置 -->
     <string name="weather_config">天气设置</string>
-    <string name="weather_city_label">手动设置城市</string>
+    <string name="weather_city_label">固定城市（可选）</string>
     <string name="weather_city_hint">如：上海、北京、Tokyo</string>
-    <string name="weather_city_auto_note">留空则自动定位（可能不准确）</string>
+    <string name="weather_city_auto_note">留空会随当前位置，适合经常出行；填写后始终使用这座城市。今后每天会把当时的位置随天气一起存档。</string>
+    <string name="weather_history_backfill">补全历史天气</string>
+    <string name="weather_history_status_empty">尚未保存历史天气</string>
+    <string name="weather_history_status_count">已保存 %1$d 天历史天气</string>
+    <string name="weather_history_backfill_title">补全历史天气</string>
+    <string name="weather_history_backfill_message">将根据日记与生活片段的日期查询历史天气，只补充缺失日期。城市留空时使用最近一次自动定位；过去旅行过的日期仍需按当时城市纠正。</string>
+    <string name="weather_history_backfill_start">开始查询</string>
+    <string name="weather_history_backfill_running">正在定位并查询历史天气…</string>
+    <string name="weather_history_backfill_none">所有历史记录已有天气，无需补全</string>
+    <string name="weather_history_backfill_result">%1$s：补全 %2$d/%3$d 天，%4$d 天未查到；已同步 %5$d 本生活志</string>
+    <string name="weather_history_backfill_failed">历史天气补全失败：%1$s</string>
+    <string name="weather_history_correct">纠正历史天气</string>
+    <string name="weather_history_correct_title">纠正历史天气</string>
+    <string name="weather_history_correct_note">填写这段日期当时所在城市。系统只覆盖所选范围；旅行期间可以按城市分段纠正。</string>
+    <string name="weather_history_correct_city_required">请填写这段日期当时所在城市</string>
+    <string name="weather_history_correct_no_records">没有可纠正的历史记录日期</string>
+    <string name="weather_history_correct_start">开始 · %1$s</string>
+    <string name="weather_history_correct_end">结束 · %1$s</string>
+    <string name="weather_history_correct_action">确认覆盖</string>
+    <string name="weather_history_correct_running">正在重新查询并纠正历史天气…</string>
+    <string name="weather_history_correct_result">%1$s：已纠正 %2$d/%3$d 天，%4$d 天未查到；已同步 %5$d 本生活志</string>
 
     <!-- 背景设置 -->
     <string name="bg_config">背景设置</string>

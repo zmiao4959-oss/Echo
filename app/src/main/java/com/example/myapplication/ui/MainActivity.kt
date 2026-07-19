@@ -13,6 +13,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.MyApplication
@@ -54,6 +56,9 @@ class MainActivity : ThemedActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        currentStage = savedInstanceState?.getInt(KEY_CURRENT_STAGE, STAGE_TODAY) ?: STAGE_TODAY
+        restoreFragments()
 
         val app = application as MyApplication
 
@@ -114,6 +119,15 @@ class MainActivity : ThemedActivity() {
         // 请求通知权限 (Android 13+)
         requestNotificationPermissionIfNeeded()
         applyPageTextures()
+
+        if (savedInstanceState == null) {
+            // Build the heaviest tab after the launch frame has settled. Its first real tap then
+            // only reveals an already measured view, so the nav indicator keeps its own frames.
+            findViewById<View>(R.id.fragment_container).postDelayed(
+                { prewarmDiaryFragment() },
+                DIARY_PREWARM_DELAY_MS
+            )
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -125,7 +139,7 @@ class MainActivity : ThemedActivity() {
     private fun handleQuickRecordIntent(sourceIntent: Intent?): Boolean {
         if (!QuickRecordRoute.isQuickRecordAction(sourceIntent?.action)) return false
 
-        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        val currentFragment = currentVisibleFragment()
         if (bottomNav.selectedItemId != R.id.nav_today) {
             bottomNav.selectedItemId = R.id.nav_today
         } else if (currentFragment !is TodayFragment) {
@@ -209,23 +223,13 @@ class MainActivity : ThemedActivity() {
     // ── Fragment 切换 ──
 
     private fun showTodayFragment(): Boolean {
-        if (todayFragment == null) {
-            todayFragment = TodayFragment()
-        }
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, todayFragment!!)
-            .commit()
-        return true
+        val target = todayFragment ?: TodayFragment().also { todayFragment = it }
+        return showFragment(target, TAG_TODAY)
     }
 
     private fun showDiaryFragment(): Boolean {
-        if (diaryFragment == null) {
-            diaryFragment = DiaryFragment()
-        }
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, diaryFragment!!)
-            .commit()
-        return true
+        val target = diaryFragment ?: DiaryFragment().also { diaryFragment = it }
+        return showFragment(target, TAG_DIARY)
     }
 
     /** Called by the Today page after the user explicitly chooses to build today's diary. */
@@ -235,23 +239,74 @@ class MainActivity : ThemedActivity() {
     }
 
     private fun showPlanFragment(): Boolean {
-        if (planFragment == null) {
-            planFragment = PlanFragment()
-        }
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, planFragment!!)
-            .commit()
-        return true
+        val target = planFragment ?: PlanFragment().also { planFragment = it }
+        return showFragment(target, TAG_PLAN)
     }
 
     private fun showMemoryFragment(): Boolean {
-        if (memoryFragment == null) {
-            memoryFragment = MemoryFragment()
+        val target = memoryFragment ?: MemoryFragment().also { memoryFragment = it }
+        return showFragment(target, TAG_MEMORY)
+    }
+
+    /**
+     * Keep each tab's view hierarchy alive. `replace()` removed and rebuilt the outgoing page on
+     * every tap, which made the bottom navigation animation compete with diary inflation/binding.
+     */
+    private fun showFragment(target: Fragment, tag: String): Boolean {
+        if (target.isAdded && !target.isHidden && target == currentVisibleFragment()) return true
+
+        val transaction = supportFragmentManager.beginTransaction().setReorderingAllowed(true)
+        supportFragmentManager.fragments.forEach { fragment ->
+            if (fragment != target && fragment.tag in MAIN_FRAGMENT_TAGS && fragment.isAdded && !fragment.isHidden) {
+                transaction.hide(fragment)
+                transaction.setMaxLifecycle(fragment, Lifecycle.State.STARTED)
+            }
         }
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, memoryFragment!!)
-            .commit()
+
+        if (target.isAdded) {
+            transaction.show(target)
+        } else {
+            transaction.add(R.id.fragment_container, target, tag)
+        }
+        transaction.setMaxLifecycle(target, Lifecycle.State.RESUMED)
+        transaction.commit()
         return true
+    }
+
+    private fun restoreFragments() {
+        todayFragment = supportFragmentManager.findFragmentByTag(TAG_TODAY) as? TodayFragment
+        diaryFragment = supportFragmentManager.findFragmentByTag(TAG_DIARY) as? DiaryFragment
+        planFragment = supportFragmentManager.findFragmentByTag(TAG_PLAN) as? PlanFragment
+        memoryFragment = supportFragmentManager.findFragmentByTag(TAG_MEMORY) as? MemoryFragment
+    }
+
+    private fun prewarmDiaryFragment() {
+        if (
+            isFinishing || isDestroyed || supportFragmentManager.isStateSaved ||
+            !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        ) return
+        val target = diaryFragment ?: DiaryFragment().also { diaryFragment = it }
+        if (target.isAdded || currentVisibleFragment() is DiaryFragment) return
+
+        supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .add(R.id.fragment_container, target, TAG_DIARY)
+            .hide(target)
+            .setMaxLifecycle(target, Lifecycle.State.STARTED)
+            .commitNow()
+        // Fragment hide uses GONE, which skips measurement. INVISIBLE keeps the prewarmed page
+        // non-interactive and non-drawing while allowing its six-card first batch to be measured.
+        target.requireView().visibility = View.INVISIBLE
+        // Populate and bind the first batch while the page is hidden.
+        diaryViewModel.loadDiaries()
+    }
+
+    private fun currentVisibleFragment(): Fragment? =
+        supportFragmentManager.fragments.lastOrNull { it.isAdded && !it.isHidden && it.tag in MAIN_FRAGMENT_TAGS }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(KEY_CURRENT_STAGE, currentStage)
+        super.onSaveInstanceState(outState)
     }
 
     // ── 通知权限 ──
@@ -271,6 +326,13 @@ class MainActivity : ThemedActivity() {
 
     companion object {
         private const val REQUEST_CODE_NOTIFICATIONS = 1001
+        private const val KEY_CURRENT_STAGE = "main_current_stage"
+        private const val DIARY_PREWARM_DELAY_MS = 900L
+        private const val TAG_TODAY = "main:today"
+        private const val TAG_DIARY = "main:diary"
+        private const val TAG_PLAN = "main:plan"
+        private const val TAG_MEMORY = "main:memory"
+        private val MAIN_FRAGMENT_TAGS = setOf(TAG_TODAY, TAG_DIARY, TAG_PLAN, TAG_MEMORY)
         const val STAGE_TODAY = 0
         const val STAGE_DIARY = 1
         const val STAGE_PLAN = 2

@@ -5,12 +5,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.content.res.ColorStateList
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.MyApplication
 import com.example.myapplication.R
+import com.example.myapplication.data.model.DailyDiary
 import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.PageTextureManager
 import com.example.myapplication.ui.ThemeColors
@@ -42,6 +45,7 @@ class DiaryFragment : Fragment() {
     private lateinit var tvGeneratingStatus: TextView
 
     // History list
+    private lateinit var diaryScroll: NestedScrollView
     private lateinit var recyclerDiaries: RecyclerView
     private lateinit var tvDiaryCount: TextView
     private lateinit var tvEmptyDiaries: TextView
@@ -58,6 +62,11 @@ class DiaryFragment : Fragment() {
     private var isMoodExpanded = false
 
     private var diaryAdapter: DiaryListAdapter? = null
+    private var filteredDiaries: List<DailyDiary> = emptyList()
+    private var visibleDiaryCount = 0
+    private var diaryScrollObserver: ViewTreeObserver.OnScrollChangedListener? = null
+    private var appliedCardAppearance: String? = null
+    private var appliedPageTexture: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -93,18 +102,25 @@ class DiaryFragment : Fragment() {
     private fun applyPageTexture() {
         val config = (requireActivity().application as MyApplication).appConfig
         val key = config.getPageTextureKey(PageTextureManager.DIARY_PAGE)
+        val signature = "${config.themeKey}:$key"
+        if (signature == appliedPageTexture) return
         PageTextureManager.apply(requireView(), key, transparentWhenNone = true)
+        appliedPageTexture = signature
     }
 
     private fun applyCardTextures() {
         val config = (requireActivity().application as MyApplication).appConfig
         val key = config.getCardTextureKey(CardTextureManager.DIARY)
+        val signature = "${config.themeKey}:$key:${config.cardOpacity}:${config.cardCornerRadiusDp}"
+        if (signature == appliedCardAppearance) return
 
         CardTextureManager.apply(cardTodayDiary, key, R.attr.echoSurface)
         CardTextureManager.apply(cardMoodChart, key, R.attr.echoSurface)
+        appliedCardAppearance = signature
     }
 
     private fun bindViews(view: View) {
+        diaryScroll = view.findViewById(R.id.diary_scroll)
         cardTodayDiary = view.findViewById(R.id.card_today_diary)
         layoutDiaryPreview = view.findViewById(R.id.layout_diary_preview)
         layoutNoDiary = view.findViewById(R.id.layout_no_diary)
@@ -137,6 +153,36 @@ class DiaryFragment : Fragment() {
         }
         recyclerDiaries.layoutManager = LinearLayoutManager(requireContext())
         recyclerDiaries.adapter = diaryAdapter
+        // This RecyclerView lives inside the page scroller. Feed it in small batches so a tab
+        // switch never has to inflate every historical diary in one frame.
+        recyclerDiaries.itemAnimator = null
+        diaryScrollObserver = ViewTreeObserver.OnScrollChangedListener { appendDiaryBatchIfNeeded() }
+        diaryScroll.viewTreeObserver.addOnScrollChangedListener(diaryScrollObserver)
+    }
+
+    private fun appendDiaryBatchIfNeeded() {
+        // A prewarmed hidden page measures at height 0. Treating that as "at the bottom" would
+        // eagerly append every batch and recreate the original all-at-once cost.
+        if (!diaryScroll.isShown || diaryScroll.height <= 0 || visibleDiaryCount >= filteredDiaries.size) return
+        val content = diaryScroll.getChildAt(0) ?: return
+        val remaining = content.height - diaryScroll.scrollY - diaryScroll.height
+        if (remaining <= diaryScroll.height) {
+            visibleDiaryCount = (visibleDiaryCount + DIARY_BATCH_SIZE).coerceAtMost(filteredDiaries.size)
+            diaryAdapter?.submitList(filteredDiaries.take(visibleDiaryCount))
+        }
+    }
+
+    private fun renderDiaryList(diaries: List<DailyDiary>) {
+        val contentChanged = filteredDiaries.map { it.id } != diaries.map { it.id }
+        filteredDiaries = diaries
+        visibleDiaryCount = when {
+            diaries.isEmpty() -> 0
+            contentChanged -> INITIAL_DIARY_COUNT.coerceAtMost(diaries.size)
+            else -> visibleDiaryCount.coerceIn(1, diaries.size)
+        }
+        diaryAdapter?.submitList(diaries.take(visibleDiaryCount))
+        // A tall screen may already be near the end after the first layout.
+        diaryScroll.post { appendDiaryBatchIfNeeded() }
     }
 
     private fun setupButtons() {
@@ -360,7 +406,7 @@ class DiaryFragment : Fragment() {
 
         lifecycleScope.launch {
             viewModel.filteredDiaries.collectLatest { diaries ->
-                diaryAdapter?.submitList(diaries)
+                renderDiaryList(diaries)
                 tvDiaryCount.text = if (diaries.isNotEmpty()) "共 ${diaries.size} 篇日记" else ""
                 tvEmptyDiaries.visibility = if (diaries.isEmpty()) View.VISIBLE else View.GONE
                 recyclerDiaries.visibility = if (diaries.isEmpty()) View.GONE else View.VISIBLE
@@ -408,5 +454,24 @@ class DiaryFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onDestroyView() {
+        diaryScrollObserver?.let { observer ->
+            if (diaryScroll.viewTreeObserver.isAlive) {
+                diaryScroll.viewTreeObserver.removeOnScrollChangedListener(observer)
+            }
+        }
+        diaryScrollObserver = null
+        appliedCardAppearance = null
+        appliedPageTexture = null
+        recyclerDiaries.adapter = null
+        diaryAdapter = null
+        super.onDestroyView()
+    }
+
+    companion object {
+        private const val INITIAL_DIARY_COUNT = 6
+        private const val DIARY_BATCH_SIZE = 6
     }
 }

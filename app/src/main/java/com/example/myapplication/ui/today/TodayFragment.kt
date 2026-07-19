@@ -32,6 +32,7 @@ import com.example.myapplication.MyApplication
 import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.data.model.EchoForeshadow
 import com.example.myapplication.data.model.ForeshadowOutcome
+import com.example.myapplication.data.store.WeatherHistoryStore
 import com.example.myapplication.R
 import com.example.myapplication.policy.TodayFormationPolicy
 import com.example.myapplication.policy.TodaySpotlightPolicy
@@ -938,6 +939,17 @@ class TodayFragment : Fragment() {
             val desc = prefs.getString("weather_desc_cn", null)
             val info = prefs.getString("weather_info_v3", null)
             if (desc != null && info != null) {
+                Regex("-?\\d+(?:\\.\\d+)?").find(info)?.value?.toFloatOrNull()?.let { temperature ->
+                    WeatherHistoryStore.record(
+                        context = ctx,
+                        description = desc,
+                        temperatureC = temperature,
+                        city = currentCity.ifBlank { prefs.getString("weather_location_label", "").orEmpty() },
+                        capturedAt = cacheTime,
+                        latitude = prefs.getString("weather_location_lat", null)?.toDoubleOrNull(),
+                        longitude = prefs.getString("weather_location_lon", null)?.toDoubleOrNull()
+                    )
+                }
                 renderWeather(desc, info)
                 return
             }
@@ -959,23 +971,53 @@ class TodayFragment : Fragment() {
                 val json = com.google.gson.JsonParser.parseString(body).asJsonObject
                 val current = json.getAsJsonArray("current_condition")
                     ?.get(0)?.asJsonObject ?: return@launch
+                val nearestArea = json.getAsJsonArray("nearest_area")
+                    ?.firstOrNull()?.asJsonObject
+                val resolvedLatitude = nearestArea?.get("latitude")
+                    ?.takeUnless { it.isJsonNull }?.asString
+                val resolvedLongitude = nearestArea?.get("longitude")
+                    ?.takeUnless { it.isJsonNull }?.asString
+                val resolvedLocationLabel = listOf("areaName", "region", "country")
+                    .mapNotNull { field ->
+                        nearestArea?.getAsJsonArray(field)?.firstOrNull()?.asJsonObject
+                            ?.get("value")?.takeUnless { it.isJsonNull }?.asString
+                    }
+                    .filter(String::isNotBlank)
+                    .distinct()
+                    .joinToString(" · ")
 
                 val tempC = current.get("temp_C")?.asString ?: ""
                 val descEn = current.getAsJsonArray("weatherDesc")
                     ?.get(0)?.asJsonObject?.get("value")?.asString ?: ""
                 val desc = weatherToChinese(descEn)
+                tempC.toFloatOrNull()?.let { temperature ->
+                    WeatherHistoryStore.record(
+                        context = ctx,
+                        description = desc,
+                        temperatureC = temperature,
+                        city = currentCity.ifBlank { resolvedLocationLabel },
+                        latitude = resolvedLatitude?.toDoubleOrNull(),
+                        longitude = resolvedLongitude?.toDoubleOrNull()
+                    )
+                }
 
                 // 顶部只保留天气与温度。定位服务返回的英文邻近地名通常不稳定，
                 // 对自用首页帮助有限，也会让问候区显得拥挤。
                 val infoText = "${tempC}℃"
 
                 withContext(Dispatchers.Main) {
-                    prefs.edit()
+                    val editor = prefs.edit()
                         .putLong("weather_cache_time", System.currentTimeMillis())
                         .putString("weather_cache_city", currentCity)
                         .putString("weather_desc_cn", desc)
                         .putString("weather_info_v3", infoText)
-                        .apply()
+                    if (!resolvedLatitude.isNullOrBlank() && !resolvedLongitude.isNullOrBlank()) {
+                        editor
+                            .putString("weather_location_lat", resolvedLatitude)
+                            .putString("weather_location_lon", resolvedLongitude)
+                            .putString("weather_location_label", resolvedLocationLabel)
+                    }
+                    editor.apply()
 
                     renderWeather(desc, infoText)
                 }
