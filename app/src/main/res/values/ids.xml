@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="tag_theme_chrome" type="id" />
+    <item name="tag_theme_press_motion" type="id" />
+    <item name="tag_theme_scroll_motion" type="id" />
+</resources>

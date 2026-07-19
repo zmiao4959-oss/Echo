@@ -18,6 +18,8 @@ import android.view.View
 import android.view.animation.DecelerateInterpolator
 import androidx.core.graphics.ColorUtils
 import com.example.myapplication.ui.ThemeColors
+import com.example.myapplication.MyApplication
+import com.example.myapplication.ui.ThemeManager
 
 /** 一段生活片段从记录按钮沿光轨进入 Echo 的一次性叙事动效。 */
 class EchoCaptureMotionView @JvmOverloads constructor(
@@ -92,15 +94,27 @@ class EchoCaptureMotionView @JvmOverloads constructor(
         progress = 0f
 
         val density = resources.displayMetrics.density
+        val experience = ThemeManager.specFor(
+            (context.applicationContext as MyApplication).appConfig.themeKey
+        ).experience
         path.reset()
         path.moveTo(startX, startY)
+        val controls = when (experience) {
+            ThemeManager.Experience.PAPER -> floatArrayOf(-8f, -82f, -88f, 32f)
+            ThemeManager.Experience.ARCHIVE -> floatArrayOf(-42f, -55f, -138f, 12f)
+            ThemeManager.Experience.FILM -> floatArrayOf(0f, -48f, -62f, 8f)
+            ThemeManager.Experience.CEDAR -> floatArrayOf(-10f, -118f, -72f, 54f)
+            ThemeManager.Experience.TIDE -> floatArrayOf(34f, -96f, -146f, 86f)
+            ThemeManager.Experience.ORBIT -> floatArrayOf(76f, -142f, -176f, 96f)
+            ThemeManager.Experience.GROVE -> floatArrayOf(-38f, -136f, -108f, 62f)
+            ThemeManager.Experience.INK -> floatArrayOf(2f, -72f, -118f, 20f)
+        }
         path.cubicTo(
-            startX - 20f * density,
-            startY - 105f * density,
-            targetX - 125f * density,
-            targetY + 70f * density,
-            targetX,
-            targetY
+            startX + controls[0] * density,
+            startY + controls[1] * density,
+            targetX + controls[2] * density,
+            targetY + controls[3] * density,
+            targetX, targetY
         )
         pathMeasure.setPath(path, false)
         trailPaint.shader = LinearGradient(
@@ -122,7 +136,12 @@ class EchoCaptureMotionView @JvmOverloads constructor(
         visibility = VISIBLE
         bringToFront()
         animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 1050L
+            duration = when (experience) {
+                ThemeManager.Experience.FILM -> 720L
+                ThemeManager.Experience.ORBIT -> 1280L
+                ThemeManager.Experience.PAPER, ThemeManager.Experience.CEDAR -> 980L
+                else -> 1100L
+            }
             interpolator = DecelerateInterpolator(1.25f)
             addUpdateListener {
                 progress = it.animatedValue as Float

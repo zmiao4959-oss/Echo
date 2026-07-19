@@ -24,11 +24,11 @@
         <item name="colorOnBackground">?attr/echoTextPrimary</item>
         <item name="colorOutline">?attr/echoBorder</item>
         <item name="colorOutlineVariant">?attr/echoBorder</item>
-        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
         <item name="android:fontFamily">sans</item>
         <item name="alertDialogTheme">@style/ThemeOverlay.Echo.AlertDialog</item>
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Echo.AlertDialog</item>
@@ -170,7 +170,7 @@
         <item name="echoBubbleAssistant">#18151F</item>
         <item name="echoToolInfoBg">#211E2B</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
     </style>
 
     <!-- ═══════════════════ Echo Collection · 4 静态 ═══════════════════ -->
@@ -209,7 +209,7 @@
         <item name="echoBubbleAssistant">#172B39</item>
         <item name="echoToolInfoBg">#1D3240</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
     </style>
 
     <style name="Theme.MyApplication.FilmDusk" parent="Theme.MyApplication.Base">
@@ -229,7 +229,7 @@
         <item name="echoBubbleAssistant">#372A37</item>
         <item name="echoToolInfoBg">#3B2C39</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
     </style>
 
     <style name="Theme.MyApplication.CedarStudy" parent="Theme.MyApplication.Base">
@@ -249,7 +249,7 @@
         <item name="echoBubbleAssistant">#382A1F</item>
         <item name="echoToolInfoBg">#3D2D20</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
     </style>
 
     <!-- ═══════════════════ Echo Collection · 4 动态 ═══════════════════ -->
@@ -288,7 +288,7 @@
         <item name="echoBubbleAssistant">#1B2234</item>
         <item name="echoToolInfoBg">#222A40</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
     </style>
 
     <style name="Theme.MyApplication.BreathingGrove" parent="Theme.MyApplication.Base">

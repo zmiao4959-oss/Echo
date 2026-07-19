@@ -34,21 +34,39 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Echo"
-                android:textSize="22sp"
+                android:text="私人档案馆"
+                android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="?attr/echoTextPrimary" />
 
             <TextView
+                android:id="@+id/tv_archive_theme"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/profile_subtitle"
+                android:text="当前装帧"
                 android:textSize="13sp"
                 android:textColor="?attr/echoHint"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
 
-        <!-- 功能入口卡片 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="档案索引"
+            android:textColor="?attr/echoTextPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="10dp"
+            android:text="进入手稿、时间线、提醒与长期记忆"
+            android:textColor="?attr/echoHint"
+            android:textSize="12sp" />
+
+        <!-- 档案索引 -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -312,7 +330,25 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 外观卡片 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="装帧与纸面"
+            android:textColor="?attr/echoTextPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="10dp"
+            android:text="主题定义气质，你的纹理、字体与形状仍拥有最高优先级"
+            android:textColor="?attr/echoHint"
+            android:textSize="12sp" />
+
+        <!-- 装帧卡片 -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -622,7 +658,17 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 底部操作 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="10dp"
+            android:text="迁移与备份"
+            android:textColor="?attr/echoTextPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- 迁移与备份 -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -687,7 +733,17 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 底部操作 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="10dp"
+            android:text="封存与清理"
+            android:textColor="?attr/echoTextPrimary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- 封存与清理 -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

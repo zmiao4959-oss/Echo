@@ -28,6 +28,8 @@ class ThemeManagerTest {
         assertEquals(4, motions.distinct().size)
         assertTrue(motions.none { it == ThemeManager.Motion.NONE })
         assertEquals(8, ThemeManager.themes.map { it.typography }.distinct().size)
+        assertEquals(8, ThemeManager.themes.map { it.experience }.distinct().size)
+        assertTrue(ThemeManager.themes.all { it.stateArtworkRes != 0 })
     }
 
     @Test

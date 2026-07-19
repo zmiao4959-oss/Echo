@@ -62,7 +62,7 @@
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:listitem="@layout/item_plan" />
 
-            <TextView
+            <com.example.myapplication.ui.widget.ThemeStateView
                 android:id="@+id/tv_empty_reminder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

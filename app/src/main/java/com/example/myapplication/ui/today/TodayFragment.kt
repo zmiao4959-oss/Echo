@@ -45,6 +45,7 @@ import com.example.myapplication.ui.MainActivity
 import com.example.myapplication.ui.diary.DiaryDetailActivity
 import com.example.myapplication.ui.plan.PlanEditActivity
 import com.example.myapplication.ui.ThemeColors
+import com.example.myapplication.ui.ThemeExperience
 import com.example.myapplication.ui.widget.EchoOrbView
 import com.example.myapplication.ui.widget.EchoCaptureMotionView
 import com.example.myapplication.ui.widget.EchoWeatherView
@@ -314,6 +315,7 @@ class TodayFragment : Fragment() {
             viewModel.todayDate.collectLatest { date ->
                 val display = formatDisplayDate(date)
                 tvDate.text = display
+                ThemeExperience.dateChange(tvDate)
             }
         }
 
@@ -359,6 +361,7 @@ class TodayFragment : Fragment() {
         tvRecordCount.setOnClickListener {
             isRecordsExpanded = !isRecordsExpanded
             applyRecordFilter()
+            ThemeExperience.expand(recyclerRecords, isRecordsExpanded)
         }
 
         lifecycleScope.launch {

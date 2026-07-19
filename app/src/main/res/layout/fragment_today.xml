@@ -295,7 +295,7 @@
             tools:listitem="@layout/item_life_record" />
 
         <!-- ═══ 空状态 ═══ -->
-        <TextView
+        <com.example.myapplication.ui.widget.ThemeStateView
             android:id="@+id/tv_empty_records"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

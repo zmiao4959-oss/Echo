@@ -213,7 +213,6 @@ class MainActivity : ThemedActivity() {
             todayFragment = TodayFragment()
         }
         supportFragmentManager.beginTransaction()
-            .setCustomAnimations(R.anim.echo_fragment_in, R.anim.echo_fragment_out)
             .replace(R.id.fragment_container, todayFragment!!)
             .commit()
         return true
@@ -224,7 +223,6 @@ class MainActivity : ThemedActivity() {
             diaryFragment = DiaryFragment()
         }
         supportFragmentManager.beginTransaction()
-            .setCustomAnimations(R.anim.echo_fragment_in, R.anim.echo_fragment_out)
             .replace(R.id.fragment_container, diaryFragment!!)
             .commit()
         return true
@@ -241,7 +239,6 @@ class MainActivity : ThemedActivity() {
             planFragment = PlanFragment()
         }
         supportFragmentManager.beginTransaction()
-            .setCustomAnimations(R.anim.echo_fragment_in, R.anim.echo_fragment_out)
             .replace(R.id.fragment_container, planFragment!!)
             .commit()
         return true
@@ -252,7 +249,6 @@ class MainActivity : ThemedActivity() {
             memoryFragment = MemoryFragment()
         }
         supportFragmentManager.beginTransaction()
-            .setCustomAnimations(R.anim.echo_fragment_in, R.anim.echo_fragment_out)
             .replace(R.id.fragment_container, memoryFragment!!)
             .commit()
         return true
@@ -313,7 +309,11 @@ class MainActivity : ThemedActivity() {
     }
 
     private fun openCalendar() {
+        EchoFeedback.play(btnCalendar, EchoFeedback.Kind.OPEN)
+        ThemeExperience.dateChange(btnCalendar)
         val dialog = CalendarDialog(this) { date ->
+            EchoFeedback.play(btnCalendar, EchoFeedback.Kind.CONNECT)
+            ThemeExperience.dateChange(btnCalendar)
             diaryViewModel.generateDiaryForDate(date)
             lifecycleScope.launch {
                 diaryViewModel.statusMessage.collectLatest { msg ->
@@ -325,6 +325,7 @@ class MainActivity : ThemedActivity() {
     }
 
     fun openProfile(view: View) {
+        EchoFeedback.play(view, EchoFeedback.Kind.OPEN)
         startActivity(Intent(this, ProfileActivity::class.java))
     }
 

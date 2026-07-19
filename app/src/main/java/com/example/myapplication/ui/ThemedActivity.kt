@@ -36,6 +36,8 @@ abstract class ThemedActivity : AppCompatActivity() {
                 ) {
                     FontManager.applyToView(view, config.fontKey, config.themeKey)
                     CardTextureManager.applyThemeDefaults(view)
+                    ThemeExperience.apply(view)
+                    view.post { ThemeExperience.enter(view) }
                 }
             },
             true,
@@ -57,17 +59,20 @@ abstract class ThemedActivity : AppCompatActivity() {
         super.setContentView(layoutResID)
         FontManager.applyToActivity(this, config.fontKey, config.themeKey)
         CardTextureManager.applyThemeDefaults(window.decorView)
+        ThemeExperience.apply(window.decorView)
     }
 
     override fun setContentView(view: View) {
         super.setContentView(view)
         FontManager.applyToActivity(this, config.fontKey, config.themeKey)
         CardTextureManager.applyThemeDefaults(window.decorView)
+        ThemeExperience.apply(window.decorView)
     }
 
     override fun setContentView(view: View, params: ViewGroup.LayoutParams?) {
         super.setContentView(view, params)
         FontManager.applyToActivity(this, config.fontKey, config.themeKey)
         CardTextureManager.applyThemeDefaults(window.decorView)
+        ThemeExperience.apply(window.decorView)
     }
 }

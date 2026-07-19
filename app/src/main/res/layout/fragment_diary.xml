@@ -162,7 +162,7 @@
                         android:id="@+id/layout_generating"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
+                        android:orientation="vertical"
                         android:gravity="center"
                         android:visibility="gone">
 
@@ -173,10 +173,11 @@
                             style="?android:attr/progressBarStyle"
                             android:indeterminateTint="?attr/echoPrimary" />
 
-                        <TextView
+                        <com.example.myapplication.ui.widget.ThemeStateView
                             android:id="@+id/tv_generating_status"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:paddingTop="8dp"
                             android:textSize="14sp"
                             android:textColor="?attr/echoTextSecondary"
                             android:text="正在生成日记…" />
@@ -352,7 +353,7 @@
                 tools:listitem="@layout/item_diary" />
 
             <!-- 空列表 -->
-            <TextView
+            <com.example.myapplication.ui.widget.ThemeStateView
                 android:id="@+id/tv_empty_diaries"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

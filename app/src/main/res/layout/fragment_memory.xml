@@ -365,7 +365,7 @@
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:listitem="@layout/item_memory_card" />
 
-            <TextView
+            <com.example.myapplication.ui.widget.ThemeStateView
                 android:id="@+id/tv_empty_cards"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -396,7 +396,7 @@
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:listitem="@layout/item_profile_memory" />
 
-            <TextView
+            <com.example.myapplication.ui.widget.ThemeStateView
                 android:id="@+id/tv_empty_profiles"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -3,6 +3,7 @@ package com.example.myapplication.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.Manifest
 import android.app.TimePickerDialog
 import android.content.pm.PackageManager
@@ -71,6 +72,26 @@ class SettingsActivity : ThemedActivity() {
         setContentView(R.layout.activity_settings)
 
         config = (application as MyApplication).appConfig
+        styleSettingsInputs(window.decorView)
+        setupAdvancedSection(
+            R.id.btn_toggle_connection,
+            R.id.advanced_connection_container,
+            "连接与模型"
+        )
+        setupAdvancedSection(
+            R.id.btn_toggle_lab,
+            R.id.advanced_lab_container,
+            "实验室与诊断"
+        )
+
+        findViewById<SwitchMaterial>(R.id.switch_interaction_haptics).apply {
+            isChecked = config.interactionHapticsEnabled
+            setOnCheckedChangeListener { _, checked -> config.interactionHapticsEnabled = checked }
+        }
+        findViewById<SwitchMaterial>(R.id.switch_interaction_sounds).apply {
+            isChecked = config.interactionSoundsEnabled
+            setOnCheckedChangeListener { _, checked -> config.interactionSoundsEnabled = checked }
+        }
 
         // LLM 配置
         val llmBaseUrl = findViewById<EditText>(R.id.llm_base_url)
@@ -395,6 +416,27 @@ class SettingsActivity : ThemedActivity() {
 
         // 诊断面板
         refreshDiagnostics()
+    }
+
+    private fun styleSettingsInputs(view: View) {
+        if (view is EditText) {
+            view.setTextColor(ThemeColors.textPrimary(this))
+            view.setHintTextColor(ThemeColors.textSecondary(this))
+        }
+        if (view is android.view.ViewGroup) {
+            for (index in 0 until view.childCount) styleSettingsInputs(view.getChildAt(index))
+        }
+    }
+
+    private fun setupAdvancedSection(buttonId: Int, containerId: Int, title: String) {
+        val button = findViewById<Button>(buttonId)
+        val container = findViewById<View>(containerId)
+        button.setOnClickListener {
+            val expanding = container.visibility != View.VISIBLE
+            container.visibility = if (expanding) View.VISIBLE else View.GONE
+            button.text = if (expanding) "$title　收起 ⌃" else "$title　展开 ›"
+            ThemeExperience.expand(container, expanding)
+        }
     }
 
     private fun refreshDiagnostics() {

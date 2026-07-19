@@ -12,6 +12,8 @@ import android.os.VibratorManager
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import android.view.View
+import com.example.myapplication.MyApplication
+import com.example.myapplication.ui.ThemeManager
 import java.util.concurrent.Executors
 import kotlin.math.PI
 import kotlin.math.sin
@@ -25,13 +27,16 @@ object EchoFeedback {
     }
 
     fun play(view: View, kind: Kind) {
-        haptic(view, kind)
+        val config = (view.context.applicationContext as? MyApplication)?.appConfig
+        if (config?.interactionHapticsEnabled != false) haptic(view, kind)
+        if (config?.interactionSoundsEnabled != true) return
         val audioManager = view.context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
         if (audioManager?.ringerMode != AudioManager.RINGER_MODE_NORMAL) return
         val pan = if (view.rootView.width > 0) {
             ((view.x + view.width / 2f) / view.rootView.width * 2f - 1f).coerceIn(-1f, 1f)
         } else 0f
-        audioExecutor.execute { synthesize(kind, pan) }
+        val experience = ThemeManager.specFor(config.themeKey).experience
+        audioExecutor.execute { synthesize(kind, pan, experience) }
     }
 
     private fun haptic(view: View, kind: Kind) {
@@ -78,7 +83,7 @@ object EchoFeedback {
         }
     }
 
-    private fun synthesize(kind: Kind, pan: Float) {
+    private fun synthesize(kind: Kind, pan: Float, experience: ThemeManager.Experience) {
         val sampleRate = 22_050
         val duration = when (kind) {
             Kind.CAPTURE -> 0.24
@@ -87,7 +92,13 @@ object EchoFeedback {
             Kind.DELETE -> 0.12
             Kind.OPEN -> 0.14
         }
-        val frames = (sampleRate * duration).toInt()
+        val durationFactor = when (experience) {
+            ThemeManager.Experience.FILM -> .78
+            ThemeManager.Experience.CEDAR, ThemeManager.Experience.PAPER -> 1.08
+            ThemeManager.Experience.ORBIT -> 1.18
+            else -> 1.0
+        }
+        val frames = (sampleRate * duration * durationFactor).toInt()
         val pcm = ShortArray(frames * 2)
         val startHz = when (kind) {
             Kind.CAPTURE -> 420.0
@@ -103,15 +114,31 @@ object EchoFeedback {
             Kind.DELETE -> 150.0
             Kind.OPEN -> 480.0
         }
+        val pitch = when (experience) {
+            ThemeManager.Experience.PAPER -> .94
+            ThemeManager.Experience.ARCHIVE -> .76
+            ThemeManager.Experience.FILM -> .84
+            ThemeManager.Experience.CEDAR -> .68
+            ThemeManager.Experience.TIDE -> 1.04
+            ThemeManager.Experience.ORBIT -> 1.20
+            ThemeManager.Experience.GROVE -> .88
+            ThemeManager.Experience.INK -> .72
+        }
         val leftGain = ((1f - pan) * 0.5f).coerceIn(0.18f, 1f)
         val rightGain = ((1f + pan) * 0.5f).coerceIn(0.18f, 1f)
         var phase = 0.0
         for (frame in 0 until frames) {
             val t = frame.toDouble() / frames
-            val hz = startHz + (endHz - startHz) * t
+            val hz = (startHz + (endHz - startHz) * t) * pitch
             phase += 2.0 * PI * hz / sampleRate
             val envelope = sin(PI * t).coerceAtLeast(0.0) * (1.0 - t * 0.35)
-            val shimmer = sin(phase) * 0.72 + sin(phase * 2.01) * 0.18
+            val overtone = when (experience) {
+                ThemeManager.Experience.ARCHIVE, ThemeManager.Experience.ORBIT -> 2.51
+                ThemeManager.Experience.CEDAR, ThemeManager.Experience.INK -> 1.51
+                ThemeManager.Experience.FILM -> 1.99
+                else -> 2.01
+            }
+            val shimmer = sin(phase) * 0.72 + sin(phase * overtone) * 0.18
             val value = (shimmer * envelope * 2100).toInt().coerceIn(-32767, 32767)
             pcm[frame * 2] = (value * leftGain).toInt().toShort()
             pcm[frame * 2 + 1] = (value * rightGain).toInt().toShort()

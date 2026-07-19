@@ -75,7 +75,10 @@ class ProfileActivity : ThemedActivity() {
 
         // 显示当前主题名
         val tvThemeCurrent = findViewById<TextView>(R.id.tv_theme_current)
-        tvThemeCurrent.text = ThemeManager.specFor(config.themeKey).name
+        val themeSpec = ThemeManager.specFor(config.themeKey)
+        tvThemeCurrent.text = themeSpec.name
+        findViewById<TextView>(R.id.tv_archive_theme).text =
+            "当前装帧 · ${themeSpec.name}  /  ${themeSpec.description}"
 
         // 显示当前字体名
         val tvFontCurrent = findViewById<TextView>(R.id.tv_font_current)

@@ -72,6 +72,15 @@ class AppConfig(context: Context) {
         get() = prefs.getString(KEY_THEME, "paper_atelier") ?: "paper_atelier"
         set(value) = prefs.edit().putString(KEY_THEME, value).apply()
 
+    /** Short interaction cues. Kept separate so a quiet app can still feel tactile. */
+    var interactionHapticsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_INTERACTION_HAPTICS, true)
+        set(value) = prefs.edit().putBoolean(KEY_INTERACTION_HAPTICS, value).apply()
+
+    var interactionSoundsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_INTERACTION_SOUNDS, false)
+        set(value) = prefs.edit().putBoolean(KEY_INTERACTION_SOUNDS, value).apply()
+
     // ── 字体配置 ──
     var fontKey: String
         get() = prefs.getString(KEY_FONT, "default") ?: "default"
@@ -217,6 +226,8 @@ class AppConfig(context: Context) {
         private const val KEY_TTS_URL = "tts_url"
         private const val KEY_TTS_ENABLED = "tts_enabled"
         private const val KEY_THEME = "theme_key"
+        private const val KEY_INTERACTION_HAPTICS = "interaction_haptics_enabled"
+        private const val KEY_INTERACTION_SOUNDS = "interaction_sounds_enabled"
         private const val KEY_FONT = "font_key"
         private const val KEY_WEATHER_CITY = "weather_city"
         private const val KEY_BACKGROUND = "background_key"

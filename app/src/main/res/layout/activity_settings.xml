@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/echoBackground">
+    android:background="?attr/echoBackground"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,6 +20,80 @@
             android:textStyle="bold"
             android:textColor="?attr/echoTextPrimary"
             android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-18dp"
+            android:layout_marginBottom="18dp"
+            android:text="先决定 Echo 如何回应你；连接与模型收在后面"
+            android:textColor="?attr/echoHint"
+            android:textSize="12sp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="?attr/echoSurface"
+            app:cardCornerRadius="24dp"
+            app:strokeColor="?attr/echoBorder"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="交互感受"
+                    android:textColor="?attr/echoTextPrimary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginBottom="10dp"
+                    android:text="让记录、翻页和日期跳转保留一点真实触感"
+                    android:textColor="?attr/echoHint"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_interaction_haptics"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="轻触反馈"
+                    android:textColor="?attr/echoTextPrimary" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_interaction_sounds"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="主题音色"
+                    android:textColor="?attr/echoTextPrimary" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_toggle_connection"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="12dp"
+            android:gravity="start|center_vertical"
+            android:text="连接与模型　展开 ›"
+            android:textColor="?attr/echoTextPrimary" />
+
+        <LinearLayout
+            android:id="@+id/advanced_connection_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
 
         <!-- LLM 配置 -->
         <TextView
@@ -148,6 +223,8 @@
         </LinearLayout>
 
         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
+
+        </LinearLayout>
 
         <!-- 天气设置 -->
         <TextView
@@ -460,6 +537,22 @@
 
         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="?attr/echoBorder" android:layout_marginVertical="16dp"/>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_toggle_lab"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="start|center_vertical"
+            android:text="实验室与诊断　展开 ›"
+            android:textColor="?attr/echoTextPrimary" />
+
+        <LinearLayout
+            android:id="@+id/advanced_lab_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
         <!-- 检索模式设置 -->
         <TextView
             android:layout_width="match_parent"
@@ -576,6 +669,8 @@
             android:layout_height="wrap_content"
             android:textSize="13sp"
             android:textColor="#888" />
+
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>
