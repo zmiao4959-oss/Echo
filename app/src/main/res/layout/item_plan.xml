@@ -9,8 +9,8 @@
     android:clickable="true"
     android:focusable="true"
     app:cardBackgroundColor="?attr/echoSurface"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="1dp"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="0dp"
     app:strokeColor="?attr/echoBorder"
     app:strokeWidth="1dp">
 
@@ -18,7 +18,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingHorizontal="18dp"
+        android:paddingVertical="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -42,10 +43,10 @@
                 android:layout_marginStart="10dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:textColor="?attr/echoTextPrimary"
-                android:textSize="16sp"
-                android:textStyle="bold"
+                android:textSize="17sp"
                 tools:text="检查计算任务" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial

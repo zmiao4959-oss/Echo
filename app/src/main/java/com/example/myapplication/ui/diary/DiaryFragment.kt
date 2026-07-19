@@ -320,7 +320,7 @@ class DiaryFragment : Fragment() {
 
     private fun updateMoodDaysToggle() {
         val days = viewModel.moodStatsDays.value
-        val activeBg = AppCompatResources.getDrawable(requireContext(), R.drawable.bg_send_button)
+        val activeBg = AppCompatResources.getDrawable(requireContext(), R.drawable.bg_filter_selected)
         val inactiveBg = AppCompatResources.getDrawable(requireContext(), R.drawable.bg_input)
         val ctx = requireContext()
         if (days == 7) {

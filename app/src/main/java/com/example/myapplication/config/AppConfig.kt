@@ -69,7 +69,7 @@ class AppConfig(context: Context) {
 
     // ── 主题配置 ──
     var themeKey: String
-        get() = prefs.getString(KEY_THEME, "warm_tea") ?: "warm_tea"
+        get() = prefs.getString(KEY_THEME, "paper_atelier") ?: "paper_atelier"
         set(value) = prefs.edit().putString(KEY_THEME, value).apply()
 
     // ── 字体配置 ──
@@ -192,7 +192,7 @@ class AppConfig(context: Context) {
 
     // ── 背景配置 ──
     var backgroundKey: String
-        get() = prefs.getString(KEY_BACKGROUND, "bg_default_1") ?: "bg_default_1"
+        get() = prefs.getString(KEY_BACKGROUND, "theme") ?: "theme"
         set(value) = prefs.edit().putString(KEY_BACKGROUND, value).apply()
 
     // ── 便捷方法 ──

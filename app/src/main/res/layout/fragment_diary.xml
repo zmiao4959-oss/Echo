@@ -8,7 +8,9 @@
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:overScrollMode="never">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -21,20 +23,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="20dp"
-                android:paddingTop="24dp"
-                android:paddingBottom="4dp"
+                android:paddingTop="28dp"
+                android:paddingBottom="2dp"
                 android:text="@string/diary_page_title"
-                android:textSize="28sp"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="32sp"
                 android:textColor="?attr/echoTextPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="20dp"
-                android:paddingBottom="16dp"
+                android:paddingBottom="20dp"
                 android:text="@string/diary_page_subtitle"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textColor="?attr/echoTextSecondary" />
 
             <!-- 今日日记卡片 -->
@@ -43,24 +45,26 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="3dp"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="0dp"
                 app:cardBackgroundColor="?attr/echoSurface"
-                app:strokeWidth="0dp">
+                app:strokeColor="?attr/echoBorder"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/diary_today_card_title"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="?attr/echoPrimary" />
+                        android:fontFamily="sans-serif-medium"
+                        android:letterSpacing="0.06"
+                        android:textSize="12sp"
+                        android:textColor="?attr/echoAccent" />
 
                     <!-- 如果有日记，显示摘要 -->
                     <LinearLayout
@@ -75,9 +79,9 @@
                             android:id="@+id/tv_today_diary_title"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
+                            android:layout_marginTop="10dp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textSize="20sp"
                             android:textColor="?attr/echoTextPrimary"
                             tools:text="今天的项目有了新进展" />
 
@@ -86,7 +90,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:textSize="14sp"
+                            android:textSize="15sp"
                             android:textColor="?attr/echoTextSecondary"
                             android:maxLines="3"
                             android:ellipsize="end"
@@ -133,8 +137,8 @@
                             android:id="@+id/tv_no_diary_status"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:textSize="14sp"
+                            android:layout_marginTop="12dp"
+                            android:textSize="15sp"
                             android:textColor="?attr/echoHint"
                             android:text="@string/diary_no_today" />
 
@@ -142,11 +146,13 @@
                             android:id="@+id/btn_generate_diary"
                             style="@style/Widget.Material3.Button.TonalButton"
                             android:layout_width="wrap_content"
-                            android:layout_height="40dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_height="44dp"
+                            android:layout_marginTop="12dp"
+                            android:fontFamily="sans-serif-medium"
+                            android:minWidth="140dp"
                             android:text="@string/diary_generate_button"
                             android:textSize="14sp"
-                            app:cornerRadius="12dp"
+                            app:cornerRadius="16dp"
                             app:backgroundTint="?attr/echoPrimary"
                             android:textColor="?attr/echoOnPrimary" />
                     </LinearLayout>
@@ -184,11 +190,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
                 app:cardBackgroundColor="?attr/echoSurface"
-                app:strokeWidth="0dp"
+                app:strokeColor="?attr/echoBorder"
+                app:strokeWidth="1dp"
                 android:visibility="gone"
                 tools:visibility="visible">
 
@@ -196,7 +203,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="18dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -222,7 +229,7 @@
                             android:text="7天"
                             android:textSize="12sp"
                             android:textColor="?attr/echoOnPrimary"
-                            android:background="@drawable/bg_send_button"
+                            android:background="@drawable/bg_filter_selected"
                             android:clickable="true"
                             android:focusable="true" />
 
@@ -283,16 +290,16 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="20dp"
-                android:paddingTop="24dp"
-                android:paddingBottom="4dp">
+                android:paddingTop="28dp"
+                android:paddingBottom="6dp">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/diary_history_title"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:textSize="21sp"
                     android:textColor="?attr/echoTextPrimary" />
 
                 <TextView
@@ -300,7 +307,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="32dp"
                     android:gravity="center"
-                    android:paddingHorizontal="10dp"
+                    android:paddingHorizontal="12dp"
                     android:text="筛选 ▾"
                     android:textSize="13sp"
                     android:textColor="?attr/echoPrimary"
@@ -314,7 +321,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="20dp"
-                android:paddingBottom="8dp"
+                android:paddingBottom="10dp"
                 android:textSize="13sp"
                 android:textColor="?attr/echoHint"
                 tools:text="共 5 篇日记" />

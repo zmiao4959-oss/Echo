@@ -301,6 +301,11 @@ class SettingsActivity : ThemedActivity() {
         weatherCity.setText(config.weatherCity)
 
         // 背景选择按钮
+        findViewById<Button>(R.id.bg_follow_theme).setOnClickListener {
+            config.backgroundKey = BackgroundManager.THEME_BACKGROUND
+            refreshBackgroundSelection()
+            applyCurrentBackground()
+        }
         findViewById<Button>(R.id.bg_select_1).setOnClickListener {
             config.backgroundKey = "bg_default_1"
             refreshBackgroundSelection()
@@ -461,6 +466,7 @@ class SettingsActivity : ThemedActivity() {
         btn3.text = "默认 3${if (currentKey == "bg_default_3") " ✓" else ""}"
 
         label.text = when {
+            currentKey == BackgroundManager.THEME_BACKGROUND -> "当前: 跟随主题"
             currentKey.startsWith("custom:") -> "当前: 自定义图片"
             currentKey in BackgroundManager.DEFAULT_BG_IDS -> "当前: $currentKey"
             else -> ""

@@ -12,6 +12,7 @@ import java.io.FileOutputStream
  */
 object BackgroundManager {
 
+    const val THEME_BACKGROUND = "theme"
     private const val CUSTOM_FILE = "bg_custom.jpg"
     private const val TAG = "BackgroundManager"
 
@@ -29,6 +30,9 @@ object BackgroundManager {
         val bgView = (root as? android.view.ViewGroup)?.getChildAt(0) ?: root
 
         when {
+            backgroundKey == THEME_BACKGROUND -> {
+                bgView.setBackgroundColor(ThemeColors.background(activity))
+            }
             backgroundKey.startsWith("custom:") -> {
                 val path = backgroundKey.removePrefix("custom:")
                 val file = File(path)

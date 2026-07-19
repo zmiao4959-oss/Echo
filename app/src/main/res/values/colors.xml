@@ -4,12 +4,12 @@
     <color name="white">#FFFFFFFF</color>
 
     <!-- Echo 品牌色 -->
-    <color name="echo_primary">#2F7D7A</color>
-    <color name="echo_primary_dark">#1E5553</color>
-    <color name="echo_background">#FAF7F0</color>
-    <color name="echo_surface">#FFFFFF</color>
-    <color name="echo_surface_variant">#F3EFE7</color>
-    <color name="echo_text_primary">#163536</color>
-    <color name="echo_text_secondary">#7A7A7A</color>
-    <color name="echo_accent_warm">#E9C98F</color>
+    <color name="echo_primary">#526D62</color>
+    <color name="echo_primary_dark">#334B43</color>
+    <color name="echo_background">#F5F0E7</color>
+    <color name="echo_surface">#FFFCF7</color>
+    <color name="echo_surface_variant">#ECE4D8</color>
+    <color name="echo_text_primary">#27332F</color>
+    <color name="echo_text_secondary">#69716D</color>
+    <color name="echo_accent_warm">#C9825B</color>
 </resources>

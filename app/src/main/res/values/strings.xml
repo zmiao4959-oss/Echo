@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">小爪</string>
     <string name="app_title">Echo</string>
+    <string name="app_subtitle">把今天，慢慢收好</string>
+    <string name="quick_note_label">此刻的想法</string>
 
     <!-- 底部导航 -->
     <string name="nav_today">今日</string>

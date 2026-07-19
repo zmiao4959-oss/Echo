@@ -12,7 +12,8 @@
         android:layout_height="match_parent"
         android:background="@android:color/transparent"
         android:clipToPadding="false"
-        android:paddingBottom="24dp">
+        android:overScrollMode="never"
+        android:paddingBottom="32dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -26,8 +27,8 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="4dp">
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -39,8 +40,10 @@
                     android:id="@+id/tv_today_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="0.04"
                     android:textColor="?attr/echoTextSecondary"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     tools:text="2025年6月24日 星期二" />
 
                 <LinearLayout
@@ -77,14 +80,14 @@
                     android:maxLines="2"
                     android:text="@string/today_greeting"
                     android:textColor="?attr/echoTextPrimary"
-                    android:textSize="26sp"
-                    android:textStyle="bold" />
+                    android:textSize="30sp"
+                    android:fontFamily="sans-serif-medium" />
             </LinearLayout>
 
             <com.example.myapplication.ui.widget.EchoOrbView
                 android:id="@+id/echo_orb"
-                android:layout_width="132dp"
-                android:layout_height="132dp"
+                android:layout_width="116dp"
+                android:layout_height="116dp"
                 android:importantForAccessibility="no"
                 android:translationX="8dp" />
         </LinearLayout>
@@ -98,8 +101,8 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="4dp"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="1dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
             app:cardBackgroundColor="?attr/echoSurface"
             app:strokeColor="?attr/echoBorder"
             app:strokeWidth="1dp">
@@ -108,8 +111,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="12dp">
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="15dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -166,8 +169,8 @@
             android:layout_marginTop="8dp"
             android:visibility="gone"
             app:cardBackgroundColor="?attr/echoSurfaceVariant"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="1dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
             app:strokeColor="?attr/echoBorder"
             app:strokeWidth="1dp"
             tools:visibility="visible">
@@ -176,8 +179,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="14dp">
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="16dp">
 
                 <TextView
                     android:id="@+id/tv_today_spotlight_title"
@@ -254,16 +257,16 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="20dp"
-            android:paddingTop="24dp"
-            android:paddingBottom="4dp">
+            android:paddingTop="28dp"
+            android:paddingBottom="8dp">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/today_records_title"
-                android:textSize="18sp"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="20sp"
                 android:textColor="?attr/echoTextPrimary" />
 
             <TextView
@@ -310,8 +313,8 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="12dp"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="1dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
             app:cardBackgroundColor="?attr/echoSurfaceVariant"
             app:strokeColor="?attr/echoBorder"
             app:strokeWidth="1dp">
@@ -320,7 +323,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="18dp">
 
                 <TextView
                     android:layout_width="wrap_content"

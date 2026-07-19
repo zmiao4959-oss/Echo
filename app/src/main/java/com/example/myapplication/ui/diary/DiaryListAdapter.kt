@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.diary
 
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -9,6 +10,7 @@ import com.example.myapplication.MyApplication
 import com.example.myapplication.R
 import com.example.myapplication.data.model.DailyDiary
 import com.example.myapplication.ui.CardTextureManager
+import com.example.myapplication.ui.ThemeColors
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import java.text.SimpleDateFormat
@@ -59,8 +61,10 @@ class DiaryListAdapter(
             for (tag in diary.tags.take(4)) {
                 val chip = Chip(ctx)
                 chip.text = tag
-                chip.chipStrokeWidth = 1f
+                chip.chipStrokeWidth = 0f
+                chip.chipBackgroundColor = ColorStateList.valueOf(ThemeColors.surfaceVariant(ctx))
                 chip.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+                chip.setTextColor(ThemeColors.textPrimary(ctx))
                 chip.isCheckable = false
                 chip.isClickable = false
                 chipGroup.addView(chip)

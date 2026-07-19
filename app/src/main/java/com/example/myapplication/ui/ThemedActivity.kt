@@ -31,7 +31,7 @@ abstract class ThemedActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         window.navigationBarColor = android.graphics.Color.TRANSPARENT
-        val isDark = config.themeKey == ThemeManager.THEME_DARK
+        val isDark = ThemeManager.isDark(config.themeKey)
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.isAppearanceLightStatusBars = !isDark
         controller.isAppearanceLightNavigationBars = !isDark

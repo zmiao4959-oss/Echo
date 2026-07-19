@@ -156,8 +156,18 @@ class MainActivity : ThemedActivity() {
 
     private fun applyPageTextures() {
         val config = (application as MyApplication).appConfig
-        PageTextureManager.apply(topBar, config.getPageTextureKey(PageTextureManager.TOP_BAR))
-        PageTextureManager.apply(bottomNav, config.getPageTextureKey(PageTextureManager.BOTTOM_BAR))
+        val topTexture = config.getPageTextureKey(PageTextureManager.TOP_BAR)
+        val bottomTexture = config.getPageTextureKey(PageTextureManager.BOTTOM_BAR)
+        if (topTexture == PageTextureManager.NONE) {
+            topBar.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+        } else {
+            PageTextureManager.apply(topBar, topTexture)
+        }
+        if (bottomTexture == PageTextureManager.NONE) {
+            bottomNav.background = ContextCompat.getDrawable(this, R.drawable.bg_bottom_navigation)
+        } else {
+            PageTextureManager.apply(bottomNav, bottomTexture)
+        }
     }
 
     /** Edge-to-Edge: 为顶栏/底栏/内容容器补充系统栏的 padding */
@@ -191,7 +201,7 @@ class MainActivity : ThemedActivity() {
         // 内容容器：底部额外留出导航栏高度（已通过 XML paddingBottom="64dp" 留出 bottomNav 空间）
         ViewCompat.setOnApplyWindowInsetsListener(fragmentContainer) { v, insets ->
             val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            v.updatePadding(bottom = navBars.bottom + (64 * resources.displayMetrics.density).toInt())
+            v.updatePadding(bottom = navBars.bottom + (88 * resources.displayMetrics.density).toInt())
             insets
         }
     }

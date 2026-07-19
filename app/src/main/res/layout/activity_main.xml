@@ -22,28 +22,57 @@
         <LinearLayout
             android:id="@+id/top_bar"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="72dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="6dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingHorizontal="16dp"
-            android:background="?attr/echoSurface"
-            android:elevation="2dp">
+            android:paddingHorizontal="12dp"
+            android:background="@android:color/transparent"
+            android:elevation="0dp">
 
             <TextView
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_brand_mark"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:text="E"
+                android:textColor="?attr/echoOnPrimary"
+                android:textSize="19sp" />
+
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
                 android:layout_weight="1"
-                android:text="@string/app_title"
-                android:textColor="?attr/echoTextPrimary"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                tools:ignore="VisualLintSystemUi" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="0.03"
+                    android:text="@string/app_title"
+                    android:textColor="?attr/echoTextPrimary"
+                    android:textSize="18sp"
+                    tools:ignore="VisualLintSystemUi" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="@string/app_subtitle"
+                    android:textColor="?attr/echoTextSecondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
             <ImageButton
                 android:id="@+id/btn_calendar"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_icon_button"
                 android:contentDescription="日历"
                 android:padding="10dp"
                 android:src="@drawable/ic_calendar_outline"
@@ -51,11 +80,11 @@
 
             <ImageButton
                 android:id="@+id/btn_profile"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_icon_button"
                 android:contentDescription="@string/profile_entry"
-                android:padding="10dp"
+                android:padding="9dp"
                 android:src="@drawable/ic_profile_outline" />
         </LinearLayout>
 
@@ -65,7 +94,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:paddingBottom="64dp" />
+            android:paddingBottom="88dp" />
     </LinearLayout>
 
     <com.example.myapplication.ui.widget.EchoJourneyView
@@ -79,8 +108,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="?attr/echoSurface"
-        android:elevation="6dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/bg_bottom_navigation"
+        android:elevation="10dp"
+        android:minHeight="64dp"
+        app:itemIconSize="23dp"
+        app:itemPaddingBottom="7dp"
+        app:itemPaddingTop="7dp"
         app:menu="@menu/bottom_nav"
         app:labelVisibilityMode="labeled"
         tools:ignore="VisualLintBottomNav" />

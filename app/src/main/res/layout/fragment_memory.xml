@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/echoBackground">
+    android:background="?attr/echoBackground"
+    android:overScrollMode="never">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,20 +18,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingHorizontal="20dp"
-            android:paddingTop="24dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="2dp"
             android:text="@string/memory_page_title"
-            android:textSize="28sp"
-            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="32sp"
             android:textColor="?attr/echoTextPrimary" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingHorizontal="20dp"
-            android:paddingBottom="16dp"
+            android:paddingBottom="20dp"
             android:text="@string/memory_page_subtitle"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textColor="?attr/echoTextSecondary" />
 
         <!-- 搜索框 -->
@@ -61,9 +62,9 @@
                 android:id="@+id/btn_search"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="8dp"
                 android:padding="10dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:background="@drawable/bg_icon_button"
                 android:src="@drawable/ic_echo_search"
                 android:contentDescription="搜索"
                 app:tint="?attr/echoPrimary" />
@@ -112,10 +113,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="4dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
                 app:cardBackgroundColor="?attr/echoSurface"
-                app:strokeWidth="0dp">
+                app:strokeColor="?attr/echoBorder"
+                app:strokeWidth="1dp">
 
                 <TextView
                     android:id="@+id/tv_search_results"
@@ -206,10 +208,11 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
+                app:cardCornerRadius="26dp"
+                app:cardElevation="0dp"
                 app:cardBackgroundColor="?attr/echoSurfaceVariant"
-                app:strokeWidth="0dp">
+                app:strokeColor="?attr/echoBorder"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -266,10 +269,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
                 app:cardBackgroundColor="?attr/echoSurface"
-                app:strokeWidth="0dp"
+                app:strokeColor="?attr/echoBorder"
+                app:strokeWidth="1dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:visibility="gone"

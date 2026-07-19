@@ -1,10 +1,16 @@
 package com.example.myapplication.ui
 
 import android.content.Intent
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.BaseAdapter
 import android.widget.EditText
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -68,7 +74,7 @@ class ProfileActivity : ThemedActivity() {
 
         // 显示当前主题名
         val tvThemeCurrent = findViewById<TextView>(R.id.tv_theme_current)
-        tvThemeCurrent.text = ThemeManager.themeNames[config.themeKey] ?: getString(R.string.theme_warm_tea)
+        tvThemeCurrent.text = ThemeManager.specFor(config.themeKey).name
 
         // 显示当前字体名
         val tvFontCurrent = findViewById<TextView>(R.id.tv_font_current)
@@ -166,26 +172,78 @@ class ProfileActivity : ThemedActivity() {
 
     private fun showThemePickerDialog() {
         val config = (application as MyApplication).appConfig
-        val themes = ThemeManager.themeNames.entries.toList()
-        val currentKey = config.themeKey
-        val currentIndex = themes.indexOfFirst { it.key == currentKey }.coerceAtLeast(0)
-        val names = themes.map { it.value }.toTypedArray()
+        val themes = ThemeManager.themes
+        val currentKey = ThemeManager.specFor(config.themeKey).key
 
         AlertDialog.Builder(this)
-            .setTitle("选择主题")
-            .setSingleChoiceItems(names, currentIndex) { dialog, which ->
+            .setTitle("Echo 主题收藏")
+            .setAdapter(ThemeChoiceAdapter(themes, currentKey)) { dialog, which ->
                 val newKey = themes[which].key
                 if (newKey != currentKey) {
                     config.themeKey = newKey
+                    config.backgroundKey = BackgroundManager.THEME_BACKGROUND
                     ThemeManager.pendingChange = true
                     dialog.dismiss()
-                    // 用 finish + startActivity 替代 recreate()，确保主题立即生效
                     finish()
                     startActivity(Intent(this@ProfileActivity, ProfileActivity::class.java))
                 }
             }
             .setNegativeButton("取消", null)
             .show()
+    }
+
+    private inner class ThemeChoiceAdapter(
+        private val items: List<ThemeManager.ThemeSpec>,
+        private val selectedKey: String,
+    ) : BaseAdapter() {
+
+        override fun getCount(): Int = items.size
+        override fun getItem(position: Int): ThemeManager.ThemeSpec = items[position]
+        override fun getItemId(position: Int): Long = position.toLong()
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val view = convertView ?: LayoutInflater.from(this@ProfileActivity)
+                .inflate(R.layout.item_theme_choice, parent, false)
+            val spec = getItem(position)
+            val preview = view.findViewById<ImageView>(R.id.theme_preview)
+            val radius = 16f * resources.displayMetrics.density
+            val outline = GradientDrawable().apply {
+                cornerRadius = radius
+                setColor(spec.previewColors.first())
+            }
+            preview.background = outline
+            preview.clipToOutline = true
+            if (spec.previewArtworkRes != null) {
+                preview.setImageResource(spec.previewArtworkRes)
+            } else {
+                preview.setImageDrawable(GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    spec.previewColors,
+                ).apply { cornerRadius = radius })
+            }
+
+            view.findViewById<TextView>(R.id.theme_name).text = spec.name
+            view.findViewById<TextView>(R.id.theme_description).text = spec.description
+            view.findViewById<TextView>(R.id.theme_kind).text =
+                if (spec.kind == ThemeManager.Kind.STATIC) "静态" else "动态"
+            view.findViewById<View>(R.id.theme_check).visibility =
+                if (spec.key == selectedKey) View.VISIBLE else View.INVISIBLE
+
+            val swatches = view.findViewById<LinearLayout>(R.id.theme_swatches)
+            swatches.removeAllViews()
+            val size = (12 * resources.displayMetrics.density).toInt()
+            val gap = (5 * resources.displayMetrics.density).toInt()
+            spec.previewColors.forEach { color ->
+                swatches.addView(View(this@ProfileActivity).apply {
+                    background = GradientDrawable().apply {
+                        shape = GradientDrawable.OVAL
+                        setColor(color)
+                    }
+                    layoutParams = LinearLayout.LayoutParams(size, size).apply { marginEnd = gap }
+                })
+            }
+            return view
+        }
     }
 
     private fun showFontPickerDialog() {

@@ -17,13 +17,33 @@
         <item name="colorOnSurface">?attr/echoTextPrimary</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Echo.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Echo.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Echo.Large</item>
+    </style>
+
+    <style name="ShapeAppearance.Echo.Small" parent="ShapeAppearance.Material3.Corner.Medium">
+        <item name="cornerSize">12dp</item>
+    </style>
+
+    <style name="ShapeAppearance.Echo.Medium" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSize">20dp</item>
+    </style>
+
+    <style name="ShapeAppearance.Echo.Large" parent="ShapeAppearance.Material3.Corner.Full">
+        <item name="cornerSize">28dp</item>
     </style>
 
     <!-- ── 卡片样式 ── -->
     <style name="EchoCard" parent="Widget.Material3.CardView.Filled">
-        <item name="cardCornerRadius">20dp</item>
-        <item name="cardElevation">2dp</item>
+        <item name="cardCornerRadius">24dp</item>
+        <item name="cardElevation">0dp</item>
         <item name="cardBackgroundColor">?attr/echoSurface</item>
+        <item name="strokeColor">?attr/echoBorder</item>
+        <item name="strokeWidth">1dp</item>
         <item name="contentPadding">16dp</item>
     </style>
 
@@ -31,21 +51,21 @@
     主题 1: 暖茶 (Warm Tea) — 默认，teal + 暖白
     ============================================================ -->
     <style name="Theme.MyApplication" parent="Theme.MyApplication.Base">
-        <item name="echoPrimary">#2F7D7A</item>
-        <item name="echoPrimaryDark">#1E5553</item>
-        <item name="echoBackground">#FAF7F0</item>
-        <item name="echoSurface">#FFFFFF</item>
-        <item name="echoSurfaceVariant">#F3EFE7</item>
-        <item name="echoTextPrimary">#163536</item>
-        <item name="echoTextSecondary">#7A7A7A</item>
-        <item name="echoAccent">#E9C98F</item>
+        <item name="echoPrimary">#526D62</item>
+        <item name="echoPrimaryDark">#334B43</item>
+        <item name="echoBackground">#F5F0E7</item>
+        <item name="echoSurface">#FFFCF7</item>
+        <item name="echoSurfaceVariant">#ECE4D8</item>
+        <item name="echoTextPrimary">#27332F</item>
+        <item name="echoTextSecondary">#69716D</item>
+        <item name="echoAccent">#C9825B</item>
         <item name="echoOnPrimary">#FFFFFF</item>
-        <item name="echoBorder">#E0DCD5</item>
-        <item name="echoDestructive">#E53935</item>
-        <item name="echoHint">#BDBDBD</item>
-        <item name="echoBubbleUser">#2F7D7A</item>
-        <item name="echoBubbleAssistant">#F3EFE7</item>
-        <item name="echoToolInfoBg">#F3EFE7</item>
+        <item name="echoBorder">#DED4C6</item>
+        <item name="echoDestructive">#B8544E</item>
+        <item name="echoHint">#9A9B94</item>
+        <item name="echoBubbleUser">#526D62</item>
+        <item name="echoBubbleAssistant">#ECE4D8</item>
+        <item name="echoToolInfoBg">#ECE4D8</item>
     </style>
 
     <!-- ============================================================
@@ -130,5 +150,161 @@
         <item name="echoBubbleUser">#8E69DB</item>
         <item name="echoBubbleAssistant">#18151F</item>
         <item name="echoToolInfoBg">#211E2B</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <!-- ═══════════════════ Echo Collection · 4 静态 ═══════════════════ -->
+    <style name="Theme.MyApplication.PaperAtelier" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#526B5F</item>
+        <item name="echoPrimaryDark">#35493F</item>
+        <item name="echoBackground">#F4EFE4</item>
+        <item name="echoSurface">#F2FFFDF8</item>
+        <item name="echoSurfaceVariant">#EDE5D6</item>
+        <item name="echoTextPrimary">#26332E</item>
+        <item name="echoTextSecondary">#68716C</item>
+        <item name="echoAccent">#C77C55</item>
+        <item name="echoOnPrimary">#FFFFFF</item>
+        <item name="echoBorder">#D7CCBC</item>
+        <item name="echoDestructive">#A94F48</item>
+        <item name="echoHint">#999A92</item>
+        <item name="echoBubbleUser">#526B5F</item>
+        <item name="echoBubbleAssistant">#EDE5D6</item>
+        <item name="echoToolInfoBg">#EDE5D6</item>
+    </style>
+
+    <style name="Theme.MyApplication.AbyssalArchive" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#77B7CC</item>
+        <item name="echoPrimaryDark">#285D75</item>
+        <item name="echoBackground">#061421</item>
+        <item name="echoSurface">#EA122330</item>
+        <item name="echoSurfaceVariant">#243746</item>
+        <item name="echoTextPrimary">#EDF4F3</item>
+        <item name="echoTextSecondary">#A9BAC1</item>
+        <item name="echoAccent">#56D1D8</item>
+        <item name="echoOnPrimary">#06141D</item>
+        <item name="echoBorder">#405363</item>
+        <item name="echoDestructive">#E58988</item>
+        <item name="echoHint">#71838C</item>
+        <item name="echoBubbleUser">#367991</item>
+        <item name="echoBubbleAssistant">#172B39</item>
+        <item name="echoToolInfoBg">#1D3240</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <style name="Theme.MyApplication.FilmDusk" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#D29A8D</item>
+        <item name="echoPrimaryDark">#805F68</item>
+        <item name="echoBackground">#241B2A</item>
+        <item name="echoSurface">#EB2D2230</item>
+        <item name="echoSurfaceVariant">#3B2C39</item>
+        <item name="echoTextPrimary">#F7EDE8</item>
+        <item name="echoTextSecondary">#C8B3B7</item>
+        <item name="echoAccent">#F0A064</item>
+        <item name="echoOnPrimary">#241920</item>
+        <item name="echoBorder">#594451</item>
+        <item name="echoDestructive">#E47E81</item>
+        <item name="echoHint">#8D7880</item>
+        <item name="echoBubbleUser">#9A6571</item>
+        <item name="echoBubbleAssistant">#372A37</item>
+        <item name="echoToolInfoBg">#3B2C39</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <style name="Theme.MyApplication.CedarStudy" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#C0AA7F</item>
+        <item name="echoPrimaryDark">#6E5637</item>
+        <item name="echoBackground">#21170F</item>
+        <item name="echoSurface">#ED2C2118</item>
+        <item name="echoSurfaceVariant">#3D2D20</item>
+        <item name="echoTextPrimary">#F3E7D5</item>
+        <item name="echoTextSecondary">#C4B39E</item>
+        <item name="echoAccent">#D1A15F</item>
+        <item name="echoOnPrimary">#21170F</item>
+        <item name="echoBorder">#594634</item>
+        <item name="echoDestructive">#D77D6B</item>
+        <item name="echoHint">#887868</item>
+        <item name="echoBubbleUser">#796243</item>
+        <item name="echoBubbleAssistant">#382A1F</item>
+        <item name="echoToolInfoBg">#3D2D20</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <!-- ═══════════════════ Echo Collection · 4 动态 ═══════════════════ -->
+    <style name="Theme.MyApplication.TidalLight" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#4D858B</item>
+        <item name="echoPrimaryDark">#315F66</item>
+        <item name="echoBackground">#DDECEA</item>
+        <item name="echoSurface">#ECF8FBF8</item>
+        <item name="echoSurfaceVariant">#D3E5E3</item>
+        <item name="echoTextPrimary">#183436</item>
+        <item name="echoTextSecondary">#587174</item>
+        <item name="echoAccent">#A97D9A</item>
+        <item name="echoOnPrimary">#FFFFFF</item>
+        <item name="echoBorder">#BBD4D3</item>
+        <item name="echoDestructive">#A95861</item>
+        <item name="echoHint">#82999A</item>
+        <item name="echoBubbleUser">#4D858B</item>
+        <item name="echoBubbleAssistant">#D3E5E3</item>
+        <item name="echoToolInfoBg">#D3E5E3</item>
+    </style>
+
+    <style name="Theme.MyApplication.OrbitalNight" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#9AAFE4</item>
+        <item name="echoPrimaryDark">#536898</item>
+        <item name="echoBackground">#090D18</item>
+        <item name="echoSurface">#EC151B2A</item>
+        <item name="echoSurfaceVariant">#222A40</item>
+        <item name="echoTextPrimary">#F0F2FA</item>
+        <item name="echoTextSecondary">#AEB6CE</item>
+        <item name="echoAccent">#D0A96B</item>
+        <item name="echoOnPrimary">#101522</item>
+        <item name="echoBorder">#343F59</item>
+        <item name="echoDestructive">#DD7F91</item>
+        <item name="echoHint">#747D97</item>
+        <item name="echoBubbleUser">#536898</item>
+        <item name="echoBubbleAssistant">#1B2234</item>
+        <item name="echoToolInfoBg">#222A40</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <style name="Theme.MyApplication.BreathingGrove" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#496557</item>
+        <item name="echoPrimaryDark">#31483D</item>
+        <item name="echoBackground">#E4E9DF</item>
+        <item name="echoSurface">#EFF8F5EE</item>
+        <item name="echoSurfaceVariant">#D8E0D3</item>
+        <item name="echoTextPrimary">#26362E</item>
+        <item name="echoTextSecondary">#617067</item>
+        <item name="echoAccent">#B28B62</item>
+        <item name="echoOnPrimary">#FFFFFF</item>
+        <item name="echoBorder">#C5D0C1</item>
+        <item name="echoDestructive">#A45B51</item>
+        <item name="echoHint">#8A958C</item>
+        <item name="echoBubbleUser">#496557</item>
+        <item name="echoBubbleAssistant">#D8E0D3</item>
+        <item name="echoToolInfoBg">#D8E0D3</item>
+    </style>
+
+    <style name="Theme.MyApplication.InkRain" parent="Theme.MyApplication.Base">
+        <item name="echoPrimary">#4B5051</item>
+        <item name="echoPrimaryDark">#303536</item>
+        <item name="echoBackground">#E7E4DE</item>
+        <item name="echoSurface">#F0F5F2EC</item>
+        <item name="echoSurfaceVariant">#DAD7D1</item>
+        <item name="echoTextPrimary">#242829</item>
+        <item name="echoTextSecondary">#666A69</item>
+        <item name="echoAccent">#8B6E65</item>
+        <item name="echoOnPrimary">#FFFFFF</item>
+        <item name="echoBorder">#C7C4BE</item>
+        <item name="echoDestructive">#95564F</item>
+        <item name="echoHint">#90918E</item>
+        <item name="echoBubbleUser">#4B5051</item>
+        <item name="echoBubbleAssistant">#DAD7D1</item>
+        <item name="echoToolInfoBg">#DAD7D1</item>
     </style>
 </resources>
