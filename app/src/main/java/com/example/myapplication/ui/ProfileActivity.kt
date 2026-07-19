@@ -125,6 +125,10 @@ class ProfileActivity : ThemedActivity() {
             startActivity(Intent(this, com.example.myapplication.ui.memory.MemoryManageActivity::class.java))
         }
 
+        findViewById<View>(R.id.entry_life_journal).setOnClickListener {
+            startActivity(Intent(this, LifeJournalActivity::class.java))
+        }
+
         findViewById<View>(R.id.entry_growth_timeline).setOnClickListener {
             startActivity(Intent(this, GrowthTimelineActivity::class.java))
         }

@@ -23,6 +23,7 @@ object EchoFileStore {
     val plansDir: File get() = echoDir.resolve("plans")
     val memoriesDir: File get() = echoDir.resolve("memories")
     val workspaceDir: File get() = echoDir.resolve("workspace")
+    val journalsDir: File get() = echoDir.resolve("journals")
 
     /** JSON 数据文件 */
     val lifeRecordsFile: File get() = recordsDir.resolve("life_records.json")
@@ -32,6 +33,7 @@ object EchoFileStore {
     val userProfileFile: File get() = memoriesDir.resolve("user_profile.json")
     val searchIndexFile: File get() = memoriesDir.resolve("search_index.json")
     val foreshadowsFile: File get() = memoriesDir.resolve("foreshadows.json")
+    val lifeJournalsFile: File get() = journalsDir.resolve("life_journals.json")
 
     /**
      * 初始化 Echo 目录结构。
@@ -39,7 +41,7 @@ object EchoFileStore {
      */
     fun init(context: Context) {
         Log.d(TAG, "Initializing Echo directory structure...")
-        val dirs = listOf(echoDir, recordsDir, diariesDir, plansDir, memoriesDir, workspaceDir)
+        val dirs = listOf(echoDir, recordsDir, diariesDir, plansDir, memoriesDir, workspaceDir, journalsDir)
         for (dir in dirs) {
             if (!dir.exists()) {
                 val ok = dir.mkdirs()

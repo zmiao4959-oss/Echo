@@ -356,7 +356,9 @@ object CardTextureManager {
             return
         }
         val bitmap = loadBitmap(view.resources, textureKey) ?: run {
-            view.background = null
+            // A stale custom key must not leave a recycled row blank or visually detached from
+            // the active theme. Fall back to the authored theme material.
+            applyThemeTextureToView(view, scrimBaseColor)
             return
         }
         val alpha = if (opacity >= 100) 255 else (255 * opacity / 100)

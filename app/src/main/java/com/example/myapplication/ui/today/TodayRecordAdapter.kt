@@ -15,6 +15,7 @@ import com.example.myapplication.R
 import com.example.myapplication.data.model.LifeRecord
 import com.example.myapplication.ui.CardTextureManager
 import com.example.myapplication.ui.ThemeColors
+import com.example.myapplication.ui.ThemeExperience
 import com.example.myapplication.ui.widget.EchoMomentGlyphView
 import java.io.File
 import java.text.SimpleDateFormat
@@ -53,6 +54,11 @@ class TodayRecordAdapter(
         holder.card.animate().cancel()
         holder.card.alpha = 1f
         holder.card.translationY = 0f
+
+        // RecyclerView rows are inflated after the Activity/Fragment theme traversal. Apply the
+        // authored surface and chrome here so every recycled row follows the current theme.
+        CardTextureManager.apply(holder.card, CardTextureManager.NONE, R.attr.echoSurface)
+        ThemeExperience.apply(holder.card)
         val textLayer = holder.card.findViewById<View>(R.id.text_layer)
 
         val cal = Calendar.getInstance().apply { timeInMillis = record.createdAt }
@@ -124,6 +130,10 @@ class TodayRecordAdapter(
                 .setDuration(320L)
                 .start()
         }
+    }
+
+    fun refreshAppearance() {
+        if (itemCount > 0) notifyItemRangeChanged(0, itemCount)
     }
 
     private fun togglePlayback(audioPath: String, playBtn: ImageButton) {

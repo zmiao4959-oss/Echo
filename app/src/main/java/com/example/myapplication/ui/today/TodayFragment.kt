@@ -175,6 +175,7 @@ class TodayFragment : Fragment() {
         CardTextureManager.apply(cardTodaySpotlight, config.getCardTextureKey(CardTextureManager.LIFE_RECORD), R.attr.echoSurfaceVariant)
         CardTextureManager.apply(cardChatEntry, config.getCardTextureKey(CardTextureManager.CHAT), R.attr.echoSurface)
         CardTextureManager.apply(cardAiPreview, config.getCardTextureKey(CardTextureManager.CHAT), R.attr.echoSurfaceVariant)
+        recordAdapter?.refreshAppearance()
         renderTodaySpotlight()
     }
 

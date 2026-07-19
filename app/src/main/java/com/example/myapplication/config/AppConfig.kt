@@ -12,6 +12,10 @@ class AppConfig(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("clawspeaker_config", Context.MODE_PRIVATE)
 
+    init {
+        migrateLifeRecordThemeOwnership()
+    }
+
     // ── LLM 配置 ──
     var llmBaseUrl: String
         get() = prefs.getString(KEY_LLM_BASE_URL, "") ?: ""
@@ -70,7 +74,15 @@ class AppConfig(context: Context) {
     // ── 主题配置 ──
     var themeKey: String
         get() = prefs.getString(KEY_THEME, "paper_atelier") ?: "paper_atelier"
-        set(value) = prefs.edit().putString(KEY_THEME, value).apply()
+        set(value) {
+            prefs.edit()
+                .putString(KEY_THEME, value)
+                // A newly selected visual world should be visible immediately. Custom record
+                // textures remain saved in their period slots and can be explicitly re-enabled.
+                .putBoolean(KEY_LIFE_RECORD_USE_TIME_TEXTURE, false)
+                .putString("card_texture_life_record", "none")
+                .apply()
+        }
 
     /** Short interaction cues. Kept separate so a quiet app can still feel tactile. */
     var interactionHapticsEnabled: Boolean
@@ -191,6 +203,20 @@ class AppConfig(context: Context) {
         prefs.edit().putString("card_texture_life_record_text_$period", key).apply()
     }
 
+    /**
+     * Older builds treated a text-layer texture as a permanent global override. The authored
+     * theme system now owns the default record appearance, so disable that legacy override once
+     * without deleting the user's texture files or per-period choices.
+     */
+    private fun migrateLifeRecordThemeOwnership() {
+        if (prefs.getBoolean(KEY_LIFE_RECORD_THEME_OWNERSHIP_MIGRATED, false)) return
+        prefs.edit()
+            .putBoolean(KEY_LIFE_RECORD_USE_TIME_TEXTURE, false)
+            .putString("card_texture_life_record", "none")
+            .putBoolean(KEY_LIFE_RECORD_THEME_OWNERSHIP_MIGRATED, true)
+            .apply()
+    }
+
     // ── 页面纹理（四个底栏页） ──
     fun getPageTextureKey(category: String): String =
         prefs.getString("page_texture_$category", "none") ?: "none"
@@ -234,6 +260,7 @@ class AppConfig(context: Context) {
         private const val KEY_CARD_OPACITY = "card_opacity"
         private const val KEY_CARD_CORNER_RADIUS = "card_corner_radius"
         private const val KEY_LIFE_RECORD_USE_TIME_TEXTURE = "life_record_use_time_texture"
+        private const val KEY_LIFE_RECORD_THEME_OWNERSHIP_MIGRATED = "life_record_theme_ownership_migrated_v1"
         private const val KEY_RETRIEVAL_MODE = "retrieval_mode"
         private const val KEY_EMBEDDING_API_KEY = "embedding_api_key"
         private const val KEY_EMBEDDING_BASE_URL = "embedding_base_url"
