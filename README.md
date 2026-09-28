@@ -13,6 +13,14 @@
 
 应用支持接入 OpenAI 兼容接口，通过流式对话和 Function Calling 操作本地数据。生活记录、日记、计划、记忆卡片与会话均保存在设备本地，不依赖自建后端服务。
 
+<img width="1080" height="2376" alt="Screenshot_20260928_153652" src="https://github.com/user-attachments/assets/d4cb547b-80a0-4cc1-b491-7339e8346b94" />
+<img width="1080" height="2376" alt="Screenshot_20260928_153626" src="https://github.com/user-attachments/assets/4cb60526-adb0-4949-8b37-c19bf26c84bd" />
+<img width="1080" height="2376" alt="Screenshot_20260928_153614" src="https://github.com/user-attachments/assets/7d786177-eab8-4ea0-b4d9-fb349a2a5373" />
+<img width="1080" height="2376" alt="Screenshot_20260928_153559" src="https://github.com/user-attachments/assets/c47446b5-af0e-43bc-889a-da0a92505e5e" />
+<img width="1080" height="2376" alt="Screenshot_20260928_153509" src="https://github.com/user-attachments/assets/07e688af-d965-496b-8a8d-1135f99be12f" />
+
+
+
 ## 核心功能
 
 - **流式 AI 对话**：支持 OpenAI 兼容接口、SSE 流式响应、工具调用、多轮工具循环和长上下文压缩。
